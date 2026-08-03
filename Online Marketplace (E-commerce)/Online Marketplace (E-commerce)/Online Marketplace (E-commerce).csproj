@@ -7,4 +7,12 @@
     <RootNamespace>Online_Marketplace__E_commerce_</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\" />
+    <Folder Include="ERD &amp;Mapping\" />
+    <Folder Include="Controllers\" />
+    <Folder Include="Services\" />
+    <Folder Include="Repos\" />
+  </ItemGroup>
+
 </Project>
