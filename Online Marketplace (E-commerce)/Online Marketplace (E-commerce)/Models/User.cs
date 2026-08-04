@@ -9,7 +9,8 @@
         public int Phonenumber { get; set; }
         public string Role { get; set; } // "Customer" or "Vendor"
 
-        public VendorProfile VP { get; set; } // Navigation property for VendorProfile 
+        // Navigation property for VendorProfile 
+
 
     }
 }
