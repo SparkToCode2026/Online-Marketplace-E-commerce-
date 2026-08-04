@@ -6,5 +6,7 @@
         public string StoreName { get; set; }
         public string Address { get; set; }
         public int CreatedaAt { get; set; }
+
+        public User Users { get; set; } // Navigation property to the associated User
     }
 }
