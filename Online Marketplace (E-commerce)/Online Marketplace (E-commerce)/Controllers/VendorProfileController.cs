@@ -72,5 +72,13 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok("Vendor profile verified successfully");
         }
 
+        //case 13 — Get all Vendor Profiles
+        [HttpGet("all")]
+        public IActionResult GetAllVendorProfiles()
+        {
+            var profiles = _context.VendorProfiles.Include(v => v.Users).ToList();
+            return Ok(profiles);
+        }
+
     }
 }
