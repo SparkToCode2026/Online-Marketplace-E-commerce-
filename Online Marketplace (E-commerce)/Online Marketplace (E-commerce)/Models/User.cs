@@ -1,7 +1,9 @@
-﻿namespace Online_Marketplace__E_commerce_.Models
+﻿using System.ComponentModel.DataAnnotations;
+namespace Online_Marketplace__E_commerce_.Models
 {
     public class User
     {
+        [Key]
         public int  UserId {  get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
