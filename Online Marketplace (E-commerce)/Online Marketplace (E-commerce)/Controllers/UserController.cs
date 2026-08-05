@@ -81,6 +81,16 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok("User reactivated successfully");
         }
 
+        // case 6 — Get all users
+        // GET /user/getAll
+        [HttpGet("getAll")]
+
+        public IActionResult GetAllUsers()
+        {
+            var users = _context.Users.ToList();
+            return Ok(users);
+        }
+
 
 
 
