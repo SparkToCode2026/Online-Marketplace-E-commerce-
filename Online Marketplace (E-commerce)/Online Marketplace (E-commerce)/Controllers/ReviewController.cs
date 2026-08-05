@@ -6,10 +6,19 @@ namespace Online_Marketplace__E_commerce_.Controllers
     [Route("api/[controller]")]
     public class ReviewController : ControllerBase
     {
-        [HttpGet]
-        public IActionResult Index()
+
+        private readonly ProjectContext _projectContext;
+        public ReviewController(ProjectContext projectContext)
         {
-            return Ok("Review Index");
+            _projectContext = projectContext;
+        }
+
+        [HttpGet]
+        public IActionResult GetAllReview()
+        {
+            var allReviews = _projectContext.Reviews.ToList();
+
+            return Ok(allReviews);
         }
     }
 }
