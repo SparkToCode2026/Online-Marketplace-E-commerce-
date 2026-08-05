@@ -5,7 +5,7 @@
 namespace Online_Marketplace__E_commerce_.Migrations
 {
     /// <inheritdoc />
-    public partial class initialc : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

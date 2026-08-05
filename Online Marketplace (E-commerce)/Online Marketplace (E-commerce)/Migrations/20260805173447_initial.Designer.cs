@@ -11,8 +11,8 @@ using Online_Marketplace__E_commerce_;
 namespace Online_Marketplace__E_commerce_.Migrations
 {
     [DbContext(typeof(ProjectContext))]
-    [Migration("20260804235158_initialc")]
-    partial class initialc
+    [Migration("20260805173447_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
