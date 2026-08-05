@@ -70,6 +70,18 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok("User deactivated successfully");
         }
 
+        // case 5 — Reactivate a User
+        public IActionResult ReactivateUser(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+                return NotFound("User not found");
+            user.isActive = true;
+            _context.SaveChanges();
+            return Ok("User reactivated successfully");
+        }
+
+
 
 
 
