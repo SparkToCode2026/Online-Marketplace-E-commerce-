@@ -11,8 +11,8 @@ using Online_Marketplace__E_commerce_;
 namespace Online_Marketplace__E_commerce_.Migrations
 {
     [DbContext(typeof(ProjectContext))]
-    [Migration("20260804232924_initialCreate")]
-    partial class initialCreate
+    [Migration("20260804235158_initialc")]
+    partial class initialc
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -75,9 +75,25 @@ namespace Online_Marketplace__E_commerce_.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("VendorProfileId");
 
+                    b.HasIndex("UserId");
+
                     b.ToTable("VendorProfiles");
+                });
+
+            modelBuilder.Entity("Online_Marketplace__E_commerce_.Models.VendorProfile", b =>
+                {
+                    b.HasOne("Online_Marketplace__E_commerce_.Models.User", "Users")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }
