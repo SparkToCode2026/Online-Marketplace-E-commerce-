@@ -1,4 +1,6 @@
 
+using Microsoft.EntityFrameworkCore;
+
 namespace Online_Marketplace__E_commerce_
 {
     public class Program
@@ -10,8 +12,10 @@ namespace Online_Marketplace__E_commerce_
             // Add services to the container.
 
             builder.Services.AddControllers();
-            
-         
+
+            // DI container for ProjectContext
+            builder.Services.AddDbContext<ProjectContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
 
