@@ -12,6 +12,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context = context;
         }
         // Case 01 — Register a User
+        [HttpPost("add")]
         public  IActionResult AddUser(UserRegister register)
         {
             if (_context.Users.Any(u => u.Email == register.email))
@@ -31,8 +32,21 @@ namespace Online_Marketplace__E_commerce_.Controllers
             //(self-study): send activation email
             return Ok(user.UserId);
         }
-        
-    
+        // case 02 — Update a User
+        [HttpPut("update")]
+        public IActionResult UpdateUser(int id, User updatedUser)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+                return NotFound("User not found");
+            user.Username = updatedUser.Username;
+            user.Phonenumber = updatedUser.Phonenumber;
+            _context.SaveChanges();
+            return Ok(user);
+        }
+
+
+
 
     }
 }
