@@ -90,6 +90,17 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profile);
         }
 
+        //case 15 -Get Newest Vendor Profiles
+        [HttpGet("newest")]
+        public IActionResult GetNewestVendorProfiles()
+        {
+            var profiles = _context.VendorProfiles
+                .OrderByDescending(v => v.CreatedaAt)
+                .Take(5)
+                .Include(v => v.Users)
+                .ToList();
+            return Ok(profiles);
+        }
 
     }
 }
