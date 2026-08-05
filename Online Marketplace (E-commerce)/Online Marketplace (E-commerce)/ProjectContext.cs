@@ -9,7 +9,7 @@ namespace Online_Marketplace__E_commerce_
         public DbSet<User> Users { get; set; }
         public DbSet<VendorProfile> VendorProfiles { get; set; }
 
-        // conect to database
+        // conect to database add 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             options.UseSqlServer(
