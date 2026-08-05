@@ -91,6 +91,23 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(users);
         }
 
+        // case 7 — Get a user by ID
+        [HttpGet("getById")]
+        public IActionResult GetUserById(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+                return NotFound("User not found");
+            return Ok(user);
+        }
+
+        // case 8 — Get users by role
+        [HttpGet("getByRole")]
+        public IActionResult GetUsersByRole(string role)
+        {
+            var users = _context.Users.Where(u => u.Role == role).ToList();
+            return Ok(users);
+        }
 
 
 
