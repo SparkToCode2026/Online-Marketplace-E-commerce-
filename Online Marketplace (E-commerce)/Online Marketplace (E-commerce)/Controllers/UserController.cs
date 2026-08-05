@@ -27,8 +27,12 @@ namespace Online_Marketplace__E_commerce_.Controllers
             };
             _context.Users.Add(user);
             _context.SaveChanges();
+            
+            //(self-study): send activation email
             return Ok(user.UserId);
         }
+        
+    
 
     }
 }
