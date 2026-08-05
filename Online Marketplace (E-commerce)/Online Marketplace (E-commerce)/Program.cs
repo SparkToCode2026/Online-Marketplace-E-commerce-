@@ -12,6 +12,7 @@ namespace Online_Marketplace__E_commerce_
             // Add services to the container.
 
             builder.Services.AddControllers();
+            builder.Services.AddSwaggerGen();
 
             // DI container for ProjectContext
             builder.Services.AddDbContext<ProjectContext>(options =>
@@ -22,7 +23,8 @@ namespace Online_Marketplace__E_commerce_
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();
