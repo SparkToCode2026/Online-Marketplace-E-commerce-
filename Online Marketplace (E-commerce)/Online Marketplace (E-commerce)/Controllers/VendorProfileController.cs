@@ -80,5 +80,16 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profiles);
         }
 
+        // case 14 — Get a Vendor Profile by ID
+        [HttpGet("Getbyid")]
+        public IActionResult GetVendorProfileById(int id)
+        {
+            var profile = _context.VendorProfiles.Include(v => v.Users).FirstOrDefault(v => v.VendorProfileId == id);
+            if (profile == null)
+                return NotFound("Vendor profile not found");
+            return Ok(profile);
+        }
+
+
     }
 }
