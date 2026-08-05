@@ -44,6 +44,18 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context.SaveChanges();
             return Ok(user);
         }
+        // case 3 — Change a User's Role
+        [HttpPut("changeRole")]
+        public IActionResult ChangeUserRole(int id, string newRole)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+                return NotFound("User not found");
+            user.Role = newRole;
+            _context.SaveChanges();
+            return Ok(user);
+        }
+
 
 
 
