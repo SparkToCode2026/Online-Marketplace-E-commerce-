@@ -48,6 +48,17 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context.SaveChanges();
             return Ok(profile);
         }
+        //case 11 — Verify a Vendor Profile
+        [HttpPatch("verify")]
+        public IActionResult DeleteVendorProfile(int id)
+        {
+            var profile = _context.VendorProfiles.Find(id);
+            if (profile == null)
+                return NotFound("Vendor profile not found");
+            _context.VendorProfiles.Remove(profile);
+            _context.SaveChanges();
+            return Ok("Vendor profile deleted successfully");
+        }
 
     }
 }
