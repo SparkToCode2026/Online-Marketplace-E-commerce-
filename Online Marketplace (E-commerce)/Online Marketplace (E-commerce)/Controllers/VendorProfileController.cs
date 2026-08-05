@@ -34,5 +34,20 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profile.VendorProfileId);
         }
 
+        //case 10 — Update a Vendor Profile
+        //PUT /vendorprofile/update
+
+        [HttpPut("update")]
+        public IActionResult UpdateVendorProfile(int id, VendorProfile updatedProfile)
+        {
+            var profile = _context.VendorProfiles.Find(id);
+            if (profile == null)
+                return NotFound("Vendor profile not found");
+            profile.StoreName = updatedProfile.StoreName;
+            profile.Address = updatedProfile.Address;
+            _context.SaveChanges();
+            return Ok(profile);
+        }
+
     }
 }
