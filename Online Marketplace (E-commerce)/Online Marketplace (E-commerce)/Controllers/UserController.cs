@@ -56,6 +56,20 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(user);
         }
 
+        // case 4 — Deactivate a User
+        // DELETE /user/remove 
+        [HttpDelete("remove")]
+        public IActionResult DeactivateUser(int id)
+        {
+            var user = _context.Users.Find(id);
+            if (user == null)
+                return NotFound("User not found");
+            user.isActive = false;
+            _context.SaveChanges();
+          
+            return Ok("User deactivated successfully");
+        }
+
 
 
 
