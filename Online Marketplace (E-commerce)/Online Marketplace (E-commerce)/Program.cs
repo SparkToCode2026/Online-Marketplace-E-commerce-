@@ -15,15 +15,19 @@ namespace Online_Marketplace__E_commerce_
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddControllers();
-            
-         
+            builder.Services.AddSwaggerGen();
+
+            // DI container for ProjectContext
+            builder.Services.AddDbContext<ProjectContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
-                
+                app.UseSwagger();
+                app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();

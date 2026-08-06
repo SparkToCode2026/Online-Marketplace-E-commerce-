@@ -5,6 +5,7 @@ namespace Online_Marketplace__E_commerce_.Models
 {
     public class User
     {
+
         [Key]
         [JsonIgnore]
         public int  UserId {  get; set; }
@@ -24,6 +25,7 @@ namespace Online_Marketplace__E_commerce_.Models
         [InverseProperty("user")]
         [JsonIgnore]
         public VendorProfile vendorProfile { get; set; }
+
 
     }
 }

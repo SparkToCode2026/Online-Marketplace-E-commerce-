@@ -8,11 +8,14 @@ namespace Online_Marketplace__E_commerce_
         //Models 
         public DbSet<User> Users { get; set; }
         public DbSet<VendorProfile> VendorProfiles { get; set; }
+      
+        public DbSet<Coupon> Coupons { get; set; }
+        public DbSet<Order> Orders { get; set; }
 
         //constructor
         public ProjectContext(DbContextOptions<ProjectContext> options) : base(options)
         {
         }
-
     }
+
 }

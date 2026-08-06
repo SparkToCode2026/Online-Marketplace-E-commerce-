@@ -21,6 +21,7 @@ namespace Online_Marketplace__E_commerce_.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+
             modelBuilder.Entity("Online_Marketplace__E_commerce_.Models.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -91,6 +92,32 @@ namespace Online_Marketplace__E_commerce_.Migrations
                         .IsRequired();
 
                     b.Navigation("Users");
+
+            modelBuilder.Entity("Online_Marketplace__E_commerce_.Models.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("Online_Marketplace__E_commerce_.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+
                 });
 #pragma warning restore 612, 618
         }
