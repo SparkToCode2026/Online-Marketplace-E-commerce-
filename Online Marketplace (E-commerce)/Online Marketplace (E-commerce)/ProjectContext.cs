@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Models;
+using static Azure.Core.HttpHeader;
 
 namespace Online_Marketplace__E_commerce_
 {
@@ -9,6 +10,9 @@ namespace Online_Marketplace__E_commerce_
         // table name Users
         public DbSet<User> Users { get; set; }
         public DbSet<Review> Reviews { get; set; }
+
+        public DbSet<Coupon> Coupons { get; set; }
+        public DbSet<Order> Orders { get; set; }
 
     }
 }
