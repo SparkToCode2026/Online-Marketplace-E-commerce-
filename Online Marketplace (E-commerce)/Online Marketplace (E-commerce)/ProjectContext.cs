@@ -11,6 +11,7 @@ namespace Online_Marketplace__E_commerce_
       
         public DbSet<Coupon> Coupons { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<Category> Categories { get; set; }
 
         //constructor
         public ProjectContext(DbContextOptions<ProjectContext> options) : base(options)
