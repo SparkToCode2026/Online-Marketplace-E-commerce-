@@ -22,10 +22,8 @@ namespace Online_Marketplace__E_commerce_.Models
         // holds a foreign key back to this user.
          public bool isActive { get; set; }
 
-        [InverseProperty("user")]
+        [InverseProperty("Users")]
         [JsonIgnore]
         public VendorProfile vendorProfile { get; set; }
-
-        //test
     }
 }
