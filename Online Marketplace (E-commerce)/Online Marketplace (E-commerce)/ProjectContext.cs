@@ -111,6 +111,21 @@ namespace Online_Marketplace__E_commerce_
                 .HasOne(s => s.order)
                 .WithOne(o => o.shipping)
                 .HasForeignKey<Shipping>(s => s.orderId);
+
+            // A review is written by one user about one product.
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.user)
+                .WithMany()
+                .HasForeignKey(r => r.userId);
+
+            // Restrict, same reasoning as OrderItem/CartItem -> Product:
+            // preserves review history and avoids the multiple-cascade-paths
+            // conflict via User -> VendorProfile -> Product.
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.product)
+                .WithMany()
+                .HasForeignKey(r => r.productId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 
