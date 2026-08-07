@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Online_Marketplace__E_commerce_.Models
@@ -10,12 +9,10 @@ namespace Online_Marketplace__E_commerce_.Models
         [JsonIgnore]
         public int orderId { get; set; }
 
-        [ForeignKey("user")]
         public int userId { get; set; }
         [JsonIgnore]
         public User user { get; set; }
 
-        [ForeignKey("coupon")]
         public int? couponId { get; set; }
         [JsonIgnore]
         public Coupon coupon { get; set; }
@@ -27,7 +24,6 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public decimal totalAmount { get; set; }
 
-        [InverseProperty("order")]
         [JsonIgnore]
         public List<OrderItem> orderItems { get; set; }
     }

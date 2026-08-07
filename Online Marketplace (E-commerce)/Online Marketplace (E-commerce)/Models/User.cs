@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 namespace Online_Marketplace__E_commerce_.Models
 {
@@ -22,7 +21,6 @@ namespace Online_Marketplace__E_commerce_.Models
         // holds a foreign key back to this user.
          public bool isActive { get; set; }
 
-        [InverseProperty("Users")]
         [JsonIgnore]
         public VendorProfile vendorProfile { get; set; }
     }

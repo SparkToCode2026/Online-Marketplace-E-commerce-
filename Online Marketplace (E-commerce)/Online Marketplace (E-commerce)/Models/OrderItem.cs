@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Online_Marketplace__E_commerce_.Models
@@ -10,12 +9,10 @@ namespace Online_Marketplace__E_commerce_.Models
         [JsonIgnore]
         public int orderItemId { get; set; }
 
-        [ForeignKey("order")]
         public int orderId { get; set; }
         [JsonIgnore]
         public Order order { get; set; }
 
-        [ForeignKey("product")]
         public int productId { get; set; }
         [JsonIgnore]
         public Product product { get; set; }

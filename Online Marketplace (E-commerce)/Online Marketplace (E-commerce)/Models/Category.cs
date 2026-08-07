@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Online_Marketplace__E_commerce_.Models
@@ -15,7 +14,6 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public string? description { get; set; }
 
-        [InverseProperty("category")]
         [JsonIgnore]
         public List<Product> products { get; set; }
     }

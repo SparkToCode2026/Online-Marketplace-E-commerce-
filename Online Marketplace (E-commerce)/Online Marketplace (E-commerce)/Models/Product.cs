@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Online_Marketplace__E_commerce_.Models
@@ -24,12 +23,10 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public DateTime createdAt { get; set; }
 
-        [ForeignKey("category")]
         public int categoryId { get; set; }
         [JsonIgnore]
         public Category category { get; set; }
 
-        [ForeignKey("vendorProfile")]
         public int vendorProfileId { get; set; }
         [JsonIgnore]
         public VendorProfile vendorProfile { get; set; }

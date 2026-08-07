@@ -6,37 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Online_Marketplace__E_commerce_.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCategoryProductOrderItemReview : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_VendorProfiles_UserId",
-                table: "VendorProfiles");
-
-            migrationBuilder.AlterColumn<DateTime>(
-                name: "CreatedaAt",
-                table: "VendorProfiles",
-                type: "datetime2",
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "int");
-
-            migrationBuilder.AddColumn<bool>(
-                name: "isVerified",
-                table: "VendorProfiles",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
-
-            migrationBuilder.AddColumn<bool>(
-                name: "isActive",
-                table: "Users",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
-
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
@@ -79,6 +53,75 @@ namespace Online_Marketplace__E_commerce_.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    UserId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Phonenumber = table.Column<int>(type: "int", nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    isActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.UserId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Orders",
+                columns: table => new
+                {
+                    orderId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    userId = table.Column<int>(type: "int", nullable: false),
+                    couponId = table.Column<int>(type: "int", nullable: true),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    orderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    totalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Orders", x => x.orderId);
+                    table.ForeignKey(
+                        name: "FK_Orders_Coupons_couponId",
+                        column: x => x.couponId,
+                        principalTable: "Coupons",
+                        principalColumn: "couponId");
+                    table.ForeignKey(
+                        name: "FK_Orders_Users_userId",
+                        column: x => x.userId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VendorProfiles",
+                columns: table => new
+                {
+                    VendorProfileId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StoreName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedaAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    isVerified = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VendorProfiles", x => x.VendorProfileId);
+                    table.ForeignKey(
+                        name: "FK_VendorProfiles_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Products",
                 columns: table => new
                 {
@@ -111,34 +154,6 @@ namespace Online_Marketplace__E_commerce_.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Orders",
-                columns: table => new
-                {
-                    orderId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    userId = table.Column<int>(type: "int", nullable: false),
-                    couponId = table.Column<int>(type: "int", nullable: true),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    orderDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    totalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Orders", x => x.orderId);
-                    table.ForeignKey(
-                        name: "FK_Orders_Coupons_couponId",
-                        column: x => x.couponId,
-                        principalTable: "Coupons",
-                        principalColumn: "couponId");
-                    table.ForeignKey(
-                        name: "FK_Orders_Users_userId",
-                        column: x => x.userId,
-                        principalTable: "Users",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "OrderItems",
                 columns: table => new
                 {
@@ -163,14 +178,8 @@ namespace Online_Marketplace__E_commerce_.Migrations
                         column: x => x.productId,
                         principalTable: "Products",
                         principalColumn: "productId",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VendorProfiles_UserId",
-                table: "VendorProfiles",
-                column: "UserId",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_OrderItems_orderId",
@@ -201,6 +210,12 @@ namespace Online_Marketplace__E_commerce_.Migrations
                 name: "IX_Products_vendorProfileId",
                 table: "Products",
                 column: "vendorProfileId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_VendorProfiles_UserId",
+                table: "VendorProfiles",
+                column: "UserId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -224,30 +239,11 @@ namespace Online_Marketplace__E_commerce_.Migrations
             migrationBuilder.DropTable(
                 name: "Categories");
 
-            migrationBuilder.DropIndex(
-                name: "IX_VendorProfiles_UserId",
-                table: "VendorProfiles");
+            migrationBuilder.DropTable(
+                name: "VendorProfiles");
 
-            migrationBuilder.DropColumn(
-                name: "isVerified",
-                table: "VendorProfiles");
-
-            migrationBuilder.DropColumn(
-                name: "isActive",
-                table: "Users");
-
-            migrationBuilder.AlterColumn<int>(
-                name: "CreatedaAt",
-                table: "VendorProfiles",
-                type: "int",
-                nullable: false,
-                oldClrType: typeof(DateTime),
-                oldType: "datetime2");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VendorProfiles_UserId",
-                table: "VendorProfiles",
-                column: "UserId");
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }

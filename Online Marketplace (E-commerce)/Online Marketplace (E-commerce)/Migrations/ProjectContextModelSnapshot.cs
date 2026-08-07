@@ -278,7 +278,7 @@ namespace Online_Marketplace__E_commerce_.Migrations
                     b.HasOne("Online_Marketplace__E_commerce_.Models.Product", "product")
                         .WithMany()
                         .HasForeignKey("productId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("order");

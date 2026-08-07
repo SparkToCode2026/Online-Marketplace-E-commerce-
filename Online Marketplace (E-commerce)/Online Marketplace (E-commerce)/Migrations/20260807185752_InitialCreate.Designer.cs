@@ -12,8 +12,8 @@ using Online_Marketplace__E_commerce_;
 namespace Online_Marketplace__E_commerce_.Migrations
 {
     [DbContext(typeof(ProjectContext))]
-    [Migration("20260807094410_AddCategoryProductOrderItemReview")]
-    partial class AddCategoryProductOrderItemReview
+    [Migration("20260807185752_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -281,7 +281,7 @@ namespace Online_Marketplace__E_commerce_.Migrations
                     b.HasOne("Online_Marketplace__E_commerce_.Models.Product", "product")
                         .WithMany()
                         .HasForeignKey("productId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("order");

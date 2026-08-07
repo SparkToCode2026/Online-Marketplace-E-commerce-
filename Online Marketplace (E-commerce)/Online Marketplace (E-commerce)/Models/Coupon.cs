@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Online_Marketplace__E_commerce_.Models
@@ -17,7 +16,6 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public DateTime expiryDate { get; set; }
 
-        [InverseProperty("coupon")]
         [JsonIgnore]
         public List<Order> orders { get; set; }
     }

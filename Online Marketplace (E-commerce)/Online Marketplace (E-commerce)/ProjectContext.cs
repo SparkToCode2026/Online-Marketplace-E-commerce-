@@ -20,6 +20,60 @@ namespace Online_Marketplace__E_commerce_
         public ProjectContext(DbContextOptions<ProjectContext> options) : base(options)
         {
         }
+
+        // All relationship mapping (FK targets, inverse navigations, delete
+        // behavior) lives here instead of being scattered across the model
+        // classes as [ForeignKey]/[InverseProperty] attributes.
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // One VendorProfile per User.
+            modelBuilder.Entity<VendorProfile>()
+                .HasOne(v => v.Users)
+                .WithOne(u => u.vendorProfile)
+                .HasForeignKey<VendorProfile>(v => v.UserId);
+
+            // An order belongs to one user. No inverse collection on User.
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.user)
+                .WithMany()
+                .HasForeignKey(o => o.userId);
+
+            // A coupon is optional on an order, and one coupon can be reused
+            // across many orders.
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.coupon)
+                .WithMany(c => c.orders)
+                .HasForeignKey(o => o.couponId);
+
+            // An order can have many line items.
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.order)
+                .WithMany(o => o.orderItems)
+                .HasForeignKey(oi => oi.orderId);
+
+            // Restrict instead of cascade: deleting a product must never
+            // silently wipe historical order records, and this also avoids
+            // SQL Server rejecting the schema for multiple cascade paths
+            // (User -> Order -> OrderItem and User -> VendorProfile ->
+            // Product -> OrderItem would otherwise both reach OrderItems).
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.product)
+                .WithMany()
+                .HasForeignKey(oi => oi.productId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // A category can hold many products.
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.category)
+                .WithMany(c => c.products)
+                .HasForeignKey(p => p.categoryId);
+
+            // A vendor can list many products.
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.vendorProfile)
+                .WithMany(v => v.Products)
+                .HasForeignKey(p => p.vendorProfileId);
+        }
     }
 
 }
