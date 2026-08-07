@@ -23,5 +23,8 @@ namespace Online_Marketplace__E_commerce_.Models
 
         [JsonIgnore]
         public VendorProfile vendorProfile { get; set; }
+
+        [JsonIgnore]
+        public Cart cart { get; set; }
     }
 }

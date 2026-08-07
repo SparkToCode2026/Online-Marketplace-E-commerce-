@@ -15,6 +15,8 @@ namespace Online_Marketplace__E_commerce_
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
 
         //constructor
         public ProjectContext(DbContextOptions<ProjectContext> options) : base(options)
@@ -73,6 +75,28 @@ namespace Online_Marketplace__E_commerce_
                 .HasOne(p => p.vendorProfile)
                 .WithMany(v => v.Products)
                 .HasForeignKey(p => p.vendorProfileId);
+
+            // One Cart per User.
+            modelBuilder.Entity<Cart>()
+                .HasOne(c => c.user)
+                .WithOne(u => u.cart)
+                .HasForeignKey<Cart>(c => c.userId);
+
+            // A cart can hold many line items.
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.cart)
+                .WithMany(c => c.cartItems)
+                .HasForeignKey(ci => ci.cartId);
+
+            // Same reasoning as OrderItem -> Product: restrict avoids the
+            // multiple-cascade-paths conflict via User -> VendorProfile ->
+            // Product, and a product shouldn't vanish out from under an
+            // active cart just because it got deleted elsewhere.
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.product)
+                .WithMany()
+                .HasForeignKey(ci => ci.productId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 
