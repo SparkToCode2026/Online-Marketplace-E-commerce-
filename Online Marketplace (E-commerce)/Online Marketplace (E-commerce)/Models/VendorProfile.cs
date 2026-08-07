@@ -24,5 +24,9 @@ namespace Online_Marketplace__E_commerce_.Models
         // Not in the original ERD. Added so Case 11 has something concrete
         // for an admin to flip when approving a new storefront.
         public bool isVerified { get; set; }
+
+        [InverseProperty("vendorProfile")]
+        [JsonIgnore]
+        public List<Product> Products { get; set; }
     }
 }
