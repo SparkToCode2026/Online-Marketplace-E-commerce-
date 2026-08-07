@@ -17,6 +17,8 @@ namespace Online_Marketplace__E_commerce_
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Shipping> Shippings { get; set; }
 
         //constructor
         public ProjectContext(DbContextOptions<ProjectContext> options) : base(options)
@@ -97,6 +99,18 @@ namespace Online_Marketplace__E_commerce_
                 .WithMany()
                 .HasForeignKey(ci => ci.productId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // One Payment per Order.
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.order)
+                .WithOne(o => o.payment)
+                .HasForeignKey<Payment>(p => p.orderId);
+
+            // One Shipping record per Order.
+            modelBuilder.Entity<Shipping>()
+                .HasOne(s => s.order)
+                .WithOne(o => o.shipping)
+                .HasForeignKey<Shipping>(s => s.orderId);
         }
     }
 

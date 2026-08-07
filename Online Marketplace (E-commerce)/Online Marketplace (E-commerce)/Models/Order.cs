@@ -26,5 +26,11 @@ namespace Online_Marketplace__E_commerce_.Models
 
         [JsonIgnore]
         public List<OrderItem> orderItems { get; set; }
+
+        [JsonIgnore]
+        public Payment payment { get; set; }
+
+        [JsonIgnore]
+        public Shipping shipping { get; set; }
     }
 }
