@@ -21,6 +21,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult Checkout(int userId, string? couponCode)
         {
             var user = _context.Users.Find(userId);
+
             if (user == null)
                 return NotFound("User not found");
 
@@ -33,6 +34,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 return BadRequest("Cart is empty");
 
             Coupon? coupon = null;
+
             if (!string.IsNullOrEmpty(couponCode))
             {
                 coupon = _context.Coupons.FirstOrDefault(c => c.code == couponCode);
@@ -43,7 +45,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
             }
 
             var orderItems = new List<OrderItem>();
+
             decimal subtotal = 0;
+
             foreach (var item in cartItems)
             {
                 subtotal += item.product.price * item.quantity;
@@ -77,6 +81,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult UpdateStatus(int id, string status)
         {
             var order = _context.Orders.Find(id);
+
             if (order == null)
                 return NotFound("Order not found");
 
@@ -97,14 +102,19 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 return NotFound("Order not found");
 
             var coupon = _context.Coupons.FirstOrDefault(c => c.code == couponCode);
+
             if (coupon == null)
                 return NotFound("Coupon not found");
+
             if (coupon.expiryDate < DateTime.Now)
                 return BadRequest("Coupon has expired");
 
             decimal subtotal = order.orderItems.Sum(oi => oi.unitPrice * oi.quantity);
+
             order.couponId = coupon.couponId;
+
             order.totalAmount = subtotal * (1 - coupon.discountPercent / 100);
+
             _context.SaveChanges();
             return Ok(order);
         }
@@ -141,13 +151,16 @@ namespace Online_Marketplace__E_commerce_.Controllers
         [HttpGet("getById")]
         public IActionResult GetOrderById(int id)
         {
+
             var order = _context.Orders
                 .Include(o => o.orderItems)
                 .Include(o => o.payment)
                 .Include(o => o.shipping)
                 .FirstOrDefault(o => o.orderId == id);
+
             if (order == null)
                 return NotFound("Order not found");
+
             return Ok(order);
         }
 

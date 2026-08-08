@@ -134,7 +134,10 @@ namespace Online_Marketplace__E_commerce_.Controllers
         {
             var demand = _context.CartItems
                 .GroupBy(ci => ci.productId)
-                .Select(g => new { productId = g.Key, totalQuantity = g.Sum(ci => ci.quantity) })
+                .Select(g => new { 
+                    productId = g.Key, 
+                    totalQuantity = g.Sum(ci => ci.quantity) 
+                })
                 .OrderByDescending(x => x.totalQuantity)
                 .ToList();
             return Ok(demand);
