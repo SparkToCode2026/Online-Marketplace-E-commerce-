@@ -10,7 +10,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
     [Authorize]
     public class PaymentController : ControllerBase
     {
+
         private readonly ProjectContext _context;
+
         public PaymentController(ProjectContext context)
         {
             _context = context;
@@ -21,6 +23,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult AddPayment(Payment payment)
         {
             var order = _context.Orders.Find(payment.orderId);
+
             if (order == null)
                 return NotFound("Order not found");
 
