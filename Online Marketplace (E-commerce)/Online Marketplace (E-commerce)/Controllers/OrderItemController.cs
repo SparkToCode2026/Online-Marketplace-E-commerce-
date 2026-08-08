@@ -14,15 +14,6 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context = context;
         }
 
-        // Recomputes an order's totalAmount from its currently tracked line
-        // items. Must be called on an Order loaded with orderItems included,
-        // so pending Add/Remove changes are reflected via EF Core's
-        // relationship fixup before this reads the in-memory collection.
-        private void RecalculateOrderTotal(Order order)
-        {
-            order.totalAmount = order.orderItems.Sum(oi => oi.unitPrice * oi.quantity);
-        }
-
         // Case 1 — Add a line item to an order that hasn't shipped yet.
         [HttpPost("add")]
         public IActionResult AddOrderItem(OrderItem orderItem)
@@ -157,6 +148,13 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .OrderByDescending(x => x.totalRevenue)
                 .ToList();
             return Ok(revenue);
+        }
+
+        // Computed in memory, not via a fresh query, since a DB query would
+        // miss pending unsaved changes; caller must Include orderItems first.
+        private void RecalculateOrderTotal(Order order)
+        {
+            order.totalAmount = order.orderItems.Sum(oi => oi.unitPrice * oi.quantity);
         }
     }
 }

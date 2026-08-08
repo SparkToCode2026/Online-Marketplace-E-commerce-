@@ -25,9 +25,8 @@ namespace Online_Marketplace__E_commerce_
         {
         }
 
-        // All relationship mapping (FK targets, inverse navigations, delete
-        // behavior) lives here instead of being scattered across the model
-        // classes as [ForeignKey]/[InverseProperty] attributes.
+        // Relationship mapping lives here (Fluent API), not as
+        // [ForeignKey]/[InverseProperty] attributes on the models.
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // One VendorProfile per User.
@@ -55,20 +54,16 @@ namespace Online_Marketplace__E_commerce_
                 .WithMany(o => o.orderItems)
                 .HasForeignKey(oi => oi.orderId);
 
-            // Restrict instead of cascade: deleting a product must never
-            // silently wipe historical order records, and this also avoids
-            // SQL Server rejecting the schema for multiple cascade paths
-            // (User -> Order -> OrderItem and User -> VendorProfile ->
-            // Product -> OrderItem would otherwise both reach OrderItems).
+            // Restrict, not cascade: deleting a product must never erase
+            // order history, and Cascade here hits SQL Server's multi-cascade-path limit.
             modelBuilder.Entity<OrderItem>()
                 .HasOne(oi => oi.product)
                 .WithMany()
                 .HasForeignKey(oi => oi.productId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // A category can hold many products. Restrict: a category with
-            // live products in it shouldn't be deletable out from under them
-            // (products must be reassigned or removed first).
+            // Restrict: a category with live products shouldn't be
+            // deletable until they're reassigned or removed.
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.category)
                 .WithMany(c => c.products)
@@ -93,10 +88,7 @@ namespace Online_Marketplace__E_commerce_
                 .WithMany(c => c.cartItems)
                 .HasForeignKey(ci => ci.cartId);
 
-            // Same reasoning as OrderItem -> Product: restrict avoids the
-            // multiple-cascade-paths conflict via User -> VendorProfile ->
-            // Product, and a product shouldn't vanish out from under an
-            // active cart just because it got deleted elsewhere.
+            // Same reasoning as OrderItem -> Product above.
             modelBuilder.Entity<CartItem>()
                 .HasOne(ci => ci.product)
                 .WithMany()
@@ -121,9 +113,7 @@ namespace Online_Marketplace__E_commerce_
                 .WithMany()
                 .HasForeignKey(r => r.userId);
 
-            // Restrict, same reasoning as OrderItem/CartItem -> Product:
-            // preserves review history and avoids the multiple-cascade-paths
-            // conflict via User -> VendorProfile -> Product.
+            // Same reasoning as OrderItem/CartItem -> Product above.
             modelBuilder.Entity<Review>()
                 .HasOne(r => r.product)
                 .WithMany()

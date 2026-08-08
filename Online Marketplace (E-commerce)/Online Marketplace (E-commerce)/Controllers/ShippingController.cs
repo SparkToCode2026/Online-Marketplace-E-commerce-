@@ -43,10 +43,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(shipping);
         }
 
-        // Case 3 — Change shipping status. Stamps shippedAt/deliveredAt as
-        // the shipment progresses, and completes the parent Order once
-        // delivered. This status is what the future email service watches
-        // to send the shipping-update notification.
+        // Case 3 — Delivery flips the parent order to Completed; the email
+        // service will watch this field for its shipping-update trigger.
         [HttpPatch("updateStatus")]
         public IActionResult UpdateShippingStatus(int id, string status)
         {

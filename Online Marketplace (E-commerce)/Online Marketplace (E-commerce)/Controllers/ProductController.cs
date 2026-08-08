@@ -60,9 +60,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(product);
         }
 
-        // Case 4 — Delete a product. Blocked if it has any order/cart/review
-        // history; deactivate it instead (case 3) if it needs to disappear
-        // from the storefront.
+        // Case 4 — Delete a product. Blocked if it has order/cart/review history; deactivate (case 3) instead.
         [HttpDelete("delete")]
         public IActionResult DeleteProduct(int id)
         {
@@ -71,8 +69,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 return NotFound("Product not found");
 
             bool hasHistory = _context.OrderItems.Any(oi => oi.productId == id)
-                || _context.CartItems.Any(ci => ci.productId == id)
+                || _context.CartItems.Any(ci => ci.productId == id) 
                 || _context.Reviews.Any(r => r.productId == id);
+
             if (hasHistory)
                 return Conflict("Product has related order items, cart items, or reviews. Deactivate it instead.");
 
@@ -116,9 +115,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(products);
         }
 
-        // Case 8 — Aggregate: top 10 best-selling products by total quantity
-        // ordered. Aggregate first, then look up names for just those ids —
-        // simpler and safer than one combined GroupBy+Join+OrderBy query.
+        // Case 8 — Top 10 best sellers by quantity sold.
+        // Looks up names after aggregating, rather than one combined GroupBy+Join query.
         [HttpGet("bestSellers")]
         public IActionResult GetBestSellers()
         {

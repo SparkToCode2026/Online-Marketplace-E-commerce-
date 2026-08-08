@@ -14,9 +14,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context = context;
         }
 
-        // Case 1 — Checkout: turn the user's cart into an order. Prices and
-        // totals are derived server-side from the cart/product data, never
-        // trusted from the caller.
+        // Case 1 — Checkout: builds the order from the user's cart.
+        // Prices/totals are derived server-side, never trusted from the caller.
         [HttpPost("checkout")]
         public IActionResult Checkout(int userId, string? couponCode)
         {

@@ -56,9 +56,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(item);
         }
 
-        // Case 3 — Adjust a cart item's quantity by a relative delta (+/-),
-        // e.g. the +/- buttons on a cart page. Removes the row if it drops
-        // to zero or below.
+        // Case 3 — Adjust quantity by a relative delta (+/- buttons); removes
+        // the item if it drops to zero or below.
         [HttpPatch("adjustQuantity")]
         public IActionResult AdjustQuantity(int id, int delta)
         {
@@ -126,9 +125,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(items);
         }
 
-        // Case 8 — Aggregate: total quantity of each product currently
-        // sitting in any cart. A live demand signal, distinct from actual
-        // completed sales in Product.bestSellers.
+        // Case 8 — Total quantity of each product across all carts: a live
+        // demand signal, distinct from actual sales in Product.bestSellers.
         [HttpGet("demand")]
         public IActionResult GetProductDemand()
         {
