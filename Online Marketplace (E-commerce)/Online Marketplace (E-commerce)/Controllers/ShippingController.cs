@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -11,9 +12,11 @@ namespace Online_Marketplace__E_commerce_.Controllers
     public class ShippingController : ControllerBase
     {
         private readonly ProjectContext _context;
-        public ShippingController(ProjectContext context)
+        private readonly IConfiguration _configuration;
+        public ShippingController(ProjectContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // Case 1 — Create a shipping record for an order (one per order).
@@ -59,14 +62,22 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (status == "Shipped")
                 shipping.shippedAt = DateTime.Now;
 
+            var order = _context.Orders.Include(o => o.user).First(o => o.orderId == shipping.orderId);
+
             if (status == "Delivered")
             {
                 shipping.deliveredAt = DateTime.Now;
-                var order = _context.Orders.Find(shipping.orderId);
                 order.status = "Completed";
             }
 
             _context.SaveChanges();
+
+            EmailService.Send(
+                order.user!.Email,
+                "Shipping Update",
+                $"Your order #{order.orderId} shipping status is now: {status}.",
+                _configuration);
+
             return Ok(shipping);
         }
 

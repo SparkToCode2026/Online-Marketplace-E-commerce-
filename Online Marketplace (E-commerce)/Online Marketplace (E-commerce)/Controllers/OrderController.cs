@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -11,9 +12,11 @@ namespace Online_Marketplace__E_commerce_.Controllers
     public class OrderController : ControllerBase
     {
         private readonly ProjectContext _context;
-        public OrderController(ProjectContext context)
+        private readonly IConfiguration _configuration;
+        public OrderController(ProjectContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // Case 1 — Checkout: builds the order from the user's cart.
@@ -73,6 +76,12 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context.Orders.Add(order);
             _context.CartItems.RemoveRange(cartItems);
             _context.SaveChanges();
+
+            EmailService.Send(
+                user.Email,
+                "Order Confirmation",
+                $"Thanks for your order! Order #{order.orderId} totaling {order.totalAmount:C} has been placed.",
+                _configuration);
 
             return Ok(order.orderId);
         }
