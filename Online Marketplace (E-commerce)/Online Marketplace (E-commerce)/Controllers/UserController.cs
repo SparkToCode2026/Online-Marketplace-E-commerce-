@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -11,9 +12,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
         {
             _context = context;
         }
-        // Case 01 — Register a User
-        [HttpPost("add")]
-        public  IActionResult AddUser(UserRegister register)
+        // Case 01 — Register a new user.
+        [HttpPost("register")]
+        public IActionResult Register(UserRegister register)
         {
             if (_context.Users.Any(u => u.Email == register.email))
                 return BadRequest("Email already registered");
@@ -21,14 +22,14 @@ namespace Online_Marketplace__E_commerce_.Controllers
             {
                 Username = register.userName,
                 Email = register.email,
-                PasswordHash = register.password,
+                PasswordHash = PasswordHasher.Hash(register.password),
                 Phonenumber = 0, // Assuming phone number is optional
                 Role = register.role,
                 isActive = true
             };
             _context.Users.Add(user);
             _context.SaveChanges();
-            
+
             //(self-study): send activation email
             return Ok(user.UserId);
         }
