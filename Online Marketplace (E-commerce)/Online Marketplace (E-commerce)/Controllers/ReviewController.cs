@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Models;
@@ -6,6 +7,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ReviewController : ControllerBase
     {
         private readonly ProjectContext _context;
@@ -31,8 +33,10 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 return BadRequest("You can only review products you have purchased");
 
             review.createdAt = DateTime.Now;
+
             _context.Reviews.Add(review);
             _context.SaveChanges();
+
             return Ok(review.reviewId);
         }
 
@@ -46,7 +50,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             review.rating = updatedReview.rating;
             review.comment = updatedReview.comment;
+
             _context.SaveChanges();
+
             return Ok(review);
         }
 
@@ -81,6 +87,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 5 — Get all reviews, including the reviewer and the product.
+        [AllowAnonymous]
         [HttpGet("all")]
         public IActionResult GetAllReviews()
         {
@@ -92,6 +99,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 6 — Get a single review by id.
+        [AllowAnonymous]
         [HttpGet("getById")]
         public IActionResult GetReviewById(int id)
         {
@@ -105,6 +113,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 7 — Filter reviews by the category of the product reviewed.
+        [AllowAnonymous]
         [HttpGet("byCategory")]
         public IActionResult GetReviewsByCategory(int categoryId)
         {
@@ -116,6 +125,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 8 — Aggregate: average rating for a product.
+        [AllowAnonymous]
         [HttpGet("averageRating")]
         public IActionResult GetAverageRating(int productId)
         {

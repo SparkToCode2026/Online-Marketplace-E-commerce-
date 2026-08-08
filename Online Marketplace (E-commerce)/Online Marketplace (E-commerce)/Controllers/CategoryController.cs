@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Models;
@@ -6,6 +7,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class CategoryController : ControllerBase
     {
         private readonly ProjectContext _context;
@@ -74,6 +76,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 5 — Get all categories, including their products.
+        [AllowAnonymous]
         [HttpGet("all")]
         public IActionResult GetAllCategories()
         {
@@ -82,6 +85,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 6 — Get a single category by id.
+        [AllowAnonymous]
         [HttpGet("getById")]
         public IActionResult GetCategoryById(int id)
         {
@@ -94,6 +98,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 7 — Filter categories by name.
+        [AllowAnonymous]
         [HttpGet("search")]
         public IActionResult SearchCategories(string name)
         {
@@ -104,6 +109,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 8 — Sort categories by how many products they hold.
+        [AllowAnonymous]
         [HttpGet("byProductCount")]
         public IActionResult GetCategoriesByProductCount()
         {

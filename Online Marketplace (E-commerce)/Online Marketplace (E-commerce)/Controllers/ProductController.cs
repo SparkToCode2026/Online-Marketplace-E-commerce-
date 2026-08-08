@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Models;
@@ -6,6 +7,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ProductController : ControllerBase
     {
         private readonly ProjectContext _context;
@@ -81,6 +83,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 5 — Get all products, including their category and vendor.
+        [AllowAnonymous]
         [HttpGet("all")]
         public IActionResult GetAllProducts()
         {
@@ -92,6 +95,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 6 — Get a single product by id.
+        [AllowAnonymous]
         [HttpGet("getById")]
         public IActionResult GetProductById(int id)
         {
@@ -105,6 +109,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 7 — Filter active products by category.
+        [AllowAnonymous]
         [HttpGet("byCategory")]
         public IActionResult GetProductsByCategory(int categoryId)
         {
@@ -117,6 +122,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 8 — Top 10 best sellers by quantity sold.
         // Looks up names after aggregating, rather than one combined GroupBy+Join query.
+        [AllowAnonymous]
         [HttpGet("bestSellers")]
         public IActionResult GetBestSellers()
         {

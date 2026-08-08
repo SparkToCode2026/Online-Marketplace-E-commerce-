@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Models;
@@ -6,6 +7,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class CartItemController : ControllerBase
     {
         private readonly ProjectContext _context;

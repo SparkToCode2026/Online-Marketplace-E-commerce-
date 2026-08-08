@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Models;
 using System.Linq;
 using System;
 namespace Online_Marketplace__E_commerce_.Controllers
 {
-   
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
     public class VendorProfileController : ControllerBase
     {
         private readonly ProjectContext _context;
@@ -15,7 +18,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
 
-        //case 09 — Register a Vendor Profile
+        //case 1 — Register a Vendor Profile
         // POST /vendorprofile/add
         [HttpPost("add")]
         public IActionResult AddVendorProfile(VendorProfile profile)
@@ -34,7 +37,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profile.VendorProfileId);
         }
 
-        //case 10 — Update a Vendor Profile
+        //case 2 — Update a Vendor Profile
         //PUT /vendorprofile/update
 
         [HttpPut("update")]
@@ -48,20 +51,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context.SaveChanges();
             return Ok(profile);
         }
-        //case 11 — Verify a Vendor Profile
+        //case 3 — Verify a Vendor Profile
         [HttpPatch("verify")]
-        public IActionResult DeleteVendorProfile(int id)
-        {
-            var profile = _context.VendorProfiles.Find(id);
-            if (profile == null)
-                return NotFound("Vendor profile not found");
-            _context.VendorProfiles.Remove(profile);
-            _context.SaveChanges();
-            return Ok("Vendor profile deleted successfully");
-        }
-
-        //case 12 — Delete a Vendor Profile
-        [HttpDelete("delete")]
         public IActionResult VerifyVendorProfile(int id)
         {
             var profile = _context.VendorProfiles.Find(id);
@@ -72,7 +63,19 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok("Vendor profile verified successfully");
         }
 
-        //case 13 — Get all Vendor Profiles
+        //case 4 — Delete a Vendor Profile
+        [HttpDelete("delete")]
+        public IActionResult DeleteVendorProfile(int id)
+        {
+            var profile = _context.VendorProfiles.Find(id);
+            if (profile == null)
+                return NotFound("Vendor profile not found");
+            _context.VendorProfiles.Remove(profile);
+            _context.SaveChanges();
+            return Ok("Vendor profile deleted successfully");
+        }
+
+        //case 5 — Get all Vendor Profiles
         [HttpGet("all")]
         public IActionResult GetAllVendorProfiles()
         {
@@ -80,7 +83,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profiles);
         }
 
-        // case 14 — Get a Vendor Profile by ID
+        // case 6 — Get a Vendor Profile by ID
         [HttpGet("Getbyid")]
         public IActionResult GetVendorProfileById(int id)
         {
@@ -90,7 +93,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profile);
         }
 
-        //case 15 -Get Newest Vendor Profiles
+        //case 7 -Get Newest Vendor Profiles
         [HttpGet("newest")]
         public IActionResult GetNewestVendorProfiles()
         {

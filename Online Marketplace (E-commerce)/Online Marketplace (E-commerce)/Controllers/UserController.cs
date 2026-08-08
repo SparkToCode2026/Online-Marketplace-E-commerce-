@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
 {
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly ProjectContext _context;
@@ -16,8 +20,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Login — verifies credentials and issues a JWT.
+        [AllowAnonymous]
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public IActionResult Login(LoginRequest request)
         {
             var user = _context.Users.FirstOrDefault(u => u.Email == request.email);
             if (user == null || !PasswordHasher.Verify(request.password, user.PasswordHash))
@@ -31,8 +36,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 01 — Register a new user.
+        [AllowAnonymous]
         [HttpPost("register")]
-        public IActionResult Register([FromBody] UserRegister register)
+        public IActionResult Register(UserRegister register)
         {
             if (_context.Users.Any(u => u.Email == register.email))
                 return BadRequest("Email already registered");
@@ -64,6 +70,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(user);
         }
         // case 3 — Change a User's Role
+        [Authorize(Roles = "Admin")]
         [HttpPut("changeRole")]
         public IActionResult ChangeUserRole(int id, string newRole)
         {
@@ -76,7 +83,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // case 4 — Deactivate a User
-        // DELETE /user/remove 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("remove")]
         public IActionResult DeactivateUser(int id)
         {
@@ -89,7 +96,10 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok("User deactivated successfully");
         }
 
-        // case 5 — Reactivate a User
+        // case 5 — Reactivate a User. Had no route at all before this, so
+        // it was unreachable regardless of authorization.
+        [Authorize(Roles = "Admin")]
+        [HttpPut("reactivate")]
         public IActionResult ReactivateUser(int id)
         {
             var user = _context.Users.Find(id);
@@ -101,9 +111,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // case 6 — Get all users
-        // GET /user/getAll
+        [Authorize(Roles = "Admin")]
         [HttpGet("getAll")]
-
         public IActionResult GetAllUsers()
         {
             var users = _context.Users.ToList();
@@ -121,6 +130,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // case 8 — Get users by role
+        [Authorize(Roles = "Admin")]
         [HttpGet("getByRole")]
         public IActionResult GetUsersByRole(string role)
         {
