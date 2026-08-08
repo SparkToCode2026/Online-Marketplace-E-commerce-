@@ -11,11 +11,11 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public int userId { get; set; }
         [JsonIgnore]
-        public User user { get; set; }
+        public User? user { get; set; }
 
         public int productId { get; set; }
         [JsonIgnore]
-        public Product product { get; set; }
+        public Product? product { get; set; }
 
         [Required]
         [Range(1, 5)]

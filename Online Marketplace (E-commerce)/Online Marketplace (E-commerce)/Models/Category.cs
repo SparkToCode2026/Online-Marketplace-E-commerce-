@@ -15,6 +15,6 @@ namespace Online_Marketplace__E_commerce_.Models
         public string? description { get; set; }
 
         [JsonIgnore]
-        public List<Product> products { get; set; }
+        public List<Product>? products { get; set; }
     }
 }

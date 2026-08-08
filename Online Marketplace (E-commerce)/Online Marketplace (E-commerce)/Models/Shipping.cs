@@ -11,13 +11,15 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public int orderId { get; set; }
         [JsonIgnore]
-        public Order order { get; set; }
+        public Order? order { get; set; }
 
         [Required]
         public string address { get; set; }
 
-        [Required]
-        public string status { get; set; }
+        // Not required from client input: AddShipping always sets this to
+        // "Preparing" itself, and UpdateShippingStatus takes it as a
+        // separate parameter rather than through this model.
+        public string? status { get; set; }
 
         public DateTime? shippedAt { get; set; }
 

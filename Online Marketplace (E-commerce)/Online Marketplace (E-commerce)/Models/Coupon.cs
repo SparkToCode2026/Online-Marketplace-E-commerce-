@@ -17,6 +17,6 @@ namespace Online_Marketplace__E_commerce_.Models
         public DateTime expiryDate { get; set; }
 
         [JsonIgnore]
-        public List<Order> orders { get; set; }
+        public List<Order>? orders { get; set; }
     }
 }

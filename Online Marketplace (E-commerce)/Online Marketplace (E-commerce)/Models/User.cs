@@ -22,9 +22,9 @@ namespace Online_Marketplace__E_commerce_.Models
          public bool isActive { get; set; }
 
         [JsonIgnore]
-        public VendorProfile vendorProfile { get; set; }
+        public VendorProfile? vendorProfile { get; set; }
 
         [JsonIgnore]
-        public Cart cart { get; set; }
+        public Cart? cart { get; set; }
     }
 }

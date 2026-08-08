@@ -11,11 +11,11 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public int userId { get; set; }
         [JsonIgnore]
-        public User user { get; set; }
+        public User? user { get; set; }
 
         public DateTime createdAt { get; set; }
 
         [JsonIgnore]
-        public List<CartItem> cartItems { get; set; }
+        public List<CartItem>? cartItems { get; set; }
     }
 }

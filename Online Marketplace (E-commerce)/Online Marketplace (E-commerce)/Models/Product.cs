@@ -25,10 +25,10 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public int categoryId { get; set; }
         [JsonIgnore]
-        public Category category { get; set; }
+        public Category? category { get; set; }
 
         public int vendorProfileId { get; set; }
         [JsonIgnore]
-        public VendorProfile vendorProfile { get; set; }
+        public VendorProfile? vendorProfile { get; set; }
     }
 }

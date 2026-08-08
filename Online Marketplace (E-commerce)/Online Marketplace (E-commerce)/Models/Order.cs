@@ -11,11 +11,11 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public int userId { get; set; }
         [JsonIgnore]
-        public User user { get; set; }
+        public User? user { get; set; }
 
         public int? couponId { get; set; }
         [JsonIgnore]
-        public Coupon coupon { get; set; }
+        public Coupon? coupon { get; set; }
 
         [Required]
         public string status { get; set; }
@@ -25,12 +25,12 @@ namespace Online_Marketplace__E_commerce_.Models
         public decimal totalAmount { get; set; }
 
         [JsonIgnore]
-        public List<OrderItem> orderItems { get; set; }
+        public List<OrderItem>? orderItems { get; set; }
 
         [JsonIgnore]
-        public Payment payment { get; set; }
+        public Payment? payment { get; set; }
 
         [JsonIgnore]
-        public Shipping shipping { get; set; }
+        public Shipping? shipping { get; set; }
     }
 }

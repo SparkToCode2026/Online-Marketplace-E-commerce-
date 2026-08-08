@@ -11,7 +11,7 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public int orderId { get; set; }
         [JsonIgnore]
-        public Order order { get; set; }
+        public Order? order { get; set; }
 
         [Required]
         public decimal amount { get; set; }
