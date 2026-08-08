@@ -17,13 +17,13 @@ namespace Online_Marketplace__E_commerce_.Models
         public int UserId { get; set; }
 
         [JsonIgnore]
-        public User Users { get; set; } // Navigation property to the associated User
+        public User? Users { get; set; } // Navigation property to the associated User
 
         // Not in the original ERD. Added so Case 11 has something concrete
         // for an admin to flip when approving a new storefront.
         public bool isVerified { get; set; }
 
         [JsonIgnore]
-        public List<Product> Products { get; set; }
+        public List<Product>? Products { get; set; }
     }
 }
