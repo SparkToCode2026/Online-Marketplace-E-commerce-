@@ -59,13 +59,16 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
         // case 02 — Update a User
         [HttpPut("update")]
-        public IActionResult UpdateUser(int id, User updatedUser)
+        public IActionResult UpdateUser(int id, UpdateUserRequest updatedUser)
         {
             var user = _context.Users.Find(id);
+
             if (user == null)
                 return NotFound("User not found");
-            user.Username = updatedUser.Username;
-            user.Phonenumber = updatedUser.Phonenumber;
+
+            user.Username = updatedUser.username;
+            user.Phonenumber = updatedUser.phonenumber;
+
             _context.SaveChanges();
             return Ok(user);
         }
@@ -75,10 +78,13 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult ChangeUserRole(int id, string newRole)
         {
             var user = _context.Users.Find(id);
+
             if (user == null)
                 return NotFound("User not found");
+
             user.Role = newRole;
             _context.SaveChanges();
+
             return Ok(user);
         }
 
@@ -88,8 +94,10 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult DeactivateUser(int id)
         {
             var user = _context.Users.Find(id);
+
             if (user == null)
                 return NotFound("User not found");
+
             user.isActive = false;
             _context.SaveChanges();
           
@@ -103,19 +111,23 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult ReactivateUser(int id)
         {
             var user = _context.Users.Find(id);
+
             if (user == null)
                 return NotFound("User not found");
+
             user.isActive = true;
+
             _context.SaveChanges();
+
             return Ok("User reactivated successfully");
         }
 
-        // case 6 — Get all users
+        // case 6 — Get all users, including their vendor profile if any.
         [Authorize(Roles = "Admin")]
         [HttpGet("getAll")]
         public IActionResult GetAllUsers()
         {
-            var users = _context.Users.ToList();
+            var users = _context.Users.Include(u => u.vendorProfile).ToList();
             return Ok(users);
         }
 
@@ -136,6 +148,18 @@ namespace Online_Marketplace__E_commerce_.Controllers
         {
             var users = _context.Users.Where(u => u.Role == role).ToList();
             return Ok(users);
+        }
+
+        // Aggregate: number of users per role.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("countByRole")]
+        public IActionResult GetUserCountByRole()
+        {
+            var counts = _context.Users
+                .GroupBy(u => u.Role)
+                .Select(g => new { role = g.Key, count = g.Count() })
+                .ToList();
+            return Ok(counts);
         }
 
 

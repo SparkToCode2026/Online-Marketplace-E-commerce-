@@ -24,14 +24,19 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult AddVendorProfile(VendorProfile profile)
         {
             var user = _context.Users.FirstOrDefault(u => u.UserId == profile.UserId);
+
             if (user == null)
                 return NotFound("User not found");
+
             if (user.Role != "Vendor")
                 return BadRequest("User role must be Vendor");
+
             if (_context.VendorProfiles.Any(v => v.UserId == profile.UserId))
                 return Conflict("Vendor already has a profile");
+
             profile.CreatedaAt = DateTime.Now;
             profile.isVerified = false;
+
             _context.VendorProfiles.Add(profile);
             _context.SaveChanges();
             return Ok(profile.VendorProfileId);
@@ -93,7 +98,18 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profile);
         }
 
-        //case 7 -Get Newest Vendor Profiles
+        // case 7 — Filter vendor profiles by verification status.
+        [HttpGet("byVerification")]
+        public IActionResult GetVendorProfilesByVerification(bool isVerified)
+        {
+            var profiles = _context.VendorProfiles
+                .Where(v => v.isVerified == isVerified)
+                .Include(v => v.Users)
+                .ToList();
+            return Ok(profiles);
+        }
+
+        //case 8 -Get Newest Vendor Profiles
         [HttpGet("newest")]
         public IActionResult GetNewestVendorProfiles()
         {
