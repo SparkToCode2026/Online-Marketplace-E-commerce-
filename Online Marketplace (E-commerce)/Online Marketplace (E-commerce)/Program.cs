@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace Online_Marketplace__E_commerce_
 {
@@ -15,7 +16,36 @@ namespace Online_Marketplace__E_commerce_
             // Add services to the container.
 
             builder.Services.AddControllers();
-            builder.Services.AddSwaggerGen();
+
+            // Adds the "Authorize" button in Swagger UI so a JWT can be
+            // pasted in once and sent with every request from the UI.
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Paste the token from /api/User/login (no \"Bearer \" prefix needed)."
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
 
             // DI container for ProjectContext
             builder.Services.AddDbContext<ProjectContext>(options =>
@@ -48,8 +78,6 @@ namespace Online_Marketplace__E_commerce_
 
             app.UseHttpsRedirection();
 
-            // Must run before UseAuthorization: authentication figures out
-            // who the caller is, authorization decides what they can do.
             app.UseAuthentication();
             app.UseAuthorization();
 
