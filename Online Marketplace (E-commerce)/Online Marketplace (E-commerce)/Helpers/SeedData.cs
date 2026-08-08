@@ -16,8 +16,8 @@ namespace Online_Marketplace__E_commerce_.Helpers
 
             var pwd = PasswordHasher.Hash(SeedPassword);
 
-            var khaled = new User { Username = "خالد", Email = "khaled@marketplace.com", PasswordHash = pwd, Phonenumber = 500000001, Role = "Admin", isActive = true };
-            var mutaz = new User { Username = "معتز", Email = "mutaz@marketplace.com", PasswordHash = pwd, Phonenumber = 500000002, Role = "Admin", isActive = true };
+            var khaled = new User { Username = "Khalid", Email = "khaled@marketplace.com", PasswordHash = pwd, Phonenumber = 500000001, Role = "Admin", isActive = true };
+            var mutaz = new User { Username = "Mutaz", Email = "mutaz@marketplace.com", PasswordHash = pwd, Phonenumber = 500000002, Role = "Admin", isActive = true };
             var hanin = new User { Username = "Hanin", Email = "hanin@marketplace.com", PasswordHash = pwd, Phonenumber = 500000003, Role = "Vendor", isActive = true };
             var nawal = new User { Username = "Nawal", Email = "nawal@marketplace.com", PasswordHash = pwd, Phonenumber = 500000004, Role = "Vendor", isActive = true };
             var ali = new User { Username = "Ali", Email = "ali@marketplace.com", PasswordHash = pwd, Phonenumber = 500000005, Role = "Vendor", isActive = true };

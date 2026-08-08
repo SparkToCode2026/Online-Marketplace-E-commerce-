@@ -29,6 +29,16 @@ namespace Online_Marketplace__E_commerce_
         // [ForeignKey]/[InverseProperty] attributes on the models.
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Explicit precision for every money-ish decimal (3 decimal
+            // places, e.g. 19.980) instead of relying on the provider
+            // default -- silences the "no store type specified" warning
+            // that's been showing up on every migration.
+            modelBuilder.Entity<Product>().Property(p => p.price).HasPrecision(18, 3);
+            modelBuilder.Entity<OrderItem>().Property(oi => oi.unitPrice).HasPrecision(18, 3);
+            modelBuilder.Entity<Order>().Property(o => o.totalAmount).HasPrecision(18, 3);
+            modelBuilder.Entity<Payment>().Property(p => p.amount).HasPrecision(18, 3);
+            modelBuilder.Entity<Coupon>().Property(c => c.discountPercent).HasPrecision(18, 3);
+
             // One VendorProfile per User.
             modelBuilder.Entity<VendorProfile>()
                 .HasOne(v => v.Users)
