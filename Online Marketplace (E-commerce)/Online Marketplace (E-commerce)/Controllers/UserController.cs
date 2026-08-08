@@ -8,13 +8,31 @@ namespace Online_Marketplace__E_commerce_.Controllers
     public class UserController : ControllerBase
     {
         private readonly ProjectContext _context;
-        public UserController(ProjectContext context)
+        private readonly IConfiguration _configuration;
+        public UserController(ProjectContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
+
+        // Login — verifies credentials and issues a JWT.
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest request)
+        {
+            var user = _context.Users.FirstOrDefault(u => u.Email == request.email);
+            if (user == null || !PasswordHasher.Verify(request.password, user.PasswordHash))
+                return Unauthorized("Invalid email or password");
+
+            if (!user.isActive)
+                return Unauthorized("Account is deactivated");
+
+            var token = JwtTokenGenerator.GenerateToken(user, _configuration);
+            return Ok(new { token, userId = user.UserId, role = user.Role });
+        }
+
         // Case 01 — Register a new user.
         [HttpPost("register")]
-        public IActionResult Register(UserRegister register)
+        public IActionResult Register([FromBody] UserRegister register)
         {
             if (_context.Users.Any(u => u.Email == register.email))
                 return BadRequest("Email already registered");
