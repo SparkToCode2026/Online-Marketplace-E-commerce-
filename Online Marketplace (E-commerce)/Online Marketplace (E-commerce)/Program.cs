@@ -69,6 +69,13 @@ namespace Online_Marketplace__E_commerce_
 
             var app = builder.Build();
 
+            // Seeds demo data once (checks for it, does nothing on later runs).
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<ProjectContext>();
+                Helpers.SeedData.Initialize(context);
+            }
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
