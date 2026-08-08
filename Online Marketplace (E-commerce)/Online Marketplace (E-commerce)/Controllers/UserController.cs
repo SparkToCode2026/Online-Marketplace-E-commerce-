@@ -25,6 +25,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult Login(LoginRequest request)
         {
             var user = _context.Users.FirstOrDefault(u => u.Email == request.email);
+
             if (user == null || !PasswordHasher.Verify(request.password, user.PasswordHash))
                 return Unauthorized("Invalid email or password");
 
@@ -32,6 +33,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 return Unauthorized("Account is deactivated");
 
             var token = JwtTokenGenerator.GenerateToken(user, _configuration);
+
             return Ok(new { token, userId = user.UserId, role = user.Role });
         }
 
@@ -42,6 +44,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         {
             if (_context.Users.Any(u => u.Email == register.email))
                 return BadRequest("Email already registered");
+
             User user = new User
             {
                 Username = register.userName,
@@ -51,6 +54,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 Role = register.role,
                 isActive = true
             };
+
             _context.Users.Add(user);
             _context.SaveChanges();
 
@@ -59,15 +63,15 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
         // case 02 — Update a User
         [HttpPut("update")]
-        public IActionResult UpdateUser(int id, UpdateUserRequest updatedUser)
+        public IActionResult UpdateUser(int id, User updatedUser)
         {
             var user = _context.Users.Find(id);
 
             if (user == null)
                 return NotFound("User not found");
 
-            user.Username = updatedUser.username;
-            user.Phonenumber = updatedUser.phonenumber;
+            user.Username = updatedUser.Username;
+            user.Phonenumber = updatedUser.Phonenumber;
 
             _context.SaveChanges();
             return Ok(user);
@@ -159,6 +163,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .GroupBy(u => u.Role)
                 .Select(g => new { role = g.Key, count = g.Count() })
                 .ToList();
+
             return Ok(counts);
         }
 
