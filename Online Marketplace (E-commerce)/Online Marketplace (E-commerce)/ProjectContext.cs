@@ -66,11 +66,14 @@ namespace Online_Marketplace__E_commerce_
                 .HasForeignKey(oi => oi.productId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // A category can hold many products.
+            // A category can hold many products. Restrict: a category with
+            // live products in it shouldn't be deletable out from under them
+            // (products must be reassigned or removed first).
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.category)
                 .WithMany(c => c.products)
-                .HasForeignKey(p => p.categoryId);
+                .HasForeignKey(p => p.categoryId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // A vendor can list many products.
             modelBuilder.Entity<Product>()
