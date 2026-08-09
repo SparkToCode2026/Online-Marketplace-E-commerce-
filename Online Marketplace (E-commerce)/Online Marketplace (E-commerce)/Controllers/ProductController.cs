@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -19,16 +20,25 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Create a product.
         [HttpPost("add")]
-        public IActionResult AddProduct(Product product)
+        public IActionResult AddProduct(ProductCreateDto dto)
         {
-            if (!_context.Categories.Any(c => c.categoryId == product.categoryId))
+            if (!_context.Categories.Any(c => c.categoryId == dto.categoryId))
                 return NotFound("Category not found");
 
-            if (!_context.VendorProfiles.Any(v => v.VendorProfileId == product.vendorProfileId))
+            if (!_context.VendorProfiles.Any(v => v.VendorProfileId == dto.vendorProfileId))
                 return NotFound("Vendor profile not found");
 
-            product.createdAt = DateTime.Now;
-            product.isActive = true;
+            var product = new Product
+            {
+                name = dto.name,
+                description = dto.description,
+                price = dto.price,
+                stockQuantity = dto.stockQuantity,
+                categoryId = dto.categoryId,
+                vendorProfileId = dto.vendorProfileId,
+                createdAt = DateTime.Now,
+                isActive = true
+            };
             _context.Products.Add(product);
             _context.SaveChanges();
             return Ok(product.productId);

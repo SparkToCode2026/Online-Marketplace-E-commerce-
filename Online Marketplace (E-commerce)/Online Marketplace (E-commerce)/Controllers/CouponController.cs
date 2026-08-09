@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -19,17 +20,23 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Create a coupon.
         [HttpPost("add")]
-        public IActionResult AddCoupon(Coupon coupon)
+        public IActionResult AddCoupon(CouponCreateDto dto)
         {
-            if (_context.Coupons.Any(c => c.code == coupon.code))
+            if (_context.Coupons.Any(c => c.code == dto.code))
                 return Conflict("A coupon with this code already exists");
 
-            if (coupon.discountPercent <= 0 || coupon.discountPercent > 100)
+            if (dto.discountPercent <= 0 || dto.discountPercent > 100)
                 return BadRequest("discountPercent must be between 0 and 100");
 
-            if (coupon.expiryDate <= DateTime.Now)
+            if (dto.expiryDate <= DateTime.Now)
                 return BadRequest("expiryDate must be in the future");
 
+            var coupon = new Coupon
+            {
+                code = dto.code,
+                discountPercent = dto.discountPercent,
+                expiryDate = dto.expiryDate
+            };
             _context.Coupons.Add(coupon);
             _context.SaveChanges();
             return Ok(coupon.couponId);

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -21,20 +22,27 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Record a payment for an order (one payment per order).
         [HttpPost("add")]
-        public IActionResult AddPayment(Payment payment)
+        public IActionResult AddPayment(PaymentCreateDto dto)
         {
-            var order = _context.Orders.Find(payment.orderId);
+            var order = _context.Orders.Find(dto.orderId);
 
             if (order == null)
                 return NotFound("Order not found");
 
-            if (_context.Payments.Any(p => p.orderId == payment.orderId))
+            if (_context.Payments.Any(p => p.orderId == dto.orderId))
                 return Conflict("This order already has a payment on record");
 
-            if (payment.amount != order.totalAmount)
+            if (dto.amount != order.totalAmount)
                 return BadRequest("amount must match the order's totalAmount");
 
-            payment.paidAt = DateTime.Now;
+            var payment = new Payment
+            {
+                orderId = dto.orderId,
+                amount = dto.amount,
+                method = dto.method,
+                status = dto.status,
+                paidAt = DateTime.Now
+            };
             _context.Payments.Add(payment);
             _context.SaveChanges();
             return Ok(payment.paymentId);

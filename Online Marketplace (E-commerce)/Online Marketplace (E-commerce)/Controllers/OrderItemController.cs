@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -19,21 +20,27 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Add a line item to an order that hasn't shipped yet.
         [HttpPost("add")]
-        public IActionResult AddOrderItem(OrderItem orderItem)
+        public IActionResult AddOrderItem(OrderItemCreateDto dto)
         {
             var order = _context.Orders
                 .Include(o => o.orderItems)
-                .FirstOrDefault(o => o.orderId == orderItem.orderId);
+                .FirstOrDefault(o => o.orderId == dto.orderId);
             if (order == null)
                 return NotFound("Order not found");
             if (order.status != "Pending")
                 return BadRequest("Cannot modify items on an order that is no longer pending");
 
-            var product = _context.Products.Find(orderItem.productId);
+            var product = _context.Products.Find(dto.productId);
             if (product == null)
                 return NotFound("Product not found");
 
-            orderItem.unitPrice = product.price;
+            var orderItem = new OrderItem
+            {
+                orderId = dto.orderId,
+                productId = dto.productId,
+                quantity = dto.quantity,
+                unitPrice = product.price
+            };
             _context.OrderItems.Add(orderItem);
             RecalculateOrderTotal(order);
             _context.SaveChanges();

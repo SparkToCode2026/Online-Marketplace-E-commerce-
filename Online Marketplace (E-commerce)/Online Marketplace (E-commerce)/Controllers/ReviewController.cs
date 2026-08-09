@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -20,21 +21,27 @@ namespace Online_Marketplace__E_commerce_.Controllers
         // Case 1 — Create a review, only for a product the user has
         // actually ordered.
         [HttpPost("add")]
-        public IActionResult AddReview(Review review)
+        public IActionResult AddReview(ReviewCreateDto dto)
         {
-            if (!_context.Users.Any(u => u.UserId == review.userId))
+            if (!_context.Users.Any(u => u.UserId == dto.userId))
                 return NotFound("User not found");
 
-            if (!_context.Products.Any(p => p.productId == review.productId))
+            if (!_context.Products.Any(p => p.productId == dto.productId))
                 return NotFound("Product not found");
 
             bool hasPurchased = _context.OrderItems
-                .Any(oi => oi.productId == review.productId && oi.order.userId == review.userId);
+                .Any(oi => oi.productId == dto.productId && oi.order.userId == dto.userId);
             if (!hasPurchased)
                 return BadRequest("You can only review products you have purchased");
 
-            review.createdAt = DateTime.Now;
-
+            var review = new Review
+            {
+                userId = dto.userId,
+                productId = dto.productId,
+                rating = dto.rating,
+                comment = dto.comment,
+                createdAt = DateTime.Now
+            };
             _context.Reviews.Add(review);
             _context.SaveChanges();
 

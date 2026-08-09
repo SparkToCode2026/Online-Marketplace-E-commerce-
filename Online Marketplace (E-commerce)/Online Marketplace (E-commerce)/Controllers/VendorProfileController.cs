@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 using System.Linq;
@@ -22,9 +23,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
         //case 1 — Register a Vendor Profile
         // POST /vendorprofile/add
         [HttpPost("add")]
-        public IActionResult AddVendorProfile(VendorProfile profile)
+        public IActionResult AddVendorProfile(VendorProfileCreateDto dto)
         {
-            var user = _context.Users.FirstOrDefault(u => u.UserId == profile.UserId);
+            var user = _context.Users.FirstOrDefault(u => u.UserId == dto.UserId);
 
             if (user == null)
                 return NotFound("User not found");
@@ -32,12 +33,17 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (user.Role != "Vendor")
                 return BadRequest("User role must be Vendor");
 
-            if (_context.VendorProfiles.Any(v => v.UserId == profile.UserId))
+            if (_context.VendorProfiles.Any(v => v.UserId == dto.UserId))
                 return Conflict("Vendor already has a profile");
 
-            profile.CreatedaAt = DateTime.Now;
-            profile.isVerified = false;
-
+            var profile = new VendorProfile
+            {
+                StoreName = dto.StoreName,
+                Address = dto.Address,
+                UserId = dto.UserId,
+                CreatedaAt = DateTime.Now,
+                isVerified = false
+            };
             _context.VendorProfiles.Add(profile);
             _context.SaveChanges();
             return Ok(profile.VendorProfileId);

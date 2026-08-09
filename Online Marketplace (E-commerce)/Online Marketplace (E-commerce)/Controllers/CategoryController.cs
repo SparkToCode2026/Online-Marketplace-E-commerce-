@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -19,11 +20,16 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Create a category.
         [HttpPost("add")]
-        public IActionResult AddCategory(Category category)
+        public IActionResult AddCategory(CategoryCreateDto dto)
         {
-            if (_context.Categories.Any(c => c.name == category.name))
+            if (_context.Categories.Any(c => c.name == dto.name))
                 return Conflict("A category with this name already exists");
 
+            var category = new Category
+            {
+                name = dto.name,
+                description = dto.description
+            };
             _context.Categories.Add(category);
             _context.SaveChanges();
             return Ok(category.categoryId);

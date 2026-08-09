@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -21,15 +22,20 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Create a shipping record for an order (one per order).
         [HttpPost("add")]
-        public IActionResult AddShipping(Shipping shipping)
+        public IActionResult AddShipping(ShippingCreateDto dto)
         {
-            if (!_context.Orders.Any(o => o.orderId == shipping.orderId))
+            if (!_context.Orders.Any(o => o.orderId == dto.orderId))
                 return NotFound("Order not found");
 
-            if (_context.Shippings.Any(s => s.orderId == shipping.orderId))
+            if (_context.Shippings.Any(s => s.orderId == dto.orderId))
                 return Conflict("This order already has a shipping record");
 
-            shipping.status = "Preparing";
+            var shipping = new Shipping
+            {
+                orderId = dto.orderId,
+                address = dto.address,
+                status = "Preparing"
+            };
             _context.Shippings.Add(shipping);
             _context.SaveChanges();
             return Ok(shipping.shippingId);

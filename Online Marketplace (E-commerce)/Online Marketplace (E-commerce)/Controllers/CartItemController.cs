@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
@@ -20,24 +21,30 @@ namespace Online_Marketplace__E_commerce_.Controllers
         // Case 1 — Add a product to a cart. If it's already in there,
         // increase the quantity instead of creating a duplicate row.
         [HttpPost("add")]
-        public IActionResult AddCartItem(CartItem cartItem)
+        public IActionResult AddCartItem(CartItemCreateDto dto)
         {
-            if (!_context.Carts.Any(c => c.cartId == cartItem.cartId))
+            if (!_context.Carts.Any(c => c.cartId == dto.cartId))
                 return NotFound("Cart not found");
 
-            var product = _context.Products.Find(cartItem.productId);
+            var product = _context.Products.Find(dto.productId);
             if (product == null || !product.isActive)
                 return NotFound("Product not found or unavailable");
 
             var existing = _context.CartItems
-                .FirstOrDefault(ci => ci.cartId == cartItem.cartId && ci.productId == cartItem.productId);
+                .FirstOrDefault(ci => ci.cartId == dto.cartId && ci.productId == dto.productId);
             if (existing != null)
             {
-                existing.quantity += cartItem.quantity;
+                existing.quantity += dto.quantity;
                 _context.SaveChanges();
                 return Ok(existing.ToDto());
             }
 
+            var cartItem = new CartItem
+            {
+                cartId = dto.cartId,
+                productId = dto.productId,
+                quantity = dto.quantity
+            };
             _context.CartItems.Add(cartItem);
             _context.SaveChanges();
             return Ok(cartItem.cartItemId);
