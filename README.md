@@ -67,7 +67,7 @@ On first run, demo data is seeded automatically (see below) — no manual setup 
 
 | Role | Username | Email |
 |---|---|---|
-| Admin | خالد | `khaled@marketplace.com` |
+| Admin | khalid | `khaild.alhadi2021@marketplace.com` |
 | Admin | معتز | `mutaz@marketplace.com` |
 | Vendor | Hanin (Hanin's Boutique) | `hanin@marketplace.com` |
 | Vendor | Nawal (Nawal Electronics) | `nawal@marketplace.com` |

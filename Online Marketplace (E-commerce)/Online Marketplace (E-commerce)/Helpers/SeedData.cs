@@ -11,7 +11,7 @@ namespace Online_Marketplace__E_commerce_.Helpers
         // seeding must not skip because of those, or duplicate on rerun.
         public static void Initialize(ProjectContext context)
         {
-            if (context.Users.Any(u => u.Email == "khaled@marketplace.com"))
+            if (context.Users.Any(u => u.Email == "khaild.alhadi2021@gmail.com"))
                 return;
 
             var pwd = PasswordHasher.Hash(SeedPassword);
