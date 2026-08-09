@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -46,7 +47,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             product.price = updatedProduct.price;
             product.stockQuantity = updatedProduct.stockQuantity;
             _context.SaveChanges();
-            return Ok(product);
+            return Ok(product.ToDto());
         }
 
         // Case 3 — Activate/deactivate a product without deleting it.
@@ -59,7 +60,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             product.isActive = isActive;
             _context.SaveChanges();
-            return Ok(product);
+            return Ok(product.ToDto());
         }
 
         // Case 4 — Delete a product. Blocked if it has order/cart/review history; deactivate (case 3) instead.
@@ -91,7 +92,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(p => p.category)
                 .Include(p => p.vendorProfile)
                 .ToList();
-            return Ok(products);
+            return Ok(products.Select(p => p.ToDto()));
         }
 
         // Case 6 — Get a single product by id.
@@ -105,7 +106,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(p => p.productId == id);
             if (product == null)
                 return NotFound("Product not found");
-            return Ok(product);
+            return Ok(product.ToDto());
         }
 
         // Case 7 — Filter active products by category.
@@ -117,7 +118,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Where(p => p.categoryId == categoryId && p.isActive)
                 .Include(p => p.vendorProfile)
                 .ToList();
-            return Ok(products);
+            return Ok(products.Select(p => p.ToDto()));
         }
 
         // Case 8 — Top 10 best sellers by quantity sold.

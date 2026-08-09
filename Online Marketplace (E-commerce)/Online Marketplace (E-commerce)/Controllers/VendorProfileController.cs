@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 using System.Linq;
 using System;
@@ -57,7 +58,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             profile.Address = updatedProfile.Address;
 
             _context.SaveChanges();
-            return Ok(profile);
+            return Ok(profile.ToDto());
         }
         //case 3 — Verify a Vendor Profile
         [HttpPatch("verify")]
@@ -94,7 +95,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAllVendorProfiles()
         {
             var profiles = _context.VendorProfiles.Include(v => v.Users).ToList();
-            return Ok(profiles);
+            return Ok(profiles.Select(v => v.ToDto()));
         }
 
         // case 6 — Get a Vendor Profile by ID
@@ -106,7 +107,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (profile == null)
                 return NotFound("Vendor profile not found");
 
-            return Ok(profile);
+            return Ok(profile.ToDto());
         }
 
         // case 7 — Filter vendor profiles by verification status.
@@ -118,7 +119,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(v => v.Users)
                 .ToList();
 
-            return Ok(profiles);
+            return Ok(profiles.Select(v => v.ToDto()));
         }
 
         //case 8 -Get Newest Vendor Profiles
@@ -131,7 +132,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(v => v.Users)
                 .ToList();
 
-            return Ok(profiles);
+            return Ok(profiles.Select(v => v.ToDto()));
         }
 
     }

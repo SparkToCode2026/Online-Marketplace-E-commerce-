@@ -97,7 +97,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             order.status = status;
             _context.SaveChanges();
-            return Ok(order);
+            return Ok(order.ToDto());
         }
 
         // Case 3 — Apply/change the coupon on an existing order and
@@ -126,7 +126,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             order.totalAmount = subtotal * (1 - coupon.discountPercent / 100);
 
             _context.SaveChanges();
-            return Ok(order);
+            return Ok(order.ToDto());
         }
 
         // Case 4 — Delete an order. Blocked once it has a payment on record,
@@ -154,7 +154,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(o => o.orderItems)
                 .Include(o => o.coupon)
                 .ToList();
-            return Ok(orders);
+            return Ok(orders.Select(o => o.ToDto()));
         }
 
         // Case 6 — Get a single order with its items, payment, and shipping.
@@ -171,7 +171,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (order == null)
                 return NotFound("Order not found");
 
-            return Ok(order);
+            return Ok(order.ToDto());
         }
 
         // Case 7 — Filter orders placed within a date range.
@@ -181,7 +181,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var orders = _context.Orders
                 .Where(o => o.orderDate >= from && o.orderDate <= to)
                 .ToList();
-            return Ok(orders);
+            return Ok(orders.Select(o => o.ToDto()));
         }
 
         // Case 8 — Aggregate: order count and revenue grouped by status.

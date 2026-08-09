@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -50,7 +51,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             payment.method = updatedPayment.method;
             payment.amount = updatedPayment.amount;
             _context.SaveChanges();
-            return Ok(payment);
+            return Ok(payment.ToDto());
         }
 
         // Case 3 — Change a payment's status. Completing a payment also
@@ -71,7 +72,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             }
 
             _context.SaveChanges();
-            return Ok(payment);
+            return Ok(payment.ToDto());
         }
 
         // Case 4 — Delete a payment. Blocked once it's Completed, since a
@@ -96,7 +97,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAllPayments()
         {
             var payments = _context.Payments.Include(p => p.order).ToList();
-            return Ok(payments);
+            return Ok(payments.Select(p => p.ToDto()));
         }
 
         // Case 6 — Get a single payment by id.
@@ -108,7 +109,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(p => p.paymentId == id);
             if (payment == null)
                 return NotFound("Payment not found");
-            return Ok(payment);
+            return Ok(payment.ToDto());
         }
 
         // Case 7 — Filter payments by status.
@@ -118,7 +119,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var payments = _context.Payments
                 .Where(p => p.status == status)
                 .ToList();
-            return Ok(payments);
+            return Ok(payments.Select(p => p.ToDto()));
         }
 
         // Case 8 — Aggregate: total amount collected per payment method.

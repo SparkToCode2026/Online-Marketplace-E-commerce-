@@ -74,7 +74,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             user.Phonenumber = updatedUser.Phonenumber;
 
             _context.SaveChanges();
-            return Ok(user);
+            return Ok(user.ToDto());
         }
         // case 3 — Change a User's Role
         [Authorize(Roles = "Admin")]
@@ -89,7 +89,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             user.Role = newRole;
             _context.SaveChanges();
 
-            return Ok(user);
+            return Ok(user.ToDto());
         }
 
         // case 4 — Deactivate a User
@@ -132,7 +132,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAllUsers()
         {
             var users = _context.Users.Include(u => u.vendorProfile).ToList();
-            return Ok(users);
+            return Ok(users.Select(u => u.ToDto()));
         }
 
         // case 7 — Get a user by ID
@@ -142,7 +142,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var user = _context.Users.Find(id);
             if (user == null)
                 return NotFound("User not found");
-            return Ok(user);
+            return Ok(user.ToDto());
         }
 
         // case 8 — Get users by role
@@ -151,7 +151,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetUsersByRole(string role)
         {
             var users = _context.Users.Where(u => u.Role == role).ToList();
-            return Ok(users);
+            return Ok(users.Select(u => u.ToDto()));
         }
 
         // Aggregate: number of users per role.

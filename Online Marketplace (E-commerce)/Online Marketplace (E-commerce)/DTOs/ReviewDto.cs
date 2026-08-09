@@ -1,24 +1,15 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace Online_Marketplace__E_commerce_.Models
+namespace Online_Marketplace__E_commerce_.DTOs
 {
-    public class Review
+    public class ReviewDto
     {
-        [Key]
         public int reviewId { get; set; }
-
         public int userId { get; set; }
-        public User? user { get; set; }
-
         public int productId { get; set; }
-        public Product? product { get; set; }
-
-        [Required]
-        [Range(1, 5)]
         public int rating { get; set; }
-
         public string? comment { get; set; }
-
         public DateTime createdAt { get; set; }
+
+        public UserDto? user { get; set; }
+        public ProductDto? product { get; set; }
     }
 }

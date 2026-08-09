@@ -1,12 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace Online_Marketplace__E_commerce_.Models
 {
     public class Coupon
     {
         [Key]
-        [JsonIgnore]
         public int couponId { get; set; }
 
         [Required]
@@ -16,7 +14,6 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public DateTime expiryDate { get; set; }
 
-        [JsonIgnore]
         public List<Order>? orders { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -34,7 +35,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             {
                 existing.quantity += cartItem.quantity;
                 _context.SaveChanges();
-                return Ok(existing);
+                return Ok(existing.ToDto());
             }
 
             _context.CartItems.Add(cartItem);
@@ -55,7 +56,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             item.quantity = quantity;
             _context.SaveChanges();
-            return Ok(item);
+            return Ok(item.ToDto());
         }
 
         // Case 3 — Adjust quantity by a relative delta (+/- buttons); removes
@@ -76,7 +77,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             }
 
             _context.SaveChanges();
-            return Ok(item);
+            return Ok(item.ToDto());
         }
 
         // Case 4 — Remove a cart item.
@@ -100,7 +101,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(ci => ci.cart)
                 .Include(ci => ci.product)
                 .ToList();
-            return Ok(items);
+            return Ok(items.Select(ci => ci.ToDto()));
         }
 
         // Case 6 — Get a single cart item by id.
@@ -112,7 +113,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(ci => ci.cartItemId == id);
             if (item == null)
                 return NotFound("Cart item not found");
-            return Ok(item);
+            return Ok(item.ToDto());
         }
 
         // Case 7 — Find cart items sitting on a now-inactive product
@@ -124,7 +125,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(ci => ci.product)
                 .Where(ci => !ci.product.isActive)
                 .ToList();
-            return Ok(items);
+            return Ok(items.Select(ci => ci.ToDto()));
         }
 
         // Case 8 — Total quantity of each product across all carts: a live

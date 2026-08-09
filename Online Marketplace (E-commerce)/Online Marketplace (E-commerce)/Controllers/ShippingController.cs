@@ -45,7 +45,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             shipping.address = updatedShipping.address;
             _context.SaveChanges();
-            return Ok(shipping);
+            return Ok(shipping.ToDto());
         }
 
         // Case 3 — Delivery flips the parent order to Completed; the email
@@ -78,7 +78,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 $"Your order #{order.orderId} shipping status is now: {status}.",
                 _configuration);
 
-            return Ok(shipping);
+            return Ok(shipping.ToDto());
         }
 
         // Case 4 — Delete a shipping record. Blocked once delivered.
@@ -102,7 +102,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAllShippings()
         {
             var shippings = _context.Shippings.Include(s => s.order).ToList();
-            return Ok(shippings);
+            return Ok(shippings.Select(s => s.ToDto()));
         }
 
         // Case 6 — Get a single shipping record by id.
@@ -114,7 +114,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(s => s.shippingId == id);
             if (shipping == null)
                 return NotFound("Shipping record not found");
-            return Ok(shipping);
+            return Ok(shipping.ToDto());
         }
 
         // Case 7 — Filter shipping records by status.
@@ -124,7 +124,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var shippings = _context.Shippings
                 .Where(s => s.status == status)
                 .ToList();
-            return Ok(shippings);
+            return Ok(shippings.Select(s => s.ToDto()));
         }
 
         // Case 8 — Aggregate: average delivery time (in days) across all

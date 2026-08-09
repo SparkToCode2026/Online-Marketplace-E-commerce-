@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -50,7 +51,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             cart.userId = newUserId;
             _context.SaveChanges();
-            return Ok(cart);
+            return Ok(cart.ToDto());
         }
 
         // Case 3 — Clear a cart: remove all its items without deleting the
@@ -86,7 +87,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAllCarts()
         {
             var carts = _context.Carts.Include(c => c.cartItems).ToList();
-            return Ok(carts);
+            return Ok(carts.Select(c => c.ToDto()));
         }
 
         // Case 6 — Get a single cart with its items and each item's product.
@@ -99,7 +100,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(c => c.cartId == id);
             if (cart == null)
                 return NotFound("Cart not found");
-            return Ok(cart);
+            return Ok(cart.ToDto());
         }
 
         // Case 7 — Filter carts created after a given date.
@@ -109,7 +110,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var carts = _context.Carts
                 .Where(c => c.createdAt >= date)
                 .ToList();
-            return Ok(carts);
+            return Ok(carts.Select(c => c.ToDto()));
         }
 
         // Case 8 — Sort carts by how many items they currently hold.

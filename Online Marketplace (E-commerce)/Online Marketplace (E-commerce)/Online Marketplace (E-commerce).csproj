@@ -8,16 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="DTOs\**" />
     <Compile Remove="Repos\**" />
     <Compile Remove="Services\**" />
-    <Content Remove="DTOs\**" />
     <Content Remove="Repos\**" />
     <Content Remove="Services\**" />
-    <EmbeddedResource Remove="DTOs\**" />
     <EmbeddedResource Remove="Repos\**" />
     <EmbeddedResource Remove="Services\**" />
-    <None Remove="DTOs\**" />
     <None Remove="Repos\**" />
     <None Remove="Services\**" />
   </ItemGroup>

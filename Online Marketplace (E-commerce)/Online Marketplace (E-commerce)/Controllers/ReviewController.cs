@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -53,7 +54,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             _context.SaveChanges();
 
-            return Ok(review);
+            return Ok(review.ToDto());
         }
 
         // Case 3 — Reassign a review to a different product (moderation
@@ -70,7 +71,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             review.productId = newProductId;
             _context.SaveChanges();
-            return Ok(review);
+            return Ok(review.ToDto());
         }
 
         // Case 4 — Delete a review.
@@ -95,7 +96,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(r => r.user)
                 .Include(r => r.product)
                 .ToList();
-            return Ok(reviews);
+            return Ok(reviews.Select(r => r.ToDto()));
         }
 
         // Case 6 — Get a single review by id.
@@ -109,7 +110,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(r => r.reviewId == id);
             if (review == null)
                 return NotFound("Review not found");
-            return Ok(review);
+            return Ok(review.ToDto());
         }
 
         // Case 7 — Filter reviews by the category of the product reviewed.
@@ -121,7 +122,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .Include(r => r.product)
                 .Where(r => r.product.categoryId == categoryId)
                 .ToList();
-            return Ok(reviews);
+            return Ok(reviews.Select(r => r.ToDto()));
         }
 
         // Case 8 — Aggregate: average rating for a product.

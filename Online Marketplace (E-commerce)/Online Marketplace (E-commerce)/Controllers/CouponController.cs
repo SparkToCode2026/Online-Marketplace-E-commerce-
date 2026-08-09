@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -45,7 +46,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             coupon.discountPercent = updatedCoupon.discountPercent;
             coupon.expiryDate = updatedCoupon.expiryDate;
             _context.SaveChanges();
-            return Ok(coupon);
+            return Ok(coupon.ToDto());
         }
 
         // Case 3 — Deactivate a coupon immediately by expiring it now,
@@ -59,7 +60,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             coupon.expiryDate = DateTime.Now;
             _context.SaveChanges();
-            return Ok(coupon);
+            return Ok(coupon.ToDto());
         }
 
         // Case 4 — Delete a coupon. Blocked while orders still reference it.
@@ -83,7 +84,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAllCoupons()
         {
             var coupons = _context.Coupons.Include(c => c.orders).ToList();
-            return Ok(coupons);
+            return Ok(coupons.Select(c => c.ToDto()));
         }
 
         // Case 6 — Get a single coupon by id.
@@ -95,7 +96,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(c => c.couponId == id);
             if (coupon == null)
                 return NotFound("Coupon not found");
-            return Ok(coupon);
+            return Ok(coupon.ToDto());
         }
 
         // Case 7 — Filter to only currently valid (not yet expired) coupons.
@@ -105,7 +106,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var coupons = _context.Coupons
                 .Where(c => c.expiryDate >= DateTime.Now)
                 .ToList();
-            return Ok(coupons);
+            return Ok(coupons.Select(c => c.ToDto()));
         }
 
         // Case 8 — Sort coupons by how many orders have used them.

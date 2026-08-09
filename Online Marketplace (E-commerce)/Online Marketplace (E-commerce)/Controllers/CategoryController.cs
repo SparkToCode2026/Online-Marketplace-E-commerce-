@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 
 namespace Online_Marketplace__E_commerce_.Controllers
@@ -39,7 +40,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             category.name = updatedCategory.name;
             category.description = updatedCategory.description;
             _context.SaveChanges();
-            return Ok(category);
+            return Ok(category.ToDto());
         }
 
         // Case 3 — Move every product out of this category into another one.
@@ -81,7 +82,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAllCategories()
         {
             var categories = _context.Categories.Include(c => c.products).ToList();
-            return Ok(categories);
+            return Ok(categories.Select(c => c.ToDto()));
         }
 
         // Case 6 — Get a single category by id.
@@ -94,7 +95,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .FirstOrDefault(c => c.categoryId == id);
             if (category == null)
                 return NotFound("Category not found");
-            return Ok(category);
+            return Ok(category.ToDto());
         }
 
         // Case 7 — Filter categories by name.
@@ -105,7 +106,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var categories = _context.Categories
                 .Where(c => c.name.Contains(name))
                 .ToList();
-            return Ok(categories);
+            return Ok(categories.Select(c => c.ToDto()));
         }
 
         // Case 8 — Sort categories by how many products they hold.
