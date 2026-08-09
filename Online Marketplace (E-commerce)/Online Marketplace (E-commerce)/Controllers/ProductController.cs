@@ -46,16 +46,16 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 2 — Update a product's core details.
         [HttpPut("update")]
-        public IActionResult UpdateProduct(int id, Product updatedProduct)
+        public IActionResult UpdateProduct(int id, ProductUpdateDto dto)
         {
             var product = _context.Products.Find(id);
             if (product == null)
                 return NotFound("Product not found");
 
-            product.name = updatedProduct.name;
-            product.description = updatedProduct.description;
-            product.price = updatedProduct.price;
-            product.stockQuantity = updatedProduct.stockQuantity;
+            product.name = dto.name;
+            product.description = dto.description;
+            product.price = dto.price;
+            product.stockQuantity = dto.stockQuantity;
             _context.SaveChanges();
             return Ok(product.ToDto());
         }

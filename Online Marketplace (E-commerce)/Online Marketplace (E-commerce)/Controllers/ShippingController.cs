@@ -43,13 +43,13 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 2 — Update the shipping address.
         [HttpPut("update")]
-        public IActionResult UpdateShipping(int id, Shipping updatedShipping)
+        public IActionResult UpdateShipping(int id, ShippingUpdateDto dto)
         {
             var shipping = _context.Shippings.Find(id);
             if (shipping == null)
                 return NotFound("Shipping record not found");
 
-            shipping.address = updatedShipping.address;
+            shipping.address = dto.address;
             _context.SaveChanges();
             return Ok(shipping.ToDto());
         }

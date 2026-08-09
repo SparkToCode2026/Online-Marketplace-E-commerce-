@@ -50,14 +50,14 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 2 — Update a payment's method/amount (data correction).
         [HttpPut("update")]
-        public IActionResult UpdatePayment(int id, Payment updatedPayment)
+        public IActionResult UpdatePayment(int id, PaymentUpdateDto dto)
         {
             var payment = _context.Payments.Find(id);
             if (payment == null)
                 return NotFound("Payment not found");
 
-            payment.method = updatedPayment.method;
-            payment.amount = updatedPayment.amount;
+            payment.method = dto.method;
+            payment.amount = dto.amount;
             _context.SaveChanges();
             return Ok(payment.ToDto());
         }

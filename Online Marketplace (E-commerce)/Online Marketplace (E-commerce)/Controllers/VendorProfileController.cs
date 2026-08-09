@@ -53,15 +53,15 @@ namespace Online_Marketplace__E_commerce_.Controllers
         //PUT /vendorprofile/update
 
         [HttpPut("update")]
-        public IActionResult UpdateVendorProfile(int id, VendorProfile updatedProfile)
+        public IActionResult UpdateVendorProfile(int id, VendorProfileUpdateDto dto)
         {
             var profile = _context.VendorProfiles.Find(id);
 
             if (profile == null)
                 return NotFound("Vendor profile not found");
 
-            profile.StoreName = updatedProfile.StoreName;
-            profile.Address = updatedProfile.Address;
+            profile.StoreName = dto.StoreName;
+            profile.Address = dto.Address;
 
             _context.SaveChanges();
             return Ok(profile.ToDto());

@@ -50,14 +50,14 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 2 — Update a review's rating/comment.
         [HttpPut("update")]
-        public IActionResult UpdateReview(int id, Review updatedReview)
+        public IActionResult UpdateReview(int id, ReviewUpdateDto dto)
         {
             var review = _context.Reviews.Find(id);
             if (review == null)
                 return NotFound("Review not found");
 
-            review.rating = updatedReview.rating;
-            review.comment = updatedReview.comment;
+            review.rating = dto.rating;
+            review.comment = dto.comment;
 
             _context.SaveChanges();
 

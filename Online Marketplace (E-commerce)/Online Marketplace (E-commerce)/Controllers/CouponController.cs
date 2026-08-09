@@ -44,14 +44,14 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 2 — Update a coupon's discount/expiry.
         [HttpPut("update")]
-        public IActionResult UpdateCoupon(int id, Coupon updatedCoupon)
+        public IActionResult UpdateCoupon(int id, CouponUpdateDto dto)
         {
             var coupon = _context.Coupons.Find(id);
             if (coupon == null)
                 return NotFound("Coupon not found");
 
-            coupon.discountPercent = updatedCoupon.discountPercent;
-            coupon.expiryDate = updatedCoupon.expiryDate;
+            coupon.discountPercent = dto.discountPercent;
+            coupon.expiryDate = dto.expiryDate;
             _context.SaveChanges();
             return Ok(coupon.ToDto());
         }

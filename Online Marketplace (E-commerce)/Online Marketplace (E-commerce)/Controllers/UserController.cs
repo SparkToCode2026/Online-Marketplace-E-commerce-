@@ -63,15 +63,15 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
         // case 02 — Update a User
         [HttpPut("update")]
-        public IActionResult UpdateUser(int id, User updatedUser)
+        public IActionResult UpdateUser(int id, UpdateUserRequest dto)
         {
             var user = _context.Users.Find(id);
 
             if (user == null)
                 return NotFound("User not found");
 
-            user.Username = updatedUser.Username;
-            user.Phonenumber = updatedUser.Phonenumber;
+            user.Username = dto.username;
+            user.Phonenumber = dto.phonenumber;
 
             _context.SaveChanges();
             return Ok(user.ToDto());

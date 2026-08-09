@@ -37,14 +37,14 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 2 — Update a category's name/description.
         [HttpPut("update")]
-        public IActionResult UpdateCategory(int id, Category updatedCategory)
+        public IActionResult UpdateCategory(int id, CategoryUpdateDto dto)
         {
             var category = _context.Categories.Find(id);
             if (category == null)
                 return NotFound("Category not found");
 
-            category.name = updatedCategory.name;
-            category.description = updatedCategory.description;
+            category.name = dto.name;
+            category.description = dto.description;
             _context.SaveChanges();
             return Ok(category.ToDto());
         }
