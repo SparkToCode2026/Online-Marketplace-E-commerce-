@@ -17,6 +17,8 @@ namespace Online_Marketplace__E_commerce_
 
             builder.Services.AddControllers();
 
+            builder.Services.AddCors();
+
             // Adds the "Authorize" button in Swagger UI so a JWT can be
             // pasted in once and sent with every request from the UI.
             builder.Services.AddSwaggerGen(options =>
@@ -68,6 +70,8 @@ namespace Online_Marketplace__E_commerce_
                 });
 
             var app = builder.Build();
+
+            app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
             // Seeds demo data once (checks for it, does nothing on later runs).
             using (var scope = app.Services.CreateScope())
