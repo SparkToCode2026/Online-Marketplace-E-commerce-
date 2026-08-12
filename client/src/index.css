@@ -1,0 +1,10 @@
+/* The three core Tailwind directives — all its styles are injected here */
+@tailwind base; /* reset default styles */
+@tailwind components; /* component classes */
+@tailwind utilities; /* utility classes like flex, p-4, text-center */
+
+/* Simple global styles you can tweak */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+}
