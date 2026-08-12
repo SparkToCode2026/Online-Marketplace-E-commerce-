@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, logout, addCartLine } from "../api";
+import { apiFetch, isLoggedIn, logout, addCartLine, ensureCart } from "../api";
 
 // Product shape as returned by the backend
 interface Product {
@@ -9,6 +9,8 @@ interface Product {
   description: string;
   price: number;
   productUrl: string;
+  stockQuantity: number;
+  category?: { name: string };
 }
 
 // Shop page — lists products; the cart lives on its own page (/cart).
@@ -30,30 +32,11 @@ export default function Shop() {
     apiFetch("/Product/all")
       .then((data) => setProducts(data as Product[]))
       .catch((e) => setMsg((e as Error).message));
-    ensureCart();
+    ensureCart().then(setCartId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
-
-  // Reuse the cart id across page visits (kept in localStorage).
-  async function ensureCart() {
-    const saved = localStorage.getItem("cartId");
-    if (saved) {
-      setCartId(Number(saved));
-      return;
-    }
-    try {
-      const id = (await apiFetch(
-        "/Cart/create?userId=" + localStorage.getItem("userId"),
-        "POST"
-      )) as number;
-      localStorage.setItem("cartId", String(id));
-      setCartId(id);
-    } catch {
-      setCartId(null);
-    }
-  }
 
   async function addToCart(p: Product) {
     if (!cartId) {
@@ -102,28 +85,62 @@ export default function Shop() {
           </div>
         )}
 
-        <h2 className="mb-3 text-xl font-bold">Products</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => (
-            <div key={p.productId} className="flex flex-col rounded-lg bg-white p-4 shadow">
-              <img
-                src={p.productUrl}
-                alt={p.name}
-                className="mb-3 h-40 w-full rounded object-cover"
-              />
-              <h3 className="font-semibold">{p.name}</h3>
-              <p className="flex-grow text-sm text-gray-500">{p.description}</p>
-              <div className="mt-3 flex items-center justify-between">
-                <span className="font-bold text-blue-600">{p.price.toLocaleString()} SAR</span>
-                <button
-                  onClick={() => addToCart(p)}
-                  className="rounded border border-blue-600 px-3 py-1 text-sm text-blue-600 hover:bg-blue-50"
-                >
-                  Add to cart
-                </button>
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="text-xl font-bold">Products</h2>
+          <span className="text-sm text-gray-400">{products.length} items</span>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {products.map((p) => {
+            const outOfStock = p.stockQuantity <= 0;
+            return (
+              <div
+                key={p.productId}
+                onClick={() => navigate(`/product/${p.productId}`)}
+                className="group flex cursor-pointer flex-col overflow-hidden rounded-2xl bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="relative aspect-square overflow-hidden bg-gray-100">
+                  <img
+                    src={p.productUrl}
+                    alt={p.name}
+                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  />
+                  {p.category && (
+                    <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-medium text-gray-700 shadow">
+                      {p.category.name}
+                    </span>
+                  )}
+                  {outOfStock && (
+                    <span className="absolute right-2 top-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-medium text-white">
+                      Out of stock
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-grow flex-col p-4">
+                  <h3 className="font-semibold text-gray-900">{p.name}</h3>
+                  <p className="mt-1 flex-grow line-clamp-2 text-sm text-gray-500">
+                    {p.description}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-lg font-bold text-blue-600">
+                      {p.price.toLocaleString()} SAR
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(p);
+                      }}
+                      disabled={outOfStock}
+                      className="rounded-lg border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-600 transition hover:bg-blue-600 hover:text-white disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-transparent"
+                    >
+                      Add to cart
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
