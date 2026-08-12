@@ -5,6 +5,7 @@ namespace Online_Marketplace__E_commerce_.DTOs
         public int productId { get; set; }
         public string name { get; set; }
         public string? description { get; set; }
+        public string productUrl { get; set; }
         public decimal price { get; set; }
         public int stockQuantity { get; set; }
         public bool isActive { get; set; }

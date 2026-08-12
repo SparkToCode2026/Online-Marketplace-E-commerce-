@@ -17,10 +17,10 @@ namespace Online_Marketplace__E_commerce_.Helpers
             var pwd = PasswordHasher.Hash(SeedPassword);
 
             var khalid = new User { Username = "Khalid", Email = "khaild.alhadi2021@gmail.com", PasswordHash = pwd, Phonenumber = 500000001, Role = "Admin", isActive = true };
-            var mutaz = new User { Username = "Mutaz", Email = "mutaz@marketplace.com", PasswordHash = pwd, Phonenumber = 500000002, Role = "Admin", isActive = true };
+            var mutaz = new User { Username = "Mutaz", Email = "mutaz6991@gmail.com", PasswordHash = pwd, Phonenumber = 500000002, Role = "Admin", isActive = true };
             var hanin = new User { Username = "Hanin", Email = "hanin@marketplace.com", PasswordHash = pwd, Phonenumber = 500000003, Role = "Vendor", isActive = true };
             var nawal = new User { Username = "Nawal", Email = "nawal@marketplace.com", PasswordHash = pwd, Phonenumber = 500000004, Role = "Vendor", isActive = true };
-            var ali = new User { Username = "Ali", Email = "ali@marketplace.com", PasswordHash = pwd, Phonenumber = 500000005, Role = "Vendor", isActive = true };
+            var ali = new User { Username = "Ali", Email = "alijah3099@gmail.com", PasswordHash = pwd, Phonenumber = 500000005, Role = "Vendor", isActive = true };
             var layla = new User { Username = "Layla", Email = "layla@marketplace.com", PasswordHash = pwd, Phonenumber = 500000006, Role = "Customer", isActive = true };
             var yousef = new User { Username = "Yousef", Email = "yousef@marketplace.com", PasswordHash = pwd, Phonenumber = 500000007, Role = "Customer", isActive = true };
 
@@ -39,11 +39,11 @@ namespace Online_Marketplace__E_commerce_.Helpers
             context.Categories.AddRange(electronics, clothing, books);
             context.SaveChanges();
 
-            var laptop = new Product { name = "Laptop Pro 15", description = "High-performance laptop", price = 4500m, stockQuantity = 20, isActive = true, createdAt = DateTime.Now, categoryId = electronics.categoryId, vendorProfileId = nawalProfile.VendorProfileId };
-            var headphones = new Product { name = "Wireless Headphones", description = "Noise-cancelling headphones", price = 350m, stockQuantity = 50, isActive = true, createdAt = DateTime.Now, categoryId = electronics.categoryId, vendorProfileId = nawalProfile.VendorProfileId };
-            var tshirt = new Product { name = "Cotton T-Shirt", description = "Comfortable cotton t-shirt", price = 80m, stockQuantity = 100, isActive = true, createdAt = DateTime.Now, categoryId = clothing.categoryId, vendorProfileId = haninProfile.VendorProfileId };
-            var jeans = new Product { name = "Denim Jeans", description = "Classic fit jeans", price = 180m, stockQuantity = 60, isActive = true, createdAt = DateTime.Now, categoryId = clothing.categoryId, vendorProfileId = haninProfile.VendorProfileId };
-            var novel = new Product { name = "The Silent Sea", description = "Bestselling novel", price = 60m, stockQuantity = 40, isActive = true, createdAt = DateTime.Now, categoryId = books.categoryId, vendorProfileId = aliProfile.VendorProfileId };
+            var laptop = new Product { name = "Laptop Pro 15", description = "High-performance laptop", price = 4500m, stockQuantity = 20, isActive = true, createdAt = DateTime.Now, categoryId = electronics.categoryId, vendorProfileId = nawalProfile.VendorProfileId, productUrl = "https://picsum.photos/seed/laptop/400/300" };
+            var headphones = new Product { name = "Wireless Headphones", description = "Noise-cancelling headphones", price = 350m, stockQuantity = 50, isActive = true, createdAt = DateTime.Now, categoryId = electronics.categoryId, vendorProfileId = nawalProfile.VendorProfileId, productUrl = "https://picsum.photos/seed/headphones/400/300" };
+            var tshirt = new Product { name = "Cotton T-Shirt", description = "Comfortable cotton t-shirt", price = 80m, stockQuantity = 100, isActive = true, createdAt = DateTime.Now, categoryId = clothing.categoryId, vendorProfileId = haninProfile.VendorProfileId, productUrl = "https://picsum.photos/seed/tshirt/400/300" };
+            var jeans = new Product { name = "Denim Jeans", description = "Classic fit jeans", price = 180m, stockQuantity = 60, isActive = true, createdAt = DateTime.Now, categoryId = clothing.categoryId, vendorProfileId = haninProfile.VendorProfileId, productUrl = "https://picsum.photos/seed/jeans/400/300" };
+            var novel = new Product { name = "The Silent Sea", description = "Bestselling novel", price = 60m, stockQuantity = 40, isActive = true, createdAt = DateTime.Now, categoryId = books.categoryId, vendorProfileId = aliProfile.VendorProfileId, productUrl = "https://picsum.photos/seed/book/400/300" };
             context.Products.AddRange(laptop, headphones, tshirt, jeans, novel);
             context.SaveChanges();
 

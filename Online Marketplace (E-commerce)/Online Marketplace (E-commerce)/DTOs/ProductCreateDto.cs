@@ -11,6 +11,9 @@ namespace Online_Marketplace__E_commerce_.DTOs
 
         public string? description { get; set; }
 
+        // Optional image URL. Falls back to a placeholder if not provided.
+        public string productUrl { get; set; } = "https://placehold.co/400x300?text=Product";
+
         [Required]
         public decimal price { get; set; }
 

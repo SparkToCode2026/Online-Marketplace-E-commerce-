@@ -32,6 +32,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             {
                 name = dto.name,
                 description = dto.description,
+                productUrl = dto.productUrl,
                 price = dto.price,
                 stockQuantity = dto.stockQuantity,
                 categoryId = dto.categoryId,
