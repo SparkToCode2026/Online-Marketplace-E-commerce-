@@ -1,61 +1,59 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { apiFetch } from "../api";
-import { Alert, Spinner, EmptyState } from "../components/Ui";
+import { Link, Navigate } from "react-router-dom";
+import { apiFetch, isLoggedIn } from "../api";
+import { useToast } from "../components/Toast";
+import NavBar from "../components/NavBar";
 
-// NOTE: confirm exact route/casing for GET /Category/getAll in Swagger.
-export function Categories() {
-  const [categories, setCategories] = useState(null); // null = loading
-  const [error, setError] = useState("");
+interface Category {
+  categoryId: number;
+  name: string;
+  description?: string;
+}
+
+// Categories page — lists categories; each links to the shop filtered by it.
+export default function Categories() {
+  const toast = useToast();
+  const [categories, setCategories] = useState<Category[] | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    apiFetch("/Category/getAll")
-      .then((data) => !cancelled && setCategories(data))
-      .catch((err) => {
-        if (!cancelled) {
-          setCategories([]);
-          setError(err.message);
-        }
+    apiFetch("/Category/all")
+      .then((d) => setCategories(d as Category[]))
+      .catch((e) => {
+        setCategories([]);
+        toast((e as Error).message, "error");
       });
-    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (!isLoggedIn()) return <Navigate to="/login" replace />;
+
   return (
-    <>
-      <div className="page-header">
-        <span className="page-eyebrow">Browse</span>
-        <h1>Categories</h1>
-        <p className="text-muted-ledger mb-0">Pick a category to see what's on offer.</p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <NavBar />
+      <div className="mx-auto max-w-6xl p-6">
+        <h2 className="mb-4 text-2xl font-bold text-gray-900">Categories</h2>
 
-      <Alert message={error} type="danger" onClose={() => setError("")} />
-
-      <div className="row g-3">
         {categories === null ? (
-          <div className="col-12"><Spinner /></div>
+          <p className="text-sm text-gray-400">Loading…</p>
         ) : categories.length === 0 ? (
-          <div className="col-12"><EmptyState message="No categories yet." /></div>
+          <p className="text-sm text-gray-400">No categories yet.</p>
         ) : (
-          categories.map((c) => (
-            <div className="col-sm-6 col-md-4 col-lg-3" key={c.id}>
-              <Link to={`/products?categoryId=${c.id}`} className="text-decoration-none">
-                <div className="card-ledger h-100">
-                  <div className="card-body text-center">
-                    <div className="mb-2" style={{ fontSize: "1.6rem" }}>◆</div>
-                    <h3 className="mb-0" style={{ fontSize: "1.05rem" }}>{c.name}</h3>
-                    {c.description && (
-                      <p className="text-muted-ledger mt-2 mb-0" style={{ fontSize: "0.85rem" }}>
-                        {c.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((c) => (
+              <Link
+                key={c.categoryId}
+                to={`/?category=${c.categoryId}`}
+                className="rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              >
+                <h3 className="font-semibold text-gray-900">{c.name}</h3>
+                {c.description && (
+                  <p className="mt-1 line-clamp-2 text-sm text-gray-500">{c.description}</p>
+                )}
               </Link>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
-    </>
+    </div>
   );
 }
