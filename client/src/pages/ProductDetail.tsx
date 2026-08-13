@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, logout, addCartLine, ensureCart } from "../api";
+import { useToast } from "../components/Toast";
 
 interface Product {
   productId: number;
@@ -17,10 +18,10 @@ interface Product {
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [cartId, setCartId] = useState<number | null>(null);
   const [qty, setQty] = useState(1);
-  const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function ProductDetail() {
   async function addToCart() {
     if (!product) return;
     if (!cartId) {
-      setMsg("This account already has a cart. Register a new account for the full demo.");
+      toast("This account already has a cart. Register a new account for the full demo.", "error");
       return;
     }
     try {
@@ -49,9 +50,9 @@ export default function ProductDetail() {
       for (let i = 0; i < qty; i++) {
         addCartLine({ productId: product.productId, name: product.name, price: product.price });
       }
-      setMsg(`Added ${qty} × "${product.name}" to the cart.`);
+      toast(`Added ${qty} × "${product.name}" to the cart.`, "success");
     } catch (e) {
-      setMsg((e as Error).message);
+      toast((e as Error).message, "error");
     }
   }
 
@@ -123,15 +124,6 @@ export default function ProductDetail() {
               </p>
 
               <p className="mt-4 leading-relaxed text-gray-600">{product.description}</p>
-
-              {msg && (
-                <div className="mt-4 flex items-center justify-between rounded bg-blue-50 px-4 py-2 text-sm text-blue-800">
-                  <span>{msg}</span>
-                  <button onClick={() => setMsg("")} className="text-blue-400">
-                    ✕
-                  </button>
-                </div>
-              )}
 
               <div className="mt-6 flex items-center gap-4">
                 <div className="flex items-center rounded-lg border border-gray-300">
