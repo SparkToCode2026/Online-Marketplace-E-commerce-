@@ -2,19 +2,25 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../api";
 
+// Seeded accounts, one per role, offered as one-click test logins below.
+const demoAccounts = [
+  { label: "Admin", email: "khaild.alhadi2021@gmail.com" },
+  { label: "Vendor", email: "alijah3099@gmail.com" },
+  { label: "Customer", email: "yousef@marketplace.com" },
+];
+const demoPassword = "Passw0rd!23";
+
 // Login page — verifies credentials and stores the JWT.
 export default function Login() {
-  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function login(em: string, pw: string) {
     setError("");
     try {
-      const data = (await apiFetch("/User/login", "POST", { email, password })) as {
+      const data = (await apiFetch("/User/login", "POST", { email: em, password: pw })) as {
         token: string;
         userId: number;
         role: string;
@@ -25,11 +31,22 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", String(data.userId));
       localStorage.setItem("role", data.role);
-      localStorage.setItem("email", email);
+      localStorage.setItem("email", em);
       navigate("/"); // go to the shop
     } catch (err) {
       setError((err as Error).message);
     }
+  }
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    login(email, password);
+  }
+
+  function demoLogin(em: string) {
+    setEmail(em);
+    setPassword(demoPassword);
+    login(em, demoPassword);
   }
 
   return (
@@ -93,9 +110,24 @@ export default function Login() {
               Register
             </Link>
           </p>
-          <p className="mt-1 text-xs text-gray-400">
-            Demo: khaild.alhadi2021@gmail.com / Passw0rd!23
-          </p>
+
+          <div className="mt-6 border-t border-gray-100 pt-4">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">
+              Quick test login
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {demoAccounts.map((a) => (
+                <button
+                  key={a.email}
+                  type="button"
+                  onClick={() => demoLogin(a.email)}
+                  className="rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition hover:border-blue-500 hover:text-blue-600"
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
