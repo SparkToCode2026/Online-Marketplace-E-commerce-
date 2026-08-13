@@ -164,7 +164,130 @@ async function initCheckoutPage() {
   loadCart();
 }
 
+// ---------------------------- my-orders.html ----------------------------
+
+async function initMyOrdersPage() {
+  if (!requireAuth()) return;
+
+  const listEl = document.getElementById('orders-list');
+  const fromInput = document.getElementById('filter-from');
+  const toInput = document.getElementById('filter-to');
+  const filterBtn = document.getElementById('filter-btn');
+  const clearBtn = document.getElementById('clear-filter-btn');
+
+  // There's no "orders by user" endpoint on the backend, so both paths below
+  // fetch everything and filter to the current user client-side.
+  async function loadAllMine() {
+    showSpinner(listEl);
+    try {
+      const all = await apiFetch('/Order/all');
+      renderOrders(all.filter(o => String(o.userId) === String(getUserId())));
+    } catch (err) {
+      showAlert(listEl, err.message);
+    }
+  }
+
+  async function loadByDateRange() {
+    if (!fromInput.value || !toInput.value) {
+      showAlert(listEl, 'Pick both a from and to date.', 'warning');
+      return;
+    }
+    showSpinner(listEl);
+    try {
+      const qs = new URLSearchParams({ from: fromInput.value, to: toInput.value });
+      const inRange = await apiFetch(`/Order/byDateRange?${qs.toString()}`);
+      renderOrders(inRange.filter(o => String(o.userId) === String(getUserId())));
+    } catch (err) {
+      showAlert(listEl, err.message);
+    }
+  }
+
+  function renderOrders(orders) {
+    if (orders.length === 0) {
+      showAlert(listEl, 'No orders found.', 'info');
+      return;
+    }
+
+    const rows = orders
+      .slice()
+      .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+      .map(o => `
+        <tr>
+          <td>#${o.orderId}</td>
+          <td>${formatDate(o.orderDate)}</td>
+          <td><span class="badge bg-secondary">${o.status}</span></td>
+          <td class="text-end">${formatMoney(o.totalAmount)}</td>
+          <td><a class="btn btn-sm btn-outline-primary" href="order-detail.html?id=${o.orderId}">View</a></td>
+        </tr>`).join('');
+
+    listEl.innerHTML = `
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Order #</th><th>Date</th><th>Status</th><th class="text-end">Total</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  filterBtn.addEventListener('click', loadByDateRange);
+  clearBtn.addEventListener('click', () => {
+    fromInput.value = '';
+    toInput.value = '';
+    loadAllMine();
+  });
+
+  loadAllMine();
+}
+
+// ---------------------------- order-detail.html ----------------------------
+
+async function initOrderDetailPage() {
+  if (!requireAuth()) return;
+
+  const containerEl = document.getElementById('order-detail');
+  const orderId = new URLSearchParams(window.location.search).get('id');
+
+  if (!orderId) {
+    showAlert(containerEl, 'No order id given.');
+    return;
+  }
+
+  showSpinner(containerEl);
+  try {
+    const order = await apiFetch(`/Order/getById?id=${orderId}`);
+    renderOrder(order);
+  } catch (err) {
+    showAlert(containerEl, err.message);
+  }
+
+  function renderOrder(order) {
+    const items = order.orderItems || [];
+    const rows = items.map(i => `
+      <tr>
+        <td>${i.product ? i.product.name : 'Product #' + i.productId}</td>
+        <td>${i.quantity}</td>
+        <td class="text-end">${formatMoney(i.unitPrice)}</td>
+        <td class="text-end">${formatMoney(i.unitPrice * i.quantity)}</td>
+      </tr>`).join('');
+
+    containerEl.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Order #${order.orderId}</h4>
+        <span class="badge bg-secondary fs-6">${order.status}</span>
+      </div>
+      <p class="text-muted">Placed ${formatDate(order.orderDate)}</p>
+      <table class="table">
+        <thead><tr><th>Product</th><th>Qty</th><th class="text-end">Unit price</th><th class="text-end">Line total</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><th colspan="3">Total</th><th class="text-end">${formatMoney(order.totalAmount)}</th></tr></tfoot>
+      </table>
+      ${order.shipping ? `<p><strong>Shipping status:</strong> ${order.shipping.status || 'Not shipped yet'}</p>` : ''}
+      ${order.payment ? `<p><strong>Payment status:</strong> ${order.payment.status}</p>` : ''}
+    `;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof renderNav === 'function') renderNav();
   if (document.getElementById('checkout-page')) initCheckoutPage();
+  if (document.getElementById('my-orders-page')) initMyOrdersPage();
+  if (document.getElementById('order-detail-page')) initOrderDetailPage();
 });
