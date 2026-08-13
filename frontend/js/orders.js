@@ -69,6 +69,14 @@ function showAlert(container, message, type = 'danger') {
   container.innerHTML = `<div class="alert alert-${type}" role="alert">${message}</div>`;
 }
 
+// Use when interpolating user-typed text into an innerHTML template (e.g. the coupon
+// code echoed back on the checkout page) so it can't be read as markup/script.
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 // ---------------------------- checkout.html ----------------------------
 
 async function initCheckoutPage() {
@@ -135,7 +143,7 @@ async function initCheckoutPage() {
     showAlert(
       feedbackEl,
       appliedCoupon
-        ? `Coupon "${appliedCoupon}" will be applied at checkout.`
+        ? `Coupon "${escapeHtml(appliedCoupon)}" will be applied at checkout.`
         : 'Enter a coupon code first.',
       appliedCoupon ? 'info' : 'warning'
     );
@@ -194,7 +202,9 @@ async function initMyOrdersPage() {
     }
     showSpinner(listEl);
     try {
-      const qs = new URLSearchParams({ from: fromInput.value, to: toInput.value });
+      // The date input gives "YYYY-MM-DD" (midnight). Without a time, "to" would exclude
+      // every order placed later that same day, since the backend does orderDate <= to.
+      const qs = new URLSearchParams({ from: fromInput.value, to: `${toInput.value}T23:59:59` });
       const inRange = await apiFetch(`/Order/byDateRange?${qs.toString()}`);
       renderOrders(inRange.filter(o => String(o.userId) === String(getUserId())));
     } catch (err) {
@@ -298,6 +308,7 @@ async function initAdminOrdersPage() {
   const tableEl = document.getElementById('admin-orders-table');
   const statsEl = document.getElementById('order-stats');
   const revenueEl = document.getElementById('revenue-by-product');
+  const feedbackEl = document.getElementById('admin-orders-feedback');
 
   let revenueRows = [];
   let revenueSort = { key: 'revenue', dir: 'desc' };
@@ -337,7 +348,9 @@ async function initAdminOrdersPage() {
       </table>`;
 
     tableEl.querySelectorAll('.status-select').forEach(select => {
-      const original = select.value;
+      // Tracks the last *confirmed* status, not just the value at render time — otherwise
+      // a failed update after an earlier successful one would revert past it to the original.
+      let lastConfirmed = select.value;
       select.addEventListener('change', async (e) => {
         const id = e.target.closest('tr').dataset.orderId;
         const newStatus = e.target.value;
@@ -345,10 +358,11 @@ async function initAdminOrdersPage() {
         try {
           const qs = new URLSearchParams({ id, status: newStatus });
           await apiFetch(`/Order/updateStatus?${qs.toString()}`, 'PUT');
+          lastConfirmed = newStatus;
           loadStats();
         } catch (err) {
-          alert(err.message);
-          select.value = original;
+          showAlert(feedbackEl, err.message);
+          select.value = lastConfirmed;
         } finally {
           select.disabled = false;
         }
