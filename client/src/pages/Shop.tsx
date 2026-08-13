@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, isAdmin, logout, addCartLine, ensureCart } from "../api";
+import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart } from "../api";
 import { useToast } from "../components/Toast";
 
 // Product shape as returned by the backend
@@ -46,7 +46,6 @@ export default function Shop() {
     }
     try {
       await apiFetch("/CartItem/add", "POST", { cartId, productId: p.productId, quantity: 1 });
-      addCartLine({ productId: p.productId, name: p.name, price: p.price });
       toast(`Added "${p.name}" to the cart.`, "success");
     } catch (e) {
       toast((e as Error).message, "error");

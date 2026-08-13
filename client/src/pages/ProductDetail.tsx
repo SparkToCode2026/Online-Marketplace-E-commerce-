@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, logout, addCartLine, ensureCart } from "../api";
+import { apiFetch, isLoggedIn, logout, ensureCart } from "../api";
 import { useToast } from "../components/Toast";
 
 interface Product {
@@ -47,9 +47,6 @@ export default function ProductDetail() {
         productId: product.productId,
         quantity: qty,
       });
-      for (let i = 0; i < qty; i++) {
-        addCartLine({ productId: product.productId, name: product.name, price: product.price });
-      }
       toast(`Added ${qty} × "${product.name}" to the cart.`, "success");
     } catch (e) {
       toast((e as Error).message, "error");
