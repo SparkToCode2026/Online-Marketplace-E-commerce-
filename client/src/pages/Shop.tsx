@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart } from "../api";
 import { useToast } from "../components/Toast";
+import { BrandIcon, CartIcon, AdminIcon } from "../components/icons";
 
 // Product shape as returned by the backend
 interface Product {
@@ -60,15 +61,23 @@ export default function Shop() {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="text-lg font-bold">🛒 Online Marketplace</span>
+        <span className="flex items-center gap-2 text-lg font-bold">
+          <BrandIcon className="h-6 w-6" />
+          Online Marketplace
+        </span>
         <div className="flex items-center gap-4">
           {isAdmin() && (
-            <Link to="/admin" className="text-sm text-amber-300 hover:underline">
-              ⚙️ Admin
+            <Link
+              to="/admin"
+              className="flex items-center gap-1 text-sm text-amber-300 hover:underline"
+            >
+              <AdminIcon className="h-4 w-4" />
+              Admin
             </Link>
           )}
-          <Link to="/cart" className="text-sm hover:underline">
-            🛍️ Cart
+          <Link to="/cart" className="flex items-center gap-1 text-sm hover:underline">
+            <CartIcon className="h-4 w-4" />
+            Cart
           </Link>
           <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
           <button

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, logout, ensureCart } from "../api";
 import { useToast } from "../components/Toast";
+import { BrandIcon, CartIcon, ArrowLeftIcon } from "../components/icons";
 
 interface Product {
   productId: number;
@@ -61,10 +62,14 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="text-lg font-bold">🛒 Online Marketplace</span>
+        <span className="flex items-center gap-2 text-lg font-bold">
+          <BrandIcon className="h-6 w-6" />
+          Online Marketplace
+        </span>
         <div className="flex items-center gap-4">
-          <Link to="/cart" className="text-sm hover:underline">
-            🛍️ Cart
+          <Link to="/cart" className="flex items-center gap-1 text-sm hover:underline">
+            <CartIcon className="h-4 w-4" />
+            Cart
           </Link>
           <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
           <button
@@ -77,8 +82,12 @@ export default function ProductDetail() {
       </nav>
 
       <div className="mx-auto max-w-5xl p-6">
-        <Link to="/" className="text-sm text-blue-600 hover:underline">
-          ← Back to products
+        <Link
+          to="/"
+          className="flex w-fit items-center gap-1 text-sm text-blue-600 hover:underline"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to products
         </Link>
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}

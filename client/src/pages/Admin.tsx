@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, isAdmin, logout } from "../api";
 import { useToast } from "../components/Toast";
+import { BrandIcon, ArrowLeftIcon } from "../components/icons";
 
 interface Product {
   productId: number;
@@ -137,10 +138,14 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="text-lg font-bold">🛒 Online Marketplace</span>
+        <span className="flex items-center gap-2 text-lg font-bold">
+          <BrandIcon className="h-6 w-6" />
+          Online Marketplace
+        </span>
         <div className="flex items-center gap-4">
-          <Link to="/" className="text-sm hover:underline">
-            ← Storefront
+          <Link to="/" className="flex items-center gap-1 text-sm hover:underline">
+            <ArrowLeftIcon className="h-4 w-4" />
+            Storefront
           </Link>
           <span className="rounded bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">
             Admin

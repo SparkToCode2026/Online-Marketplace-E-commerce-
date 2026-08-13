@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart } from "../api";
 import { useToast } from "../components/Toast";
+import { BrandIcon, CartIcon, AdminIcon, ArrowLeftIcon, TrashIcon } from "../components/icons";
 
 interface CartItem {
   cartItemId: number;
@@ -89,15 +90,23 @@ export default function Cart() {
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="text-lg font-bold">🛒 Online Marketplace</span>
+        <span className="flex items-center gap-2 text-lg font-bold">
+          <BrandIcon className="h-6 w-6" />
+          Online Marketplace
+        </span>
         <div className="flex items-center gap-4">
           {isAdmin() && (
-            <Link to="/admin" className="text-sm text-amber-300 hover:underline">
-              ⚙️ Admin
+            <Link
+              to="/admin"
+              className="flex items-center gap-1 text-sm text-amber-300 hover:underline"
+            >
+              <AdminIcon className="h-4 w-4" />
+              Admin
             </Link>
           )}
-          <Link to="/" className="text-sm hover:underline">
-            ← Products
+          <Link to="/" className="flex items-center gap-1 text-sm hover:underline">
+            <ArrowLeftIcon className="h-4 w-4" />
+            Products
           </Link>
           <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
           <button
@@ -110,13 +119,16 @@ export default function Cart() {
       </nav>
 
       <div className="mx-auto max-w-4xl p-6">
-        <h2 className="mb-4 text-2xl font-bold text-gray-900">🛍️ My Cart</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-gray-900">
+          <CartIcon className="h-6 w-6" />
+          My Cart
+        </h2>
 
         {loading ? (
           <p className="text-sm text-gray-400">Loading…</p>
         ) : items.length === 0 ? (
           <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-            <p className="text-4xl">🛒</p>
+            <CartIcon className="mx-auto h-12 w-12 text-gray-300" />
             <p className="mt-3 text-gray-500">Your cart is empty.</p>
             <Link
               to="/"
@@ -170,7 +182,7 @@ export default function Cart() {
                     className="text-gray-400 transition hover:text-red-500"
                     title="Remove"
                   >
-                    🗑️
+                    <TrashIcon className="h-5 w-5" />
                   </button>
                 </div>
               ))}

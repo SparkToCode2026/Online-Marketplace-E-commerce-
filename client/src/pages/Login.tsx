@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../api";
+import { BrandIcon } from "../components/icons";
 
 // Seeded accounts, one per role, offered as one-click test logins below.
 const demoAccounts = [
@@ -53,20 +54,7 @@ export default function Login() {
     <div className="flex min-h-screen">
       <div className="hidden flex-col justify-center bg-gradient-to-br from-blue-600 to-indigo-800 p-12 text-white md:flex md:w-1/2">
         <div className="flex items-center gap-2 text-3xl font-bold">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="h-8 w-8"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m-3 0h13.5l-1.14 9.13a1.5 1.5 0 01-1.49 1.37H7.38a1.5 1.5 0 01-1.49-1.37L4.75 10.5z"
-            />
-          </svg>
+          <BrandIcon className="h-8 w-8" />
           Online Marketplace
         </div>
         <h1 className="mt-6 text-4xl font-extrabold leading-tight">Welcome back.</h1>
