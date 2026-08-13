@@ -1,247 +1,337 @@
-import { useEffect, useState } from "react";
-import { apiFetch } from "../api";
-import { Alert, Spinner, Seal, EmptyState } from "../components/Ui";
-import { Modal } from "../components/Modal";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { apiFetch, isLoggedIn, formatOMR } from "../api";
+import { useToast } from "../components/Toast";
+import NavBar from "../components/NavBar";
 
-const emptyForm = { name: "", price: "", description: "", categoryId: "" };
+interface Product {
+  productId: number;
+  name: string;
+  description: string;
+  productUrl: string;
+  price: number;
+  stockQuantity: number;
+  isActive: boolean;
+  categoryId: number;
+  vendorProfileId: number;
+  category?: { name: string };
+}
 
-// NOTE: confirm whether Swagger has a dedicated GET /Product/byVendor/{id}
-// filter — this falls back to fetching /Product/all and filtering
-// client-side by vendorId if that endpoint doesn't exist.
-export function VendorProducts() {
-  const { userId } = useAuth();
-  const { showToast } = useToast();
+interface Category {
+  categoryId: number;
+  name: string;
+}
 
-  const [products, setProducts] = useState(null); // null = loading
-  const [categories, setCategories] = useState([]);
-  const [error, setError] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+const emptyForm = {
+  name: "",
+  description: "",
+  productUrl: "",
+  price: 0,
+  stockQuantity: 0,
+  categoryId: 0,
+};
+
+// Vendor products page — lists and manages only this vendor's products. Their
+// vendorProfileId comes from /VendorProfile/all (keyed by profile, not user).
+export default function VendorProducts() {
+  const toast = useToast();
+  const userId = Number(localStorage.getItem("userId"));
+  const isVendor = localStorage.getItem("role") === "Vendor";
+
+  const [vendorProfileId, setVendorProfileId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [busyId, setBusyId] = useState(null);
-
-  async function loadCategories() {
-    try {
-      const data = await apiFetch("/Category/getAll");
-      setCategories(data);
-    } catch {
-      setCategories([]);
-    }
-  }
-
-  async function loadProducts() {
-    setProducts(null);
-    setError("");
-    try {
-      let data;
-      try {
-        data = await apiFetch(`/Product/byVendor/${userId}`);
-      } catch {
-        const all = await apiFetch("/Product/all");
-        data = all.filter((p) => String(p.vendorId) === String(userId));
-      }
-      setProducts(data);
-    } catch (err) {
-      setProducts([]);
-      setError(err.message);
-    }
-  }
 
   useEffect(() => {
-    loadCategories();
-    loadProducts(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  const openAdd = () => {
-    setEditingId(null);
-    setForm({ ...emptyForm, categoryId: categories[0]?.id || "" });
-    setShowModal(true);
-  };
-
-  const openEdit = (p) => {
-    setEditingId(p.id);
-    setForm({
-      name: p.name || "",
-      price: p.price ?? "",
-      description: p.description || "",
-      categoryId: p.categoryId || categories[0]?.id || "",
-    });
-    setShowModal(true);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    const payload = {
-      name: form.name.trim(),
-      price: parseFloat(form.price),
-      description: form.description.trim(),
-      categoryId: form.categoryId,
-    };
-    try {
-      if (editingId) {
-        await apiFetch("/Product/update", { method: "PUT", body: JSON.stringify({ id: editingId, ...payload }) });
-        showToast("Product updated.");
-      } else {
-        await apiFetch("/Product/add", { method: "POST", body: JSON.stringify({ ...payload, vendorId: userId }) });
-        showToast("Product added.");
+    if (!isVendor) {
+      setLoading(false);
+      return;
+    }
+    apiFetch("/Category/all").then((d) => setCategories(d as Category[])).catch(() => {});
+    (async () => {
+      try {
+        const all = (await apiFetch("/VendorProfile/all")) as { vendorProfileId: number; userId: number }[];
+        const mine = all.find((p) => p.userId === userId);
+        setVendorProfileId(mine?.vendorProfileId ?? null);
+      } catch (e) {
+        toast((e as Error).message, "error");
+      } finally {
+        setLoading(false);
       }
-      setShowModal(false);
-      loadProducts();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleToggleActive = async (id, currentlyActive) => {
-    setBusyId(id);
-    try {
-      await apiFetch("/Product/setActive", {
-        method: "PUT",
-        body: JSON.stringify({ id, isActive: !currentlyActive }),
-      });
-      showToast(currentlyActive ? "Product deactivated." : "Product activated.");
-      loadProducts();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
+  useEffect(() => {
+    if (vendorProfileId) loadProducts(vendorProfileId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendorProfileId]);
 
-  const handleDelete = async (id) => {
-    if (!confirm("Delete this product? This cannot be undone.")) return;
-    setBusyId(id);
+  if (!isLoggedIn()) return <Navigate to="/login" replace />;
+  if (!isVendor) return <Navigate to="/" replace />;
+
+  function loadProducts(vpId: number) {
+    apiFetch("/Product/all")
+      .then((d) => setProducts((d as Product[]).filter((p) => p.vendorProfileId === vpId)))
+      .catch((e) => toast((e as Error).message, "error"));
+  }
+
+  function openAdd() {
+    setForm({ ...emptyForm, categoryId: categories[0]?.categoryId ?? 0 });
+    setEditing("new");
+  }
+
+  function openEdit(p: Product) {
+    setForm({
+      name: p.name,
+      description: p.description ?? "",
+      productUrl: p.productUrl,
+      price: p.price,
+      stockQuantity: p.stockQuantity,
+      categoryId: p.categoryId,
+    });
+    setEditing(p);
+  }
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
     try {
-      await apiFetch(`/Product/delete/${id}`, { method: "DELETE" });
-      showToast("Product deleted.");
-      loadProducts();
+      if (editing === "new") {
+        await apiFetch("/Product/add", "POST", { ...form, vendorProfileId });
+        toast(`Product "${form.name}" created.`, "success");
+      } else if (editing) {
+        await apiFetch(`/Product/update?id=${editing.productId}`, "PUT", {
+          name: form.name,
+          description: form.description,
+          price: form.price,
+          stockQuantity: form.stockQuantity,
+        });
+        toast(`Product "${form.name}" updated.`, "success");
+      }
+      setEditing(null);
+      if (vendorProfileId) loadProducts(vendorProfileId);
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusyId(null);
+      toast((err as Error).message, "error");
     }
-  };
+  }
+
+  async function toggleActive(p: Product) {
+    try {
+      await apiFetch(`/Product/setActive?id=${p.productId}&isActive=${!p.isActive}`, "PATCH");
+      if (vendorProfileId) loadProducts(vendorProfileId);
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  }
+
+  async function remove(p: Product) {
+    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    try {
+      await apiFetch(`/Product/delete?id=${p.productId}`, "DELETE");
+      toast(`Product "${p.name}" deleted.`, "success");
+      if (vendorProfileId) loadProducts(vendorProfileId);
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  }
 
   return (
-    <>
-      <div className="page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
-        <div>
-          <span className="page-eyebrow">Vendor</span>
-          <h1>My Products</h1>
-          <p className="text-muted-ledger mb-0">Manage everything listed under your store.</p>
+    <div className="min-h-screen bg-gray-50">
+      <NavBar />
+      <div className="mx-auto max-w-5xl p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">My Products</h2>
+          {vendorProfileId && (
+            <button
+              onClick={openAdd}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            >
+              + Add product
+            </button>
+          )}
         </div>
-        <button className="btn btn-brass" onClick={openAdd}>+ Add product</button>
-      </div>
 
-      <Alert message={error} type="danger" onClose={() => setError("")} />
-
-      <div className="table-ledger">
-        <table className="table table-ledger mb-0">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Price</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th className="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products === null ? (
-              <tr className="loading-row"><td colSpan={5}><Spinner /></td></tr>
-            ) : products.length === 0 ? (
-              <tr><td colSpan={5}><EmptyState message="You haven't added any products yet." /></td></tr>
-            ) : (
-              products.map((p) => {
-                const isActive = p.isActive !== false;
-                return (
-                  <tr key={p.id}>
-                    <td>{p.name}</td>
-                    <td className="text-mono">${Number(p.price ?? 0).toFixed(2)}</td>
-                    <td>{p.categoryName || "—"}</td>
-                    <td>{isActive ? <Seal variant="verified">Active</Seal> : <Seal variant="inactive">Deactivated</Seal>}</td>
-                    <td className="text-end">
-                      <div className="btn-group btn-group-sm">
-                        <button className="btn btn-outline-ledger" onClick={() => openEdit(p)}>Edit</button>
+        {loading ? (
+          <p className="text-sm text-gray-400">Loading…</p>
+        ) : !vendorProfileId ? (
+          <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
+            <p className="text-gray-500">You need a store before you can list products.</p>
+            <Link
+              to="/vendor/profile"
+              className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Set up my store
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+                <tr>
+                  <th className="px-4 py-3">Product</th>
+                  <th className="px-4 py-3">Price</th>
+                  <th className="px-4 py-3">Stock</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {products.map((p) => (
+                  <tr key={p.productId} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <img src={p.productUrl} alt={p.name} className="h-10 w-10 rounded object-cover" />
+                        <span className="font-medium text-gray-900">{p.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-medium">{formatOMR(p.price)}</td>
+                    <td className="px-4 py-3">{p.stockQuantity}</td>
+                    <td className="px-4 py-3">
+                      {p.isActive ? (
+                        <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
                         <button
-                          className="btn btn-outline-ledger"
-                          disabled={busyId === p.id}
-                          onClick={() => handleToggleActive(p.id, isActive)}
+                          onClick={() => openEdit(p)}
+                          className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
                         >
-                          {isActive ? "Deactivate" : "Activate"}
+                          Edit
                         </button>
-                        <button className="btn btn-outline-danger" disabled={busyId === p.id} onClick={() => handleDelete(p.id)}>
+                        <button
+                          onClick={() => toggleActive(p)}
+                          className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                        >
+                          {p.isActive ? "Deactivate" : "Activate"}
+                        </button>
+                        <button
+                          onClick={() => remove(p)}
+                          className="rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                        >
                           Delete
                         </button>
                       </div>
                     </td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                ))}
+                {products.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-400">
+                      No products yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      <Modal
-        show={showModal}
-        title={editingId ? "Edit product" : "Add product"}
-        onClose={() => setShowModal(false)}
-        footer={
-          <>
-            <button className="btn btn-outline-ledger" onClick={() => setShowModal(false)}>Cancel</button>
-            <button className="btn btn-primary" disabled={saving} onClick={handleSubmit}>
-              {saving ? "Saving…" : "Save product"}
-            </button>
-          </>
-        }
-      >
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="productName" className="form-label">Name</label>
-            <input
-              id="productName" className="form-control" required
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            />
+      {editing && (
+        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="mb-4 text-lg font-bold text-gray-900">
+              {editing === "new" ? "Add product" : `Edit "${editing.name}"`}
+            </h3>
+            <form onSubmit={save} className="space-y-3">
+              <input
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+              <textarea
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Description"
+                rows={2}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs text-gray-500">
+                  Price (OMR)
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.001"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                    required
+                  />
+                </label>
+                <label className="text-xs text-gray-500">
+                  Stock
+                  <input
+                    type="number"
+                    min={0}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    value={form.stockQuantity}
+                    onChange={(e) => setForm({ ...form, stockQuantity: Number(e.target.value) })}
+                    required
+                  />
+                </label>
+              </div>
+
+              {editing === "new" && (
+                <>
+                  <input
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    placeholder="Image URL (optional)"
+                    value={form.productUrl}
+                    onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
+                  />
+                  <label className="block text-xs text-gray-500">
+                    Category
+                    <select
+                      className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      value={form.categoryId}
+                      onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
+                      required
+                    >
+                      <option value={0} disabled>
+                        Select…
+                      </option>
+                      {categories.map((c) => (
+                        <option key={c.categoryId} value={c.categoryId}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              )}
+
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  {editing === "new" ? "Create" : "Save changes"}
+                </button>
+              </div>
+            </form>
           </div>
-          <div className="mb-3">
-            <label htmlFor="productPrice" className="form-label">Price</label>
-            <input
-              id="productPrice" type="number" step="0.01" min="0" className="form-control" required
-              value={form.price}
-              onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="productCategory" className="form-label">Category</label>
-            <select
-              id="productCategory" className="form-select" required
-              value={form.categoryId}
-              onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-            >
-              {categories.length === 0 && <option value="">No categories available</option>}
-              {categories.map((c) => (
-                <option value={c.id} key={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-3">
-            <label htmlFor="productDescription" className="form-label">Description</label>
-            <textarea
-              id="productDescription" className="form-control" rows={3}
-              value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            />
-          </div>
-        </form>
-      </Modal>
-    </>
+        </div>
+      )}
+    </div>
   );
 }

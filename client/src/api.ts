@@ -29,9 +29,24 @@ export async function apiFetch(path: string, method = "GET", body: unknown = nul
   return data;
 }
 
+// Formats a price as Omani Rial. OMR is subdivided into 1000 baisa, so
+// amounts are conventionally shown with three decimals (e.g. 4,500.000 OMR).
+export function formatOMR(amount: number): string {
+  const value = amount.toLocaleString(undefined, {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  });
+  return `${value} OMR`;
+}
+
 // Whether a user is currently logged in.
 export function isLoggedIn() {
   return !!localStorage.getItem("token");
+}
+
+// Whether the logged-in user is an admin (role comes from the login response).
+export function isAdmin() {
+  return localStorage.getItem("role") === "Admin";
 }
 
 // Clear the session.
@@ -39,47 +54,29 @@ export function logout() {
   localStorage.clear();
 }
 
-// ---------- Shared cart (kept in localStorage so both pages see it) ----------
-export interface CartLine {
-  productId: number;
-  name: string;
-  price: number;
-  qty: number;
-}
-
-export function getCart(): CartLine[] {
-  try {
-    return JSON.parse(localStorage.getItem("cart") || "[]");
-  } catch {
-    return [];
-  }
-}
-
-export function addCartLine(p: { productId: number; name: string; price: number }) {
-  const lines = getCart();
-  const existing = lines.find((i) => i.productId === p.productId);
-  if (existing) existing.qty++;
-  else lines.push({ ...p, qty: 1 });
-  localStorage.setItem("cart", JSON.stringify(lines));
-}
-
-export function clearCart() {
-  localStorage.removeItem("cart");
-}
-
-// Reuses the cart id across page visits (kept in localStorage) — shared by
-// every page that can add to cart, so they never race to create two carts.
+// Resolves this user's cart id (cached in localStorage). Creates one on
+// first use; if the user already has a cart (create returns 409, e.g. the
+// seeded demo accounts) it looks theirs up from /Cart/all instead.
 export async function ensureCart(): Promise<number | null> {
   const saved = localStorage.getItem("cartId");
   if (saved) return Number(saved);
+
+  const userId = Number(localStorage.getItem("userId"));
   try {
-    const id = (await apiFetch(
-      "/Cart/create?userId=" + localStorage.getItem("userId"),
-      "POST"
-    )) as number;
+    const id = (await apiFetch(`/Cart/create?userId=${userId}`, "POST")) as number;
     localStorage.setItem("cartId", String(id));
     return id;
   } catch {
+    try {
+      const carts = (await apiFetch("/Cart/all")) as { cartId: number; userId: number }[];
+      const mine = carts.find((c) => c.userId === userId);
+      if (mine) {
+        localStorage.setItem("cartId", String(mine.cartId));
+        return mine.cartId;
+      }
+    } catch {
+      /* fall through to null */
+    }
     return null;
   }
 }

@@ -1,173 +1,161 @@
-import { useEffect, useState } from "react";
-import { apiFetch } from "../api";
-import { Alert, Spinner, Seal } from "../components/Ui";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { useEffect, useState, type FormEvent } from "react";
+import { Navigate } from "react-router-dom";
+import { apiFetch, isLoggedIn } from "../api";
+import { useToast } from "../components/Toast";
+import NavBar from "../components/NavBar";
 
-const emptyForm = { storeName: "", description: "", phone: "", address: "" };
+interface Profile {
+  vendorProfileId: number;
+  storeName: string;
+  address: string;
+  isVerified: boolean;
+  userId: number;
+}
 
-// NOTE: confirm whether the profile is fetched by user id or by its own
-// vendor-profile id, and the exact field names, in Swagger.
-export function VendorProfile() {
-  const { userId } = useAuth();
-  const { showToast } = useToast();
+// Vendor store page — find this vendor's profile (via /VendorProfile/all, since
+// the API keys it by profile id not user id), then view/create/edit it. The
+// backend only stores store name and address.
+export default function VendorProfile() {
+  const toast = useToast();
+  const userId = Number(localStorage.getItem("userId"));
+  const isVendor = localStorage.getItem("role") === "Vendor";
 
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState(null); // null = no profile yet
-  const [mode, setMode] = useState("view"); // "view" | "create" | "edit"
-  const [form, setForm] = useState(emptyForm);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [storeName, setStoreName] = useState("");
+  const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   async function load() {
     setLoading(true);
-    setError("");
     try {
-      const data = await apiFetch(`/VendorProfile/getById/${userId}`);
-      if (data && (data.storeName || data.name)) {
-        setProfile(data);
-        setMode("view");
-      } else {
-        setProfile(null);
-        setMode("create");
+      const all = (await apiFetch("/VendorProfile/all")) as Profile[];
+      const mine = all.find((p) => p.userId === userId) ?? null;
+      setProfile(mine);
+      setEditing(!mine); // no profile yet -> start in create mode
+      if (mine) {
+        setStoreName(mine.storeName);
+        setAddress(mine.address);
       }
-    } catch {
-      // A 404 typically just means "no profile yet" — treat as create mode.
-      setProfile(null);
-      setMode("create");
+    } catch (e) {
+      toast((e as Error).message, "error");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    load(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+    if (isVendor) load();
+    else setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const startEdit = () => {
-    setForm({
-      storeName: profile.storeName || profile.name || "",
-      description: profile.description || "",
-      phone: profile.phone || "",
-      address: profile.address || "",
-    });
-    setMode("edit");
-  };
+  if (!isLoggedIn()) return <Navigate to="/login" replace />;
+  if (!isVendor) return <Navigate to="/" replace />;
 
-  const startCreate = () => {
-    setForm(emptyForm);
-    setMode("create");
-  };
-
-  const handleSubmit = async (e) => {
+  async function save(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError("");
     try {
-      if (mode === "edit" && profile) {
-        await apiFetch("/VendorProfile/update", {
-          method: "PUT",
-          body: JSON.stringify({ id: profile.id, ...form }),
+      if (profile) {
+        await apiFetch(`/VendorProfile/update?id=${profile.vendorProfileId}`, "PUT", {
+          storeName: storeName.trim(),
+          address: address.trim(),
         });
-        showToast("Store details updated.");
+        toast("Store details updated.", "success");
       } else {
-        await apiFetch("/VendorProfile/add", { method: "POST", body: JSON.stringify(form) });
-        showToast("Store created — an admin will review it for verification.");
+        await apiFetch("/VendorProfile/add", "POST", {
+          storeName: storeName.trim(),
+          address: address.trim(),
+          userId,
+        });
+        toast("Store created — an admin will review it for verification.", "success");
       }
       await load();
     } catch (err) {
-      setError(err.message);
+      toast((err as Error).message, "error");
     } finally {
       setSaving(false);
     }
-  };
+  }
 
   return (
-    <div style={{ maxWidth: 700 }}>
-      <div className="page-header">
-        <span className="page-eyebrow">Vendor</span>
-        <h1>My Store</h1>
-        <p className="text-muted-ledger mb-0">
-          {mode === "view" ? "Here's what customers see on your store." : "Set up your vendor profile to start selling."}
-        </p>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <NavBar />
+      <div className="mx-auto max-w-xl p-6">
+        <h2 className="mb-4 text-2xl font-bold text-gray-900">My Store</h2>
 
-      <Alert message={error} type="danger" onClose={() => setError("")} />
-
-      {loading ? (
-        <Spinner />
-      ) : mode === "view" && profile ? (
-        <div className="card-ledger">
-          <div className="card-body">
-            <div className="d-flex justify-content-between align-items-start mb-3">
+        {loading ? (
+          <p className="text-sm text-gray-400">Loading…</p>
+        ) : profile && !editing ? (
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <div className="flex items-start justify-between">
               <div>
-                <h3 className="mb-1">{profile.storeName || profile.name}</h3>
-                <Seal variant={profile.isVerified ? "verified" : "pending"}>
-                  {profile.isVerified ? "Verified" : "Pending verification"}
-                </Seal>
-              </div>
-              <button className="btn btn-outline-ledger btn-sm" onClick={startEdit}>Edit</button>
-            </div>
-            <dl className="row mb-0">
-              <dt className="col-sm-4 text-muted-ledger">Description</dt>
-              <dd className="col-sm-8">{profile.description || "—"}</dd>
-              <dt className="col-sm-4 text-muted-ledger">Contact phone</dt>
-              <dd className="col-sm-8">{profile.phone || "—"}</dd>
-              <dt className="col-sm-4 text-muted-ledger">Address</dt>
-              <dd className="col-sm-8">{profile.address || "—"}</dd>
-            </dl>
-          </div>
-        </div>
-      ) : (
-        <div className="card-ledger">
-          <div className="card-body">
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <label htmlFor="storeName" className="form-label">Store name</label>
-                <input
-                  id="storeName" className="form-control" required
-                  value={form.storeName}
-                  onChange={(e) => setForm((f) => ({ ...f, storeName: e.target.value }))}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="description" className="form-label">Description</label>
-                <textarea
-                  id="description" className="form-control" rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="phone" className="form-label">Contact phone</label>
-                <input
-                  id="phone" type="tel" className="form-control"
-                  value={form.phone}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="address" className="form-label">Address</label>
-                <input
-                  id="address" className="form-control"
-                  value={form.address}
-                  onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
-                />
-              </div>
-              <div className="d-flex gap-2">
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Saving…" : mode === "edit" ? "Save changes" : "Create store"}
-                </button>
-                {profile && (
-                  <button type="button" className="btn btn-link text-muted-ledger" onClick={() => setMode("view")}>
-                    Cancel
-                  </button>
+                <h3 className="text-lg font-semibold text-gray-900">{profile.storeName}</h3>
+                {profile.isVerified ? (
+                  <span className="mt-1 inline-block rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                    Verified
+                  </span>
+                ) : (
+                  <span className="mt-1 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                    Pending verification
+                  </span>
                 )}
               </div>
-            </form>
+              <button
+                onClick={() => setEditing(true)}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+              >
+                Edit
+              </button>
+            </div>
+            <dl className="mt-4 text-sm">
+              <dt className="text-gray-500">Address</dt>
+              <dd className="mt-1 text-gray-900">{profile.address || "—"}</dd>
+            </dl>
           </div>
-        </div>
-      )}
+        ) : (
+          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
+            <label className="block text-sm">
+              <span className="text-gray-500">Store name</span>
+              <input
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                required
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="text-gray-500">Address</span>
+              <input
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                required
+              />
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+              >
+                {saving ? "Saving…" : profile ? "Save changes" : "Create store"}
+              </button>
+              {profile && (
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

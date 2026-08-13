@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, logout, addCartLine, ensureCart } from "../api";
+import { useNavigate, Navigate, Link, useSearchParams } from "react-router-dom";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
+import { useToast } from "../components/Toast";
+import NavBar from "../components/NavBar";
 
 // Product shape as returned by the backend
 interface Product {
@@ -10,15 +12,18 @@ interface Product {
   price: number;
   productUrl: string;
   stockQuantity: number;
+  categoryId: number;
   category?: { name: string };
 }
 
-// Shop page — lists products; the cart lives on its own page (/cart).
+// Shop page — lists products; supports an optional ?category= filter.
 export default function Shop() {
   const navigate = useNavigate();
+  const toast = useToast();
+  const [searchParams] = useSearchParams();
+  const categoryFilter = searchParams.get("category");
   const [products, setProducts] = useState<Product[]>([]);
   const [cartId, setCartId] = useState<number | null>(null);
-  const [msg, setMsg] = useState("");
 
   // React.StrictMode runs effects twice in development to surface bugs.
   // Without this guard, two concurrent POST /Cart/create calls race: the
@@ -31,67 +36,51 @@ export default function Shop() {
 
     apiFetch("/Product/all")
       .then((data) => setProducts(data as Product[]))
-      .catch((e) => setMsg((e as Error).message));
+      .catch((e) => toast((e as Error).message, "error"));
     ensureCart().then(setCartId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
 
+  const shown = categoryFilter
+    ? products.filter((p) => p.categoryId === Number(categoryFilter))
+    : products;
+  const filterName = shown[0]?.category?.name;
+
   async function addToCart(p: Product) {
     if (!cartId) {
-      setMsg("This account already has a cart. Register a new account for the full demo.");
+      toast("This account already has a cart. Register a new account for the full demo.", "error");
       return;
     }
     try {
       await apiFetch("/CartItem/add", "POST", { cartId, productId: p.productId, quantity: 1 });
-      addCartLine({ productId: p.productId, name: p.name, price: p.price });
-      setMsg(`Added "${p.name}" to the cart.`);
+      toast(`Added "${p.name}" to the cart.`, "success");
     } catch (e) {
-      setMsg((e as Error).message);
+      toast((e as Error).message, "error");
     }
-  }
-
-  function handleLogout() {
-    logout();
-    navigate("/login");
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="text-lg font-bold">🛒 Online Marketplace</span>
-        <div className="flex items-center gap-4">
-          <Link to="/cart" className="text-sm hover:underline">
-            🛍️ Cart
-          </Link>
-          <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
-          <button
-            onClick={handleLogout}
-            className="rounded bg-gray-600 px-3 py-1 text-sm hover:bg-gray-500"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="mx-auto max-w-6xl p-6">
-        {msg && (
-          <div className="mb-4 flex items-center justify-between rounded bg-blue-50 px-4 py-2 text-blue-800">
-            <span>{msg}</span>
-            <button onClick={() => setMsg("")} className="text-blue-400">
-              ✕
-            </button>
-          </div>
-        )}
-
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-bold">Products</h2>
-          <span className="text-sm text-gray-400">{products.length} items</span>
+          <h2 className="text-xl font-bold">
+            {categoryFilter ? filterName ?? "Products" : "Products"}
+          </h2>
+          {categoryFilter ? (
+            <Link to="/" className="text-sm text-blue-600 hover:underline">
+              Clear filter
+            </Link>
+          ) : (
+            <span className="text-sm text-gray-400">{shown.length} items</span>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => {
+          {shown.map((p) => {
             const outOfStock = p.stockQuantity <= 0;
             return (
               <div
@@ -123,9 +112,7 @@ export default function Shop() {
                     {p.description}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-lg font-bold text-blue-600">
-                      {p.price.toLocaleString()} SAR
-                    </span>
+                    <span className="text-lg font-bold text-blue-600">{formatOMR(p.price)}</span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

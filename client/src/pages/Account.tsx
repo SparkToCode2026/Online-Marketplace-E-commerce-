@@ -1,130 +1,117 @@
-import { useEffect, useState } from "react";
-import { apiFetch } from "../api";
-import { Alert, Spinner, Seal } from "../components/Ui";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
+import { useEffect, useState, type FormEvent } from "react";
+import { Navigate } from "react-router-dom";
+import { apiFetch, isLoggedIn } from "../api";
+import { useToast } from "../components/Toast";
+import NavBar from "../components/NavBar";
 
-// NOTE: check Swagger for a "current user" endpoint (e.g. GET /User/getCurrent
-// or /User/me) — preferred over getById since it needs no id. Fallback used here.
-export function Account() {
-  const { userId, role } = useAuth();
-  const { showToast } = useToast();
+interface User {
+  userId: number;
+  username: string;
+  email: string;
+  phonenumber: number;
+  role: string;
+}
 
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
+// Account page — view your details and update the editable ones. The backend's
+// /User/update only accepts username and phone, so email and role are read-only.
+export default function Account() {
+  const toast = useToast();
+  const userId = localStorage.getItem("userId");
+  const [user, setUser] = useState<User | null>(null);
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [original, setOriginal] = useState({ name: "", email: "" });
-  const [form, setForm] = useState({ name: "", email: "" });
 
   useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        const user = await apiFetch(`/User/getById/${userId}`);
-        if (cancelled) return;
-        const values = { name: user.name || "", email: user.email || "" };
-        setOriginal(values);
-        setForm(values);
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => { cancelled = true; };
-  }, [userId]);
+    apiFetch(`/User/getById?id=${userId}`)
+      .then((d) => {
+        const u = d as User;
+        setUser(u);
+        setUsername(u.username ?? "");
+        setPhone(String(u.phonenumber ?? ""));
+      })
+      .catch((e) => toast((e as Error).message, "error"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleSave = async (e) => {
+  if (!isLoggedIn()) return <Navigate to="/login" replace />;
+
+  async function save(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError("");
     try {
-      await apiFetch("/User/update", {
-        method: "PUT",
-        body: JSON.stringify({ id: userId, name: form.name.trim(), email: form.email.trim() }),
+      await apiFetch(`/User/update?id=${userId}`, "PUT", {
+        username: username.trim(),
+        phonenumber: Number(phone),
       });
-      setOriginal(form);
-      setEditing(false);
-      showToast("Account updated.");
+      localStorage.setItem("email", user?.email ?? "");
+      toast("Account updated.", "success");
     } catch (err) {
-      setError(err.message);
+      toast((err as Error).message, "error");
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleCancel = () => {
-    setForm(original);
-    setEditing(false);
-  };
+  }
 
   return (
-    <div style={{ maxWidth: 700 }}>
-      <div className="page-header">
-        <span className="page-eyebrow">Account</span>
-        <h1>My Account</h1>
-        <p className="text-muted-ledger mb-0">View and update your personal details.</p>
+    <div className="min-h-screen bg-gray-50">
+      <NavBar />
+      <div className="mx-auto max-w-xl p-6">
+        <h2 className="mb-4 text-2xl font-bold text-gray-900">My Account</h2>
+
+        {!user ? (
+          <p className="text-sm text-gray-400">Loading…</p>
+        ) : (
+          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
+            <label className="block text-sm">
+              <span className="text-gray-500">Full name</span>
+              <input
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </label>
+
+            <label className="block text-sm">
+              <span className="text-gray-500">Phone number</span>
+              <input
+                type="tel"
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                required
+              />
+            </label>
+
+            <label className="block text-sm">
+              <span className="text-gray-500">Email</span>
+              <input
+                className="mt-1 w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500"
+                value={user.email}
+                disabled
+              />
+            </label>
+
+            <div className="text-sm">
+              <span className="text-gray-500">Role</span>
+              <div className="mt-1">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                  {user.role}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              {saving ? "Saving…" : "Save changes"}
+            </button>
+          </form>
+        )}
       </div>
-
-      <Alert message={error} type="danger" onClose={() => setError("")} />
-
-      {loading ? (
-        <Spinner />
-      ) : (
-        <div className="card-ledger">
-          <div className="card-body">
-            <form onSubmit={handleSave}>
-              <div className="mb-3">
-                <label htmlFor="name" className="form-label">Full name</label>
-                <input
-                  id="name"
-                  className="form-control"
-                  disabled={!editing}
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                />
-              </div>
-              <div className="mb-3">
-                <label htmlFor="email" className="form-label">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  className="form-control"
-                  disabled={!editing}
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Role</label>
-                <div><Seal variant="role">{role || "—"}</Seal></div>
-              </div>
-
-              <div className="d-flex gap-2 mt-4">
-                {!editing && (
-                  <button type="button" className="btn btn-outline-ledger" onClick={() => setEditing(true)}>
-                    Edit details
-                  </button>
-                )}
-                {editing && (
-                  <>
-                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                      {saving ? "Saving…" : "Save changes"}
-                    </button>
-                    <button type="button" className="btn btn-link text-muted-ledger" onClick={handleCancel}>
-                      Cancel
-                    </button>
-                  </>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

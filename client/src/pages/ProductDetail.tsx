@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, logout, addCartLine, ensureCart } from "../api";
+import { useParams, Navigate, Link } from "react-router-dom";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
+import { useToast } from "../components/Toast";
+import NavBar from "../components/NavBar";
+import { ArrowLeftIcon } from "../components/icons";
 
 interface Product {
   productId: number;
@@ -16,11 +19,10 @@ interface Product {
 // Product detail page — Case 6, GET /Product/getById?id=.
 export default function ProductDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const toast = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [cartId, setCartId] = useState<number | null>(null);
   const [qty, setQty] = useState(1);
-  const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function ProductDetail() {
   async function addToCart() {
     if (!product) return;
     if (!cartId) {
-      setMsg("This account already has a cart. Register a new account for the full demo.");
+      toast("This account already has a cart. Register a new account for the full demo.", "error");
       return;
     }
     try {
@@ -46,41 +48,23 @@ export default function ProductDetail() {
         productId: product.productId,
         quantity: qty,
       });
-      for (let i = 0; i < qty; i++) {
-        addCartLine({ productId: product.productId, name: product.name, price: product.price });
-      }
-      setMsg(`Added ${qty} × "${product.name}" to the cart.`);
+      toast(`Added ${qty} × "${product.name}" to the cart.`, "success");
     } catch (e) {
-      setMsg((e as Error).message);
+      toast((e as Error).message, "error");
     }
-  }
-
-  function handleLogout() {
-    logout();
-    navigate("/login");
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="text-lg font-bold">🛒 Online Marketplace</span>
-        <div className="flex items-center gap-4">
-          <Link to="/cart" className="text-sm hover:underline">
-            🛍️ Cart
-          </Link>
-          <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
-          <button
-            onClick={handleLogout}
-            className="rounded bg-gray-600 px-3 py-1 text-sm hover:bg-gray-500"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="mx-auto max-w-5xl p-6">
-        <Link to="/" className="text-sm text-blue-600 hover:underline">
-          ← Back to products
+        <Link
+          to="/"
+          className="flex w-fit items-center gap-1 text-sm text-blue-600 hover:underline"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to products
         </Link>
 
         {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
@@ -119,19 +103,10 @@ export default function ProductDetail() {
               )}
 
               <p className="mt-4 text-2xl font-bold text-blue-600">
-                {product.price.toLocaleString()} SAR
+                {formatOMR(product.price)}
               </p>
 
               <p className="mt-4 leading-relaxed text-gray-600">{product.description}</p>
-
-              {msg && (
-                <div className="mt-4 flex items-center justify-between rounded bg-blue-50 px-4 py-2 text-sm text-blue-800">
-                  <span>{msg}</span>
-                  <button onClick={() => setMsg("")} className="text-blue-400">
-                    ✕
-                  </button>
-                </div>
-              )}
 
               <div className="mt-6 flex items-center gap-4">
                 <div className="flex items-center rounded-lg border border-gray-300">
