@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart, formatOMR } from "../api";
+import { useNavigate, Navigate, Link, useSearchParams } from "react-router-dom";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
-import { BrandIcon, CartIcon, AdminIcon } from "../components/icons";
+import NavBar from "../components/NavBar";
 
 // Product shape as returned by the backend
 interface Product {
@@ -12,13 +12,16 @@ interface Product {
   price: number;
   productUrl: string;
   stockQuantity: number;
+  categoryId: number;
   category?: { name: string };
 }
 
-// Shop page — lists products; the cart lives on its own page (/cart).
+// Shop page — lists products; supports an optional ?category= filter.
 export default function Shop() {
   const navigate = useNavigate();
   const toast = useToast();
+  const [searchParams] = useSearchParams();
+  const categoryFilter = searchParams.get("category");
   const [products, setProducts] = useState<Product[]>([]);
   const [cartId, setCartId] = useState<number | null>(null);
 
@@ -40,6 +43,11 @@ export default function Shop() {
 
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
 
+  const shown = categoryFilter
+    ? products.filter((p) => p.categoryId === Number(categoryFilter))
+    : products;
+  const filterName = shown[0]?.category?.name;
+
   async function addToCart(p: Product) {
     if (!cartId) {
       toast("This account already has a cart. Register a new account for the full demo.", "error");
@@ -53,50 +61,26 @@ export default function Shop() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="flex items-center gap-2 text-lg font-bold">
-          <BrandIcon className="h-6 w-6" />
-          Online Marketplace
-        </span>
-        <div className="flex items-center gap-4">
-          {isAdmin() && (
-            <Link
-              to="/admin"
-              className="flex items-center gap-1 text-sm text-amber-300 hover:underline"
-            >
-              <AdminIcon className="h-4 w-4" />
-              Admin
-            </Link>
-          )}
-          <Link to="/cart" className="flex items-center gap-1 text-sm hover:underline">
-            <CartIcon className="h-4 w-4" />
-            Cart
-          </Link>
-          <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
-          <button
-            onClick={handleLogout}
-            className="rounded bg-gray-600 px-3 py-1 text-sm hover:bg-gray-500"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="mx-auto max-w-6xl p-6">
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-xl font-bold">Products</h2>
-          <span className="text-sm text-gray-400">{products.length} items</span>
+          <h2 className="text-xl font-bold">
+            {categoryFilter ? filterName ?? "Products" : "Products"}
+          </h2>
+          {categoryFilter ? (
+            <Link to="/" className="text-sm text-blue-600 hover:underline">
+              Clear filter
+            </Link>
+          ) : (
+            <span className="text-sm text-gray-400">{shown.length} items</span>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => {
+          {shown.map((p) => {
             const outOfStock = p.stockQuantity <= 0;
             return (
               <div
@@ -128,9 +112,7 @@ export default function Shop() {
                     {p.description}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-lg font-bold text-blue-600">
-                      {formatOMR(p.price)}
-                    </span>
+                    <span className="text-lg font-bold text-blue-600">{formatOMR(p.price)}</span>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

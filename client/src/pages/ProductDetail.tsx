@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, logout, ensureCart, formatOMR } from "../api";
+import { useParams, Navigate, Link } from "react-router-dom";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
-import { BrandIcon, CartIcon, ArrowLeftIcon } from "../components/icons";
+import NavBar from "../components/NavBar";
+import { ArrowLeftIcon } from "../components/icons";
 
 interface Product {
   productId: number;
@@ -18,7 +19,6 @@ interface Product {
 // Product detail page — Case 6, GET /Product/getById?id=.
 export default function ProductDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const toast = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [cartId, setCartId] = useState<number | null>(null);
@@ -54,32 +54,9 @@ export default function ProductDetail() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="flex items-center gap-2 text-lg font-bold">
-          <BrandIcon className="h-6 w-6" />
-          Online Marketplace
-        </span>
-        <div className="flex items-center gap-4">
-          <Link to="/cart" className="flex items-center gap-1 text-sm hover:underline">
-            <CartIcon className="h-4 w-4" />
-            Cart
-          </Link>
-          <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
-          <button
-            onClick={handleLogout}
-            className="rounded bg-gray-600 px-3 py-1 text-sm hover:bg-gray-500"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="mx-auto max-w-5xl p-6">
         <Link

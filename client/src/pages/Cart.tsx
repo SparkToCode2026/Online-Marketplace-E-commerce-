@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart, formatOMR } from "../api";
+import { Navigate, Link } from "react-router-dom";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
-import { BrandIcon, CartIcon, AdminIcon, ArrowLeftIcon, TrashIcon } from "../components/icons";
+import NavBar from "../components/NavBar";
+import { CartIcon, TrashIcon } from "../components/icons";
 
 interface CartItem {
   cartItemId: number;
@@ -13,7 +14,6 @@ interface CartItem {
 
 // Cart page — reads the real cart from the backend and checks out.
 export default function Cart() {
-  const navigate = useNavigate();
   const toast = useToast();
   const [cartId, setCartId] = useState<number | null>(null);
   const [items, setItems] = useState<CartItem[]>([]);
@@ -80,43 +80,11 @@ export default function Cart() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   const total = items.reduce((s, i) => s + (i.product?.price ?? 0) * i.quantity, 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="flex items-center gap-2 text-lg font-bold">
-          <BrandIcon className="h-6 w-6" />
-          Online Marketplace
-        </span>
-        <div className="flex items-center gap-4">
-          {isAdmin() && (
-            <Link
-              to="/admin"
-              className="flex items-center gap-1 text-sm text-amber-300 hover:underline"
-            >
-              <AdminIcon className="h-4 w-4" />
-              Admin
-            </Link>
-          )}
-          <Link to="/" className="flex items-center gap-1 text-sm hover:underline">
-            <ArrowLeftIcon className="h-4 w-4" />
-            Products
-          </Link>
-          <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
-          <button
-            onClick={handleLogout}
-            className="rounded bg-gray-600 px-3 py-1 text-sm hover:bg-gray-500"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="mx-auto max-w-4xl p-6">
         <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-gray-900">

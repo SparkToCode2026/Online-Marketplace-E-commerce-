@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, isAdmin, logout, formatOMR } from "../api";
+import { Navigate } from "react-router-dom";
+import { apiFetch, isLoggedIn, isAdmin, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
-import { BrandIcon, ArrowLeftIcon } from "../components/icons";
+import NavBar from "../components/NavBar";
 
 interface Product {
   productId: number;
@@ -40,7 +40,6 @@ const emptyForm = {
 
 // Admin dashboard — full product CRUD (create/update/activate/delete).
 export default function Admin() {
-  const navigate = useNavigate();
   const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -130,35 +129,9 @@ export default function Admin() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
-        <span className="flex items-center gap-2 text-lg font-bold">
-          <BrandIcon className="h-6 w-6" />
-          Online Marketplace
-        </span>
-        <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-1 text-sm hover:underline">
-            <ArrowLeftIcon className="h-4 w-4" />
-            Storefront
-          </Link>
-          <span className="rounded bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-300">
-            Admin
-          </span>
-          <span className="text-sm text-gray-300">{localStorage.getItem("email")}</span>
-          <button
-            onClick={handleLogout}
-            className="rounded bg-gray-600 px-3 py-1 text-sm hover:bg-gray-500"
-          >
-            Logout
-          </button>
-        </div>
-      </nav>
+      <NavBar />
 
       <div className="mx-auto max-w-6xl p-6">
         <div className="mb-4 flex items-center justify-between">
