@@ -34,6 +34,11 @@ export function isLoggedIn() {
   return !!localStorage.getItem("token");
 }
 
+// Whether the logged-in user is an admin (role comes from the login response).
+export function isAdmin() {
+  return localStorage.getItem("role") === "Admin";
+}
+
 // Clear the session.
 export function logout() {
   localStorage.clear();

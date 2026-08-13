@@ -4,6 +4,7 @@ import Register from "./pages/Register";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import ProductDetail from "./pages/ProductDetail";
+import Admin from "./pages/Admin";
 
 // Routes: each page lives in its own file under src/pages.
 export default function App() {
@@ -11,6 +12,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Shop />} />
       <Route path="/product/:id" element={<ProductDetail />} />
+      <Route path="/admin" element={<Admin />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />

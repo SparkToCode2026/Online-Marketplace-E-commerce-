@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, logout, addCartLine, ensureCart } from "../api";
+import { apiFetch, isLoggedIn, isAdmin, logout, addCartLine, ensureCart } from "../api";
+import { useToast } from "../components/Toast";
 
 // Product shape as returned by the backend
 interface Product {
@@ -16,9 +17,9 @@ interface Product {
 // Shop page — lists products; the cart lives on its own page (/cart).
 export default function Shop() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [cartId, setCartId] = useState<number | null>(null);
-  const [msg, setMsg] = useState("");
 
   // React.StrictMode runs effects twice in development to surface bugs.
   // Without this guard, two concurrent POST /Cart/create calls race: the
@@ -31,7 +32,7 @@ export default function Shop() {
 
     apiFetch("/Product/all")
       .then((data) => setProducts(data as Product[]))
-      .catch((e) => setMsg((e as Error).message));
+      .catch((e) => toast((e as Error).message, "error"));
     ensureCart().then(setCartId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -40,15 +41,15 @@ export default function Shop() {
 
   async function addToCart(p: Product) {
     if (!cartId) {
-      setMsg("This account already has a cart. Register a new account for the full demo.");
+      toast("This account already has a cart. Register a new account for the full demo.", "error");
       return;
     }
     try {
       await apiFetch("/CartItem/add", "POST", { cartId, productId: p.productId, quantity: 1 });
       addCartLine({ productId: p.productId, name: p.name, price: p.price });
-      setMsg(`Added "${p.name}" to the cart.`);
+      toast(`Added "${p.name}" to the cart.`, "success");
     } catch (e) {
-      setMsg((e as Error).message);
+      toast((e as Error).message, "error");
     }
   }
 
@@ -62,6 +63,11 @@ export default function Shop() {
       <nav className="flex items-center justify-between bg-gray-800 px-6 py-4 text-white">
         <span className="text-lg font-bold">🛒 Online Marketplace</span>
         <div className="flex items-center gap-4">
+          {isAdmin() && (
+            <Link to="/admin" className="text-sm text-amber-300 hover:underline">
+              ⚙️ Admin
+            </Link>
+          )}
           <Link to="/cart" className="text-sm hover:underline">
             🛍️ Cart
           </Link>
@@ -76,15 +82,6 @@ export default function Shop() {
       </nav>
 
       <div className="mx-auto max-w-6xl p-6">
-        {msg && (
-          <div className="mb-4 flex items-center justify-between rounded bg-blue-50 px-4 py-2 text-blue-800">
-            <span>{msg}</span>
-            <button onClick={() => setMsg("")} className="text-blue-400">
-              ✕
-            </button>
-          </div>
-        )}
-
         <div className="mb-4 flex items-baseline justify-between">
           <h2 className="text-xl font-bold">Products</h2>
           <span className="text-sm text-gray-400">{products.length} items</span>
