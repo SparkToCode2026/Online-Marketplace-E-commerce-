@@ -29,6 +29,16 @@ export async function apiFetch(path: string, method = "GET", body: unknown = nul
   return data;
 }
 
+// Formats a price as Omani Rial. OMR is subdivided into 1000 baisa, so
+// amounts are conventionally shown with three decimals (e.g. 4,500.000 OMR).
+export function formatOMR(amount: number): string {
+  const value = amount.toLocaleString(undefined, {
+    minimumFractionDigits: 3,
+    maximumFractionDigits: 3,
+  });
+  return `${value} OMR`;
+}
+
 // Whether a user is currently logged in.
 export function isLoggedIn() {
   return !!localStorage.getItem("token");

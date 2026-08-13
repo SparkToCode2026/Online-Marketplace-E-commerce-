@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, logout, ensureCart } from "../api";
+import { apiFetch, isLoggedIn, logout, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import { BrandIcon, CartIcon, ArrowLeftIcon } from "../components/icons";
 
@@ -126,7 +126,7 @@ export default function ProductDetail() {
               )}
 
               <p className="mt-4 text-2xl font-bold text-blue-600">
-                {product.price.toLocaleString()} SAR
+                {formatOMR(product.price)}
               </p>
 
               <p className="mt-4 leading-relaxed text-gray-600">{product.description}</p>

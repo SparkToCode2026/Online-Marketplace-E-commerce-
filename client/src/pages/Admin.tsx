@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, isAdmin, logout } from "../api";
+import { apiFetch, isLoggedIn, isAdmin, logout, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import { BrandIcon, ArrowLeftIcon } from "../components/icons";
 
@@ -200,7 +200,7 @@ export default function Admin() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-gray-500">{p.category?.name ?? "—"}</td>
-                  <td className="px-4 py-3 font-medium">{p.price.toLocaleString()} SAR</td>
+                  <td className="px-4 py-3 font-medium">{formatOMR(p.price)}</td>
                   <td className="px-4 py-3">{p.stockQuantity}</td>
                   <td className="px-4 py-3">
                     {p.isActive ? (
@@ -272,7 +272,7 @@ export default function Admin() {
               />
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-xs text-gray-500">
-                  Price (SAR)
+                  Price (OMR)
                   <input
                     type="number"
                     min={0}

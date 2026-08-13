@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart } from "../api";
+import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import { BrandIcon, CartIcon, AdminIcon, ArrowLeftIcon, TrashIcon } from "../components/icons";
 
@@ -153,7 +153,7 @@ export default function Cart() {
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{i.product?.name}</p>
                     <p className="text-sm text-gray-400">
-                      {(i.product?.price ?? 0).toLocaleString()} SAR each
+                      {formatOMR(i.product?.price ?? 0)} each
                     </p>
                   </div>
 
@@ -174,7 +174,7 @@ export default function Cart() {
                   </div>
 
                   <span className="w-24 text-right font-semibold text-gray-900">
-                    {((i.product?.price ?? 0) * i.quantity).toLocaleString()} SAR
+                    {formatOMR((i.product?.price ?? 0) * i.quantity)}
                   </span>
 
                   <button
@@ -196,7 +196,7 @@ export default function Cart() {
               </div>
               <div className="flex justify-between py-3 text-lg font-bold">
                 <span>Total</span>
-                <span>{total.toLocaleString()} SAR</span>
+                <span>{formatOMR(total)}</span>
               </div>
 
               <input

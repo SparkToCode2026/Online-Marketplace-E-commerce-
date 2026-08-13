@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart } from "../api";
+import { apiFetch, isLoggedIn, isAdmin, logout, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import { BrandIcon, CartIcon, AdminIcon } from "../components/icons";
 
@@ -129,7 +129,7 @@ export default function Shop() {
                   </p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-lg font-bold text-blue-600">
-                      {p.price.toLocaleString()} SAR
+                      {formatOMR(p.price)}
                     </span>
                     <button
                       onClick={(e) => {
