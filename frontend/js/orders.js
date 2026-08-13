@@ -285,9 +285,167 @@ async function initOrderDetailPage() {
   }
 }
 
+// ---------------------------- admin-orders.html ----------------------------
+
+// The Checkout endpoint is the only place that sets a status today ("Pending"), and there's
+// no enum/lookup endpoint for the rest — these are a reasonable guess at what updateStatus
+// expects. Confirm the exact strings in Swagger before relying on this list.
+const ORDER_STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+
+async function initAdminOrdersPage() {
+  if (!requireAdmin()) return;
+
+  const tableEl = document.getElementById('admin-orders-table');
+  const statsEl = document.getElementById('order-stats');
+  const revenueEl = document.getElementById('revenue-by-product');
+
+  let revenueRows = [];
+  let revenueSort = { key: 'revenue', dir: 'desc' };
+
+  async function loadOrders() {
+    showSpinner(tableEl);
+    try {
+      const orders = await apiFetch('/Order/all');
+      renderOrders(orders);
+    } catch (err) {
+      showAlert(tableEl, err.message);
+    }
+  }
+
+  function renderOrders(orders) {
+    const rows = orders
+      .slice()
+      .sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate))
+      .map(o => `
+        <tr data-order-id="${o.orderId}">
+          <td>#${o.orderId}</td>
+          <td>${o.userId}</td>
+          <td>${formatDate(o.orderDate)}</td>
+          <td class="text-end">${formatMoney(o.totalAmount)}</td>
+          <td>
+            <select class="form-select form-select-sm status-select">
+              ${ORDER_STATUSES.map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td><a class="btn btn-sm btn-outline-primary" href="order-detail.html?id=${o.orderId}">View</a></td>
+        </tr>`).join('');
+
+    tableEl.innerHTML = `
+      <table class="table table-hover align-middle">
+        <thead><tr><th>Order #</th><th>User</th><th>Date</th><th class="text-end">Total</th><th>Status</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    tableEl.querySelectorAll('.status-select').forEach(select => {
+      const original = select.value;
+      select.addEventListener('change', async (e) => {
+        const id = e.target.closest('tr').dataset.orderId;
+        const newStatus = e.target.value;
+        select.disabled = true;
+        try {
+          const qs = new URLSearchParams({ id, status: newStatus });
+          await apiFetch(`/Order/updateStatus?${qs.toString()}`, 'PUT');
+          loadStats();
+        } catch (err) {
+          alert(err.message);
+          select.value = original;
+        } finally {
+          select.disabled = false;
+        }
+      });
+    });
+  }
+
+  async function loadStats() {
+    showSpinner(statsEl);
+    try {
+      const stats = await apiFetch('/Order/statsByStatus');
+      renderStats(stats);
+    } catch (err) {
+      showAlert(statsEl, err.message);
+    }
+  }
+
+  function renderStats(stats) {
+    const maxRevenue = Math.max(1, ...stats.map(s => s.totalRevenue));
+    statsEl.innerHTML = stats.map(s => `
+      <div class="col-md-3 mb-3">
+        <div class="card h-100">
+          <div class="card-body">
+            <h6 class="card-title">${s.status}</h6>
+            <p class="mb-1">${s.orderCount} order(s)</p>
+            <p class="mb-2">${formatMoney(s.totalRevenue)}</p>
+            <div class="progress" role="progressbar" aria-label="${s.status} revenue share">
+              <div class="progress-bar" style="width: ${(s.totalRevenue / maxRevenue) * 100}%"></div>
+            </div>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  // No single endpoint returns product name + units sold + revenue together, so this
+  // aggregates client-side from /OrderItem/all (each item already includes its product).
+  async function loadRevenueByProduct() {
+    showSpinner(revenueEl);
+    try {
+      const items = await apiFetch('/OrderItem/all');
+      const grouped = new Map();
+      for (const i of items) {
+        const name = i.product ? i.product.name : `Product #${i.productId}`;
+        const entry = grouped.get(i.productId) || { name, unitsSold: 0, revenue: 0 };
+        entry.unitsSold += i.quantity;
+        entry.revenue += i.unitPrice * i.quantity;
+        grouped.set(i.productId, entry);
+      }
+      revenueRows = [...grouped.values()];
+      renderRevenue();
+    } catch (err) {
+      showAlert(revenueEl, err.message);
+    }
+  }
+
+  function renderRevenue() {
+    const dir = revenueSort.dir === 'asc' ? 1 : -1;
+    const sorted = revenueRows.slice().sort((a, b) => (a[revenueSort.key] > b[revenueSort.key] ? dir : -dir));
+
+    const rows = sorted.map(r => `
+      <tr>
+        <td>${r.name}</td>
+        <td class="text-end">${r.unitsSold}</td>
+        <td class="text-end">${formatMoney(r.revenue)}</td>
+      </tr>`).join('');
+
+    revenueEl.innerHTML = `
+      <table class="table table-sm table-hover">
+        <thead>
+          <tr>
+            <th data-sort="name" role="button">Product</th>
+            <th data-sort="unitsSold" class="text-end" role="button">Units sold</th>
+            <th data-sort="revenue" class="text-end" role="button">Revenue</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    revenueEl.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        revenueSort.dir = (revenueSort.key === key && revenueSort.dir === 'desc') ? 'asc' : 'desc';
+        revenueSort.key = key;
+        renderRevenue();
+      });
+    });
+  }
+
+  loadOrders();
+  loadStats();
+  loadRevenueByProduct();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof renderNav === 'function') renderNav();
   if (document.getElementById('checkout-page')) initCheckoutPage();
   if (document.getElementById('my-orders-page')) initMyOrdersPage();
   if (document.getElementById('order-detail-page')) initOrderDetailPage();
+  if (document.getElementById('admin-orders-page')) initAdminOrdersPage();
 });
