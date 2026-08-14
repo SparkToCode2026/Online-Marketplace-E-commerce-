@@ -4,6 +4,7 @@ import { apiFetch, isLoggedIn, isAdmin, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
 import AdminOrders from "../components/AdminOrders";
+import AdminCoupons from "../components/AdminCoupons";
 
 interface Product {
   productId: number;
@@ -54,8 +55,8 @@ export default function Admin() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
 
-  // Which view is showing: product management or the orders/revenue table.
-  const [tab, setTab] = useState<"products" | "orders">("products");
+  // Which admin view is showing.
+  const [tab, setTab] = useState<"products" | "orders" | "coupons">("products");
 
   // editing === null means the modal is closed. A product means "edit that
   // one"; the sentinel below means "add a new one".
@@ -154,9 +155,13 @@ export default function Admin() {
           <button onClick={() => setTab("orders")} className={tabClass(tab === "orders")}>
             Orders
           </button>
+          <button onClick={() => setTab("coupons")} className={tabClass(tab === "coupons")}>
+            Coupons
+          </button>
         </div>
 
         {tab === "orders" && <AdminOrders />}
+        {tab === "coupons" && <AdminCoupons />}
 
         {tab === "products" && (
           <>
