@@ -7,6 +7,7 @@ import AdminOrders from "../components/AdminOrders";
 import AdminCoupons from "../components/AdminCoupons";
 import AdminPayments from "../components/AdminPayments";
 import AdminShipping from "../components/AdminShipping";
+import AdminOrderItems from "../components/AdminOrderItems";
 
 interface Product {
   productId: number;
@@ -59,7 +60,7 @@ export default function Admin() {
 
   // Which admin view is showing.
   const [tab, setTab] = useState<
-    "products" | "orders" | "coupons" | "payments" | "shipping"
+    "products" | "orders" | "coupons" | "payments" | "shipping" | "items"
   >("products");
 
   // editing === null means the modal is closed. A product means "edit that
@@ -168,12 +169,16 @@ export default function Admin() {
           <button onClick={() => setTab("shipping")} className={tabClass(tab === "shipping")}>
             Shipping
           </button>
+          <button onClick={() => setTab("items")} className={tabClass(tab === "items")}>
+            Items
+          </button>
         </div>
 
         {tab === "orders" && <AdminOrders />}
         {tab === "coupons" && <AdminCoupons />}
         {tab === "payments" && <AdminPayments />}
         {tab === "shipping" && <AdminShipping />}
+        {tab === "items" && <AdminOrderItems />}
 
         {tab === "products" && (
           <>
