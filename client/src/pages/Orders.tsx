@@ -34,6 +34,14 @@ interface Product {
   productUrl: string;
 }
 
+// A payment as returned by GET /Payment/all — one per order (if paid at all).
+interface Payment {
+  paymentId: number;
+  orderId: number;
+  method: string;
+  status: string;
+}
+
 // "My Orders" — the customer's own order history.
 export default function Orders() {
   const toast = useToast();
@@ -41,6 +49,12 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   // productId -> product, so a line item can show "Wireless Mouse" instead of "#42".
   const [productMap, setProductMap] = useState<Record<number, Product>>({});
+  // orderId -> its payment, so each card knows whether it's already paid.
+  const [paymentByOrder, setPaymentByOrder] = useState<Record<number, Payment>>({});
+  // orderId -> the method chosen in its "pay" dropdown (before paying).
+  const [method, setMethod] = useState<Record<number, string>>({});
+  // The order currently being paid, so we can disable just that button.
+  const [payingId, setPayingId] = useState<number | null>(null);
 
   // Guard against React 18 StrictMode running effects twice in dev: the ref
   // makes sure we only fire the initial load once.
@@ -58,17 +72,23 @@ export default function Orders() {
   async function load() {
     setLoading(true);
     try {
-      // Two independent requests, fired together and awaited as a pair so the
-      // page renders once both are ready (fewer flickers than chaining them).
-      const [rawOrders, rawProducts] = await Promise.all([
+      // Three independent requests, fired together and awaited as a group so the
+      // page renders once everything is ready (fewer flickers than chaining them).
+      const [rawOrders, rawProducts, rawPayments] = await Promise.all([
         apiFetch("/Order/all") as Promise<Order[]>,
         apiFetch("/Product/all") as Promise<Product[]>,
+        apiFetch("/Payment/all") as Promise<Payment[]>,
       ]);
 
       // Build the id -> product lookup once, up front.
       const map: Record<number, Product> = {};
       for (const p of rawProducts) map[p.productId] = p;
       setProductMap(map);
+
+      // Build an orderId -> payment lookup (one payment per order at most).
+      const payMap: Record<number, Payment> = {};
+      for (const pay of rawPayments) payMap[pay.orderId] = pay;
+      setPaymentByOrder(payMap);
 
       // /Order/all returns EVERY user's orders (the backend has no "my orders"
       // endpoint yet), so we filter to the logged-in user here. NOTE: this is a
@@ -84,6 +104,26 @@ export default function Orders() {
       toast((e as Error).message, "error");
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Pay for an order. The backend requires the amount to EXACTLY equal the
+  // order's total, so we send o.totalAmount rather than trusting any input.
+  async function pay(o: Order) {
+    setPayingId(o.orderId);
+    try {
+      await apiFetch("/Payment/add", "POST", {
+        orderId: o.orderId,
+        amount: o.totalAmount,
+        method: method[o.orderId] ?? "Card",
+        status: "Completed",
+      });
+      toast(`Payment for order #${o.orderId} recorded.`, "success");
+      load();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    } finally {
+      setPayingId(null);
     }
   }
 
@@ -164,6 +204,34 @@ export default function Orders() {
                     {o.coupon.discountPercent}% off
                   </p>
                 )}
+
+                {/* Payment row: a green "Paid" badge once a payment exists,
+                    otherwise a method picker + a Pay button that records one. */}
+                <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                  {paymentByOrder[o.orderId] ? (
+                    <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                      Paid · {paymentByOrder[o.orderId].method}
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={method[o.orderId] ?? "Card"}
+                        onChange={(e) => setMethod({ ...method, [o.orderId]: e.target.value })}
+                        className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="Card">Card</option>
+                        <option value="Cash">Cash</option>
+                      </select>
+                      <button
+                        onClick={() => pay(o)}
+                        disabled={payingId === o.orderId}
+                        className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+                      >
+                        {payingId === o.orderId ? "Paying…" : `Pay ${formatOMR(o.totalAmount)}`}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>

@@ -5,6 +5,7 @@ import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
 import AdminOrders from "../components/AdminOrders";
 import AdminCoupons from "../components/AdminCoupons";
+import AdminPayments from "../components/AdminPayments";
 
 interface Product {
   productId: number;
@@ -56,7 +57,7 @@ export default function Admin() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
 
   // Which admin view is showing.
-  const [tab, setTab] = useState<"products" | "orders" | "coupons">("products");
+  const [tab, setTab] = useState<"products" | "orders" | "coupons" | "payments">("products");
 
   // editing === null means the modal is closed. A product means "edit that
   // one"; the sentinel below means "add a new one".
@@ -158,10 +159,14 @@ export default function Admin() {
           <button onClick={() => setTab("coupons")} className={tabClass(tab === "coupons")}>
             Coupons
           </button>
+          <button onClick={() => setTab("payments")} className={tabClass(tab === "payments")}>
+            Payments
+          </button>
         </div>
 
         {tab === "orders" && <AdminOrders />}
         {tab === "coupons" && <AdminCoupons />}
+        {tab === "payments" && <AdminPayments />}
 
         {tab === "products" && (
           <>
