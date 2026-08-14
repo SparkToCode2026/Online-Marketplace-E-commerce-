@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { apiFetch, isLoggedIn, isAdmin, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
+import AdminOrders from "../components/AdminOrders";
 
 interface Product {
   productId: number;
@@ -38,12 +39,23 @@ const emptyForm = {
   vendorProfileId: 0,
 };
 
-// Admin dashboard — full product CRUD (create/update/activate/delete).
+// Styling for a tab button: filled blue when it's the active view, plain
+// otherwise. Kept as a helper so both tabs stay visually in sync.
+function tabClass(active: boolean) {
+  return `rounded-lg px-4 py-2 text-sm font-medium transition ${
+    active ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+  }`;
+}
+
+// Admin dashboard — product CRUD plus an orders/revenue view, switched by tabs.
 export default function Admin() {
   const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
+
+  // Which view is showing: product management or the orders/revenue table.
+  const [tab, setTab] = useState<"products" | "orders">("products");
 
   // editing === null means the modal is closed. A product means "edit that
   // one"; the sentinel below means "add a new one".
@@ -134,6 +146,20 @@ export default function Admin() {
       <NavBar />
 
       <div className="mx-auto max-w-6xl p-6">
+        {/* Tab bar — switch between product management and the orders view. */}
+        <div className="mb-5 flex gap-2">
+          <button onClick={() => setTab("products")} className={tabClass(tab === "products")}>
+            Products
+          </button>
+          <button onClick={() => setTab("orders")} className={tabClass(tab === "orders")}>
+            Orders
+          </button>
+        </div>
+
+        {tab === "orders" && <AdminOrders />}
+
+        {tab === "products" && (
+          <>
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Products</h1>
@@ -220,6 +246,8 @@ export default function Admin() {
             </tbody>
           </table>
         </div>
+          </>
+        )}
       </div>
 
       {editing && (
