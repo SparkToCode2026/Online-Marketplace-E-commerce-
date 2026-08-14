@@ -42,6 +42,12 @@ interface Payment {
   status: string;
 }
 
+// A shipping record as returned by GET /Shipping/all — one per order (if any).
+interface Shipping {
+  orderId: number;
+  status: string | null;
+}
+
 // "My Orders" — the customer's own order history.
 export default function Orders() {
   const toast = useToast();
@@ -51,6 +57,8 @@ export default function Orders() {
   const [productMap, setProductMap] = useState<Record<number, Product>>({});
   // orderId -> its payment, so each card knows whether it's already paid.
   const [paymentByOrder, setPaymentByOrder] = useState<Record<number, Payment>>({});
+  // orderId -> its shipping record, so each card can show a delivery status.
+  const [shippingByOrder, setShippingByOrder] = useState<Record<number, Shipping>>({});
   // orderId -> the method chosen in its "pay" dropdown (before paying).
   const [method, setMethod] = useState<Record<number, string>>({});
   // The order currently being paid, so we can disable just that button.
@@ -74,10 +82,11 @@ export default function Orders() {
     try {
       // Three independent requests, fired together and awaited as a group so the
       // page renders once everything is ready (fewer flickers than chaining them).
-      const [rawOrders, rawProducts, rawPayments] = await Promise.all([
+      const [rawOrders, rawProducts, rawPayments, rawShipping] = await Promise.all([
         apiFetch("/Order/all") as Promise<Order[]>,
         apiFetch("/Product/all") as Promise<Product[]>,
         apiFetch("/Payment/all") as Promise<Payment[]>,
+        apiFetch("/Shipping/all") as Promise<Shipping[]>,
       ]);
 
       // Build the id -> product lookup once, up front.
@@ -89,6 +98,11 @@ export default function Orders() {
       const payMap: Record<number, Payment> = {};
       for (const pay of rawPayments) payMap[pay.orderId] = pay;
       setPaymentByOrder(payMap);
+
+      // Build an orderId -> shipping lookup (one shipment per order at most).
+      const shipMap: Record<number, Shipping> = {};
+      for (const s of rawShipping) shipMap[s.orderId] = s;
+      setShippingByOrder(shipMap);
 
       // /Order/all returns EVERY user's orders (the backend has no "my orders"
       // endpoint yet), so we filter to the logged-in user here. NOTE: this is a
@@ -230,6 +244,17 @@ export default function Orders() {
                         {payingId === o.orderId ? "Paying…" : `Pay ${formatOMR(o.totalAmount)}`}
                       </button>
                     </div>
+                  )}
+
+                  {/* Read-only shipping status (managed by an admin). Only shows
+                      once a shipment exists for this order. */}
+                  {shippingByOrder[o.orderId] && (
+                    <span className="text-xs text-gray-500">
+                      Shipping:{" "}
+                      <span className="font-medium text-gray-700">
+                        {shippingByOrder[o.orderId].status ?? "Preparing"}
+                      </span>
+                    </span>
                   )}
                 </div>
               </div>
