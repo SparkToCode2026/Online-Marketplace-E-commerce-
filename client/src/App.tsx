@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
+import Orders from "./pages/Orders";
 import ProductDetail from "./pages/ProductDetail";
 import Admin from "./pages/Admin";
 import Categories from "./pages/Categories";
@@ -22,6 +23,7 @@ export default function App() {
       <Route path="/vendor/products" element={<VendorProducts />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/cart" element={<Cart />} />
+      <Route path="/orders" element={<Orders />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
     </Routes>

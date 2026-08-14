@@ -12,6 +12,7 @@ export default function NavBar() {
     { to: "/", label: "Products", end: true },
     { to: "/categories", label: "Categories" },
     { to: "/cart", label: "Cart" },
+    { to: "/orders", label: "My Orders" },
     { to: "/account", label: "Account" },
   ];
   if (role === "Vendor") {
