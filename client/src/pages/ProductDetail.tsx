@@ -3,6 +3,7 @@ import { useParams, Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
+import ProductReviews from "../components/ProductReviews";
 import { ArrowLeftIcon } from "../components/icons";
 
 interface Product {
@@ -72,6 +73,7 @@ export default function ProductDetail() {
         {!product && !error && <p className="mt-4 text-sm text-gray-400">Loading…</p>}
 
         {product && (
+          <>
           <div className="mt-4 grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="aspect-square overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
               <img src={product.productUrl} alt={product.name} className="h-full w-full object-cover" />
@@ -134,6 +136,10 @@ export default function ProductDetail() {
               </div>
             </div>
           </div>
+
+          {/* Reviews for this product: average, list, and a write-a-review form. */}
+          <ProductReviews productId={product.productId} />
+          </>
         )}
       </div>
     </div>
