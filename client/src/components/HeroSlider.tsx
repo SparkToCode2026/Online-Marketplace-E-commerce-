@@ -10,9 +10,20 @@ interface Slide {
   cta: string;
   href: string;
   image: string;
+  // Product-promo slides drop the photo wash so the item stays crisp and bold.
+  crisp?: boolean;
 }
 
 const SLIDES: Slide[] = [
+  {
+    eyebrow: "Featured product",
+    title: "Protect your tablet",
+    subtitle: "Tablet Air 10 — stylus support and all-day battery in one sleek device.",
+    cta: "Shop now",
+    href: "#products",
+    image: "https://images.unsplash.com/photo-1623126908029-58cb08a2b272?w=800",
+    crisp: true,
+  },
   {
     eyebrow: "Online Marketplace",
     title: "Your one-stop market",
@@ -87,17 +98,19 @@ export default function HeroSlider() {
                 </a>
               </div>
 
-              <div className="relative hidden h-80 w-80 shrink-0 items-center justify-center lg:flex">
-                <div className="absolute h-80 w-80 rounded-full border-2 border-white/30" />
-                <div className="absolute h-60 w-60 rounded-full border-2 border-white/20" />
-                <div className="relative flex h-72 w-72 items-center justify-center overflow-hidden rounded-full bg-page shadow-xl">
+              <div className="relative hidden h-96 w-96 shrink-0 items-center justify-center lg:flex">
+                <div className="absolute h-96 w-96 rounded-full border-2 border-white/30" />
+                <div className="absolute h-72 w-72 rounded-full border-2 border-white/20" />
+                <div className="relative flex h-80 w-80 items-center justify-center overflow-hidden rounded-full bg-page shadow-xl">
                   <img
                     src={s.image}
                     alt=""
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
-                    className="h-[85%] w-[85%] rounded-full object-cover saturate-[.85] brightness-[.97]"
+                    className={`h-[90%] w-[90%] rounded-full object-cover ${
+                      s.crisp ? "" : "saturate-[.85] brightness-[.97]"
+                    }`}
                   />
                 </div>
               </div>
