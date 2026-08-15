@@ -67,18 +67,23 @@ export default function Shop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Jump back to page 1 whenever the category filter or search query changes.
+  // Jump back to page 1 whenever the category, search, or price filter changes.
   useEffect(() => {
     setPage(1);
-  }, [categoryFilter, searchParams.get("search")]);
+  }, [categoryFilter, searchParams.get("search"), searchParams.get("maxPrice")]);
 
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
 
   const searchQuery = (searchParams.get("search") ?? "").trim().toLowerCase();
+  // Max-price filter: keep the raw string for the input, and a parsed number
+  // for comparing. Empty string means "no cap", so every product passes.
+  const maxPrice = searchParams.get("maxPrice") ?? "";
+  const maxPriceNum = maxPrice ? Number(maxPrice) : null;
   const shown = products.filter(
     (p) =>
       (!categoryFilter || p.categoryId === Number(categoryFilter)) &&
-      (!searchQuery || p.name.toLowerCase().includes(searchQuery)),
+      (!searchQuery || p.name.toLowerCase().includes(searchQuery)) &&
+      (maxPriceNum === null || p.price <= maxPriceNum),
   );
   const activeName = categories.find((c) => String(c.categoryId) === categoryFilter)?.name;
 
@@ -107,6 +112,15 @@ export default function Shop() {
     const params = new URLSearchParams(searchParams);
     if (value) params.set("search", value);
     else params.delete("search");
+    setSearchParams(params, { replace: true });
+  }
+
+  // Same idea as updateSearch, but for the max-price cap. A blank value removes
+  // the cap entirely; anything else is stored as-is in the ?maxPrice= param.
+  function updateMaxPrice(value: string) {
+    const params = new URLSearchParams(searchParams);
+    if (value) params.set("maxPrice", value);
+    else params.delete("maxPrice");
     setSearchParams(params, { replace: true });
   }
 
@@ -175,6 +189,30 @@ export default function Shop() {
                   </Link>
                 ))}
               </nav>
+            </div>
+
+            {/* Max-price filter: show only products at or below the entered price. */}
+            <div className="mt-4 rounded-2xl bg-white/60 p-4 shadow-sm">
+              <h3 className="mb-3 px-3 font-heading text-lg">Max price</h3>
+              <div className="flex items-center gap-2 rounded-full border border-ink/15 bg-white px-3.5 py-2">
+                <input
+                  type="number"
+                  min="0"
+                  value={maxPrice}
+                  onChange={(e) => updateMaxPrice(e.target.value)}
+                  placeholder="e.g. 50"
+                  className="w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
+                />
+                <span className="shrink-0 text-xs font-medium text-ink/50">OMR</span>
+              </div>
+              {maxPrice && (
+                <button
+                  onClick={() => updateMaxPrice("")}
+                  className="mt-2 px-3 text-xs font-medium text-accent-700 hover:underline"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </aside>
 
