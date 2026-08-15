@@ -142,13 +142,43 @@ namespace Online_Marketplace__E_commerce_.Controllers
         {
             var demand = _context.CartItems
                 .GroupBy(ci => ci.productId)
-                .Select(g => new { 
-                    productId = g.Key, 
-                    totalQuantity = g.Sum(ci => ci.quantity) 
+                .Select(g => new {
+                    productId = g.Key,
+                    totalQuantity = g.Sum(ci => ci.quantity)
                 })
                 .OrderByDescending(x => x.totalQuantity)
                 .ToList();
             return Ok(demand);
+        }
+
+        // Case 9 — Filter cart items (admin) by cart, by product, and/or by
+        // whether the product is still active. status: "active" | "inactive".
+        [HttpGet("filter")]
+        public IActionResult FilterCartItems(int? cartId, int? productId, string? status)
+        {
+            var query = _context.CartItems
+                .Include(ci => ci.cart)
+                .Include(ci => ci.product)
+                .AsQueryable();
+
+            if (cartId.HasValue)
+                query = query.Where(ci => ci.cartId == cartId.Value);
+
+            if (productId.HasValue)
+                query = query.Where(ci => ci.productId == productId.Value);
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = status.ToLower() switch
+                {
+                    "active" => query.Where(ci => ci.product.isActive),
+                    "inactive" => query.Where(ci => !ci.product.isActive),
+                    _ => query
+                };
+            }
+
+            var items = query.ToList();
+            return Ok(items.Select(ci => ci.ToDto()));
         }
     }
 }
