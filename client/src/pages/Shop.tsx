@@ -4,6 +4,7 @@ import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
 import HeroSlider from "../components/HeroSlider";
+import Pagination from "../components/Pagination";
 import { SupportIcon, ShieldCheckIcon, TruckIcon, InfoIcon, SearchIcon } from "../components/icons";
 import { Stars } from "../components/ProductReviews";
 
@@ -46,6 +47,7 @@ export default function Shop() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [cartId, setCartId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   const startedRef = useRef(false);
   useEffect(() => {
@@ -65,6 +67,11 @@ export default function Shop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Jump back to page 1 whenever the category filter or search query changes.
+  useEffect(() => {
+    setPage(1);
+  }, [categoryFilter, searchParams.get("search")]);
+
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
 
   const searchQuery = (searchParams.get("search") ?? "").trim().toLowerCase();
@@ -74,6 +81,11 @@ export default function Shop() {
       (!searchQuery || p.name.toLowerCase().includes(searchQuery)),
   );
   const activeName = categories.find((c) => String(c.categoryId) === categoryFilter)?.name;
+
+  const PAGE_SIZE = 10;
+  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paged = shown.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // One pass over all reviews to get each product's {avg, count} for the grid.
   const ratingsByProduct = new Map<number, { total: number; count: number }>();
@@ -125,7 +137,7 @@ export default function Shop() {
                 <f.Icon className="h-5 w-5" />
               </span>
               <div>
-                <h3 className="text-sm font-bold">{f.title}</h3>
+                <h3 className="text-sm ">{f.title}</h3>
                 <p className="text-xs text-ink/60">{f.text}</p>
               </div>
             </div>
@@ -175,7 +187,7 @@ export default function Shop() {
             </div>
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {shown.map((p) => {
+              {paged.map((p) => {
                 const outOfStock = p.stockQuantity <= 0;
                 const rating = ratingsByProduct.get(p.productId);
                 const avg = rating ? rating.total / rating.count : null;
@@ -200,11 +212,11 @@ export default function Shop() {
 
                     <div className="flex flex-grow flex-col p-4">
                       {p.category && (
-                        <span className="text-xs font-semibold uppercase tracking-wide text-accent-700">
+                        <span className="text-xs font-normal uppercase tracking-wide text-accent-700">
                           {p.category.name}
                         </span>
                       )}
-                      <h3 className="mt-0.5 font-bold">{p.name}</h3>
+                      <h3 className="mt-0.5">{p.name}</h3>
 
                       {avg !== null && rating && (
                         <div className="mt-1 flex items-center gap-1.5">
@@ -235,6 +247,8 @@ export default function Shop() {
                 );
               })}
             </div>
+
+            <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
           </div>
         </div>
       </div>
