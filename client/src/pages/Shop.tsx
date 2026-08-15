@@ -28,13 +28,6 @@ interface Review {
   rating: number;
 }
 
-// Alternating tint per quick-category card, cycling if there are more than 3.
-const QUICK_TINTS = [
-  { bg: "bg-accent-100", fg: "text-accent-800" },
-  { bg: "bg-sage-100", fg: "text-sage-800" },
-  { bg: "bg-ink/5", fg: "text-ink" },
-];
-
 const FEATURES = [
   { Icon: SupportIcon, title: "Responsive", text: "Customer service available 24/7" },
   { Icon: ShieldCheckIcon, title: "Secure", text: "Certified marketplace since 2017" },
@@ -122,23 +115,6 @@ export default function Shop() {
     <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
       <HeroSlider />
-
-      {/* ===== Quick categories ===== */}
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 pt-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {categories.slice(0, 3).map((c, i) => (
-              <Link
-                key={c.categoryId}
-                to={`/?category=${c.categoryId}`}
-                className={`rounded-2xl p-5 font-heading text-lg shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${QUICK_TINTS[i % QUICK_TINTS.length].bg} ${QUICK_TINTS[i % QUICK_TINTS.length].fg}`}
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* ===== Feature strip ===== */}
       <section className="mx-auto max-w-6xl px-6">
