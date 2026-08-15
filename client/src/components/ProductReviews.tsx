@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import { useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
 import { StarIcon, TrashIcon } from "./icons";
 
 // A single review as returned by GET /Review/all. The API serializes every DTO
@@ -49,6 +50,7 @@ export function Stars({
 // reviews + average, writing a new one, and deleting your own.
 export default function ProductReviews({ productId }: { productId: number }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const myId = Number(localStorage.getItem("userId"));
 
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -125,7 +127,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
   }
 
   async function remove(r: Review) {
-    if (!confirm("Delete your review?")) return;
+    if (!(await confirm("Delete your review?"))) return;
     try {
       await apiFetch(`/Review/delete?id=${r.reviewId}`, "DELETE");
       toast("Review deleted.", "info");

@@ -7,6 +7,7 @@ namespace Online_Marketplace__E_commerce_.DTOs
     public class PaymentUpdateDto
     {
         [Required]
+        [Range(0.001, double.MaxValue, ErrorMessage = "amount must be greater than 0")]
         public decimal amount { get; set; }
 
         [Required]

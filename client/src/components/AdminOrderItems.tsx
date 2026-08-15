@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, formatOMR } from "../api";
 import { useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
 
 // An order line as returned by GET /OrderItem/all. On that endpoint both the
 // nested product and order ARE populated (flat), so we can read the product name
@@ -37,6 +38,7 @@ interface Order {
 // pending order. Wires up the previously-unused OrderItem controller.
 export default function AdminOrderItems() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [items, setItems] = useState<OrderItem[]>([]);
   const [revenue, setRevenue] = useState<ProductRevenue[]>([]);
   const [productMap, setProductMap] = useState<Record<number, string>>({});
@@ -120,7 +122,7 @@ export default function AdminOrderItems() {
   }
 
   async function remove(it: OrderItem) {
-    if (!confirm(`Remove line #${it.orderItemId} from order #${it.orderId}?`)) return;
+    if (!(await confirm(`Remove line #${it.orderItemId} from order #${it.orderId}?`))) return;
     try {
       await apiFetch(`/OrderItem/remove?id=${it.orderItemId}`, "DELETE");
       toast(`Line #${it.orderItemId} removed.`, "info");

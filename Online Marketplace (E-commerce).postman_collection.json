@@ -1,0 +1,2794 @@
+{
+  "info": {
+    "_postman_id": "0616ee12-abaf-4fcd-9ea2-3bd1d1aee993",
+    "name": "Online Marketplace (E-commerce) API — Spark to Code 2026",
+    "description": "Full Postman collection for the Online Marketplace capstone project. 12 model controllers x 8+ cases each, plus JWT register/login.\n\nSetup:\n1. Run the backend (dotnet run) — default http://localhost:5190.\n2. Run 'Auth > Login' once — it auto-saves {{token}}/{{userId}}/{{role}} as collection variables.\n3. Update the id variables (productId, categoryId, cartId, orderId, ...) in the collection's Variables tab to match real records (e.g. from the seed data), or capture them from each 'Create ...' response as you go.\n\nAll requests inherit Bearer auth from the collection ({{token}}); Register/Login and the public catalog-browsing GETs (Product/Category/Review list & filter endpoints) override it with No Auth.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5190/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "userId2",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "vendorProfileId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "productId2",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "categoryId2",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "cartId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "cartItemId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "orderItemId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "shippingId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "couponId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "role",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth (Register / Login)",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/User/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "register"
+              ]
+            },
+            "description": "Creates a new user. role: Customer | Vendor | Admin.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"TestUser\",\n  \"email\": \"testuser@marketplace.com\",\n  \"password\": \"Passw0rd!23\",\n  \"role\": \"Customer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/User/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "login"
+              ]
+            },
+            "description": "Returns a JWT. Auto-saves token/userId/role as collection variables for every other request in this collection.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"khaild.alhadi2021@marketplace.com\",\n  \"password\": \"Passw0rd!23\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) { pm.collectionVariables.set('token', data.token); }",
+                  "if (data.userId) { pm.collectionVariables.set('userId', data.userId); }",
+                  "if (data.role) { pm.collectionVariables.set('role', data.role); }",
+                  "pm.test('Login returned a token', function () { pm.expect(data.token).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - User",
+      "item": [
+        {
+          "name": "Update user (self)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/User/update?id={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Case 2 — update a user's own username/phone.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"khalid_updated\",\n  \"phonenumber\": 96812345678\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change user role (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/User/changeRole?id={{userId}}&newRole=Vendor",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "changeRole"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "newRole",
+                  "value": "Vendor"
+                }
+              ]
+            },
+            "description": "Case 3 — Admin-only. Second, distinct update case."
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate user (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/User/remove?id={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "remove"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — soft-delete: flips isActive to false."
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivate user (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/User/reactivate?id={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "reactivate"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Re-activates a deactivated user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/User/getAll",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "getAll"
+              ]
+            },
+            "description": "Case 5 — list, includes VendorProfile navigation."
+          },
+          "response": []
+        },
+        {
+          "name": "Get user by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/User/getById?id={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Case 6."
+          },
+          "response": []
+        },
+        {
+          "name": "Get users by role (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/User/getByRole?role=Customer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "getByRole"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "Customer"
+                }
+              ]
+            },
+            "description": "Case 7 — filter by role."
+          },
+          "response": []
+        },
+        {
+          "name": "Count users by role (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/User/countByRole",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "User",
+                "countByRole"
+              ]
+            },
+            "description": "Case 8 — aggregate: GroupBy role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - VendorProfile",
+      "item": [
+        {
+          "name": "Create vendor profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "add"
+              ]
+            },
+            "description": "Case 1 — the target user's Role must be Vendor.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StoreName\": \"Khalid's Electronics\",\n  \"Address\": \"Muscat, Oman\",\n  \"UserId\": \"{{userId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update vendor profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/update?id={{vendorProfileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{vendorProfileId}}"
+                }
+              ]
+            },
+            "description": "Case 2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"StoreName\": \"Khalid's Electronics & More\",\n  \"Address\": \"Muscat, Al Khuwair, Oman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify vendor profile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/verify?id={{vendorProfileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "verify"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{vendorProfileId}}"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete vendor profile",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/delete?id={{vendorProfileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{vendorProfileId}}"
+                }
+              ]
+            },
+            "description": "Case 4."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all vendor profiles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes the owning User."
+          },
+          "response": []
+        },
+        {
+          "name": "Get vendor profile by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/Getbyid?id={{vendorProfileId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "Getbyid"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{vendorProfileId}}"
+                }
+              ]
+            },
+            "description": "Case 6."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter vendor profiles by verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/byVerification?isVerified=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "byVerification"
+              ],
+              "query": [
+                {
+                  "key": "isVerified",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Case 7."
+          },
+          "response": []
+        },
+        {
+          "name": "Get newest vendor profiles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/VendorProfile/newest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "VendorProfile",
+                "newest"
+              ]
+            },
+            "description": "Case 8 — OrderByDescending + Take(5)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Product",
+      "item": [
+        {
+          "name": "Create product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Product/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "add"
+              ]
+            },
+            "description": "Case 1.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Wireless Mouse\",\n  \"description\": \"Ergonomic wireless mouse\",\n  \"productUrl\": \"https://placehold.co/400x300?text=Mouse\",\n  \"price\": 7.5,\n  \"stockQuantity\": 50,\n  \"categoryId\": \"{{categoryId}}\",\n  \"vendorProfileId\": \"{{vendorProfileId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Product/update?id={{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{productId}}"
+                }
+              ]
+            },
+            "description": "Case 2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Wireless Mouse (Updated)\",\n  \"description\": \"Ergonomic wireless mouse, 2.4GHz\",\n  \"price\": 8.0,\n  \"stockQuantity\": 45\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set product active/inactive",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Product/setActive?id={{productId}}&isActive=false",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "setActive"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{productId}}"
+                },
+                {
+                  "key": "isActive",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Product/delete?id={{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{productId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — blocked if the product has order/cart/review history."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Product/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "all"
+              ]
+            },
+            "description": "Case 5 — public; includes Category + VendorProfile.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get product by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Product/getById?id={{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{productId}}"
+                }
+              ]
+            },
+            "description": "Case 6 — public.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter products by category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Product/byCategory?categoryId={{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "byCategory"
+              ],
+              "query": [
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId}}"
+                }
+              ]
+            },
+            "description": "Case 7 — public.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get best sellers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Product/bestSellers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Product",
+                "bestSellers"
+              ]
+            },
+            "description": "Case 8 — public; aggregate top 10 by quantity sold.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Category",
+      "item": [
+        {
+          "name": "Create category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Category/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "add"
+              ]
+            },
+            "description": "Case 1.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Phones, laptops, accessories\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Category/update?id={{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{categoryId}}"
+                }
+              ]
+            },
+            "description": "Case 2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics & Gadgets\",\n  \"description\": \"Phones, laptops, accessories, gadgets\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reassign products to another category",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Category/reassignProducts?id={{categoryId}}&targetCategoryId={{categoryId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "reassignProducts"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{categoryId}}"
+                },
+                {
+                  "key": "targetCategoryId",
+                  "value": "{{categoryId2}}"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case (bulk FK update via ExecuteUpdate)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Category/delete?id={{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{categoryId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — blocked while it still owns products."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Category/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "all"
+              ]
+            },
+            "description": "Case 5 — public; includes Products.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get category by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Category/getById?id={{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{categoryId}}"
+                }
+              ]
+            },
+            "description": "Case 6 — public.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search categories by name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Category/search?name=Elec",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "Elec"
+                }
+              ]
+            },
+            "description": "Case 7 — public filter.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get categories by product count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Category/byProductCount",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Category",
+                "byProductCount"
+              ]
+            },
+            "description": "Case 8 — public aggregate.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Cart",
+      "item": [
+        {
+          "name": "Create cart",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/create?userId={{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "create"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                }
+              ]
+            },
+            "description": "Case 1 — one cart per user."
+          },
+          "response": []
+        },
+        {
+          "name": "Reassign cart owner",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/reassignOwner?id={{cartId}}&newUserId={{userId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "reassignOwner"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartId}}"
+                },
+                {
+                  "key": "newUserId",
+                  "value": "{{userId2}}"
+                }
+              ]
+            },
+            "description": "Case 2."
+          },
+          "response": []
+        },
+        {
+          "name": "Clear cart",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/clear?id={{cartId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "clear"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartId}}"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case (removes all items, keeps the cart)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/delete?id={{cartId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartId}}"
+                }
+              ]
+            },
+            "description": "Case 4."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all carts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes CartItems."
+          },
+          "response": []
+        },
+        {
+          "name": "Get cart by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/getById?id={{cartId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartId}}"
+                }
+              ]
+            },
+            "description": "Case 6 — includes CartItems -> Product."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter carts created after a date",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/createdAfter?date=2026-01-01",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "createdAfter"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-01-01"
+                }
+              ]
+            },
+            "description": "Case 7."
+          },
+          "response": []
+        },
+        {
+          "name": "Sort carts by item count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Cart/byItemCount",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Cart",
+                "byItemCount"
+              ]
+            },
+            "description": "Case 8."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 - CartItem",
+      "item": [
+        {
+          "name": "Add item to cart",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "add"
+              ]
+            },
+            "description": "Case 1 — increases quantity instead of duplicating if already present.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cartId\": \"{{cartId}}\",\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set cart item quantity",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/update?id={{cartItemId}}&quantity=3",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartItemId}}"
+                },
+                {
+                  "key": "quantity",
+                  "value": "3"
+                }
+              ]
+            },
+            "description": "Case 2."
+          },
+          "response": []
+        },
+        {
+          "name": "Adjust cart item quantity (+/-)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/adjustQuantity?id={{cartItemId}}&delta=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "adjustQuantity"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartItemId}}"
+                },
+                {
+                  "key": "delta",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case; removes the item if it drops to 0."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove cart item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/remove?id={{cartItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "remove"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartItemId}}"
+                }
+              ]
+            },
+            "description": "Case 4."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all cart items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes Cart + Product."
+          },
+          "response": []
+        },
+        {
+          "name": "Get cart item by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/getById?id={{cartItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{cartItemId}}"
+                }
+              ]
+            },
+            "description": "Case 6."
+          },
+          "response": []
+        },
+        {
+          "name": "Get cart items with inactive products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/inactiveProducts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "inactiveProducts"
+              ]
+            },
+            "description": "Case 7 — filter."
+          },
+          "response": []
+        },
+        {
+          "name": "Get product demand",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/CartItem/demand",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "CartItem",
+                "demand"
+              ]
+            },
+            "description": "Case 8 — aggregate: total quantity per product across all carts."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07 - Order",
+      "item": [
+        {
+          "name": "Checkout (create order from cart)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/checkout?userId={{userId}}&couponCode=WELCOME10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "checkout"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "{{userId}}"
+                },
+                {
+                  "key": "couponCode",
+                  "value": "WELCOME10"
+                }
+              ]
+            },
+            "description": "Case 1 — builds the order from the user's cart; sends the order-confirmation email."
+          },
+          "response": []
+        },
+        {
+          "name": "Update order status",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/updateStatus?id={{orderId}}&status=Confirmed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "updateStatus"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "Confirmed"
+                }
+              ]
+            },
+            "description": "Case 2."
+          },
+          "response": []
+        },
+        {
+          "name": "Apply/change coupon on an order",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/applyCoupon?id={{orderId}}&couponCode=SUMMER20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "applyCoupon"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderId}}"
+                },
+                {
+                  "key": "couponCode",
+                  "value": "SUMMER20"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case; recomputes totalAmount."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete order",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/delete?id={{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — blocked once it has a payment on record."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes OrderItems + Coupon."
+          },
+          "response": []
+        },
+        {
+          "name": "Get order by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/getById?id={{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderId}}"
+                }
+              ]
+            },
+            "description": "Case 6 — includes OrderItems, Payment, Shipping."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter orders by date range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/byDateRange?from=2026-01-01&to=2026-12-31",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "byDateRange"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": "Case 7."
+          },
+          "response": []
+        },
+        {
+          "name": "Order stats by status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Order/statsByStatus",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Order",
+                "statsByStatus"
+              ]
+            },
+            "description": "Case 8 — aggregate: count + revenue grouped by status."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 - OrderItem",
+      "item": [
+        {
+          "name": "Add order item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "add"
+              ]
+            },
+            "description": "Case 1 — only while the order is still Pending.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"productId\": \"{{productId}}\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update order item quantity",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/update?id={{orderItemId}}&quantity=2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderItemId}}"
+                },
+                {
+                  "key": "quantity",
+                  "value": "2"
+                }
+              ]
+            },
+            "description": "Case 2 — recalculates the order total."
+          },
+          "response": []
+        },
+        {
+          "name": "Correct order item price",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/correctPrice?id={{orderItemId}}&correctedUnitPrice=9.99",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "correctPrice"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderItemId}}"
+                },
+                {
+                  "key": "correctedUnitPrice",
+                  "value": "9.99"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove order item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/remove?id={{orderItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "remove"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderItemId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — only while the order is still Pending."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all order items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes Order + Product."
+          },
+          "response": []
+        },
+        {
+          "name": "Get order item by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/getById?id={{orderItemId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{orderItemId}}"
+                }
+              ]
+            },
+            "description": "Case 6."
+          },
+          "response": []
+        },
+        {
+          "name": "Get order items by product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/byProduct?productId={{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "byProduct"
+              ],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}"
+                }
+              ]
+            },
+            "description": "Case 7 — filter."
+          },
+          "response": []
+        },
+        {
+          "name": "Revenue by product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/OrderItem/revenueByProduct",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "OrderItem",
+                "revenueByProduct"
+              ]
+            },
+            "description": "Case 8 — aggregate."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 - Payment",
+      "item": [
+        {
+          "name": "Record payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "add"
+              ]
+            },
+            "description": "Case 1 — one payment per order; amount must match the order's totalAmount.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"amount\": 25.5,\n  \"method\": \"Card\",\n  \"status\": \"Pending\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update payment (correction)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/update?id={{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{paymentId}}"
+                }
+              ]
+            },
+            "description": "Case 2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 25.5,\n  \"method\": \"CashOnDelivery\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update payment status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/updateStatus?id={{paymentId}}&status=Completed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "updateStatus"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{paymentId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "Completed"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case; Completed also confirms the order."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete payment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/delete?id={{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{paymentId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — blocked once Completed."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes Order."
+          },
+          "response": []
+        },
+        {
+          "name": "Get payment by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/getById?id={{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{paymentId}}"
+                }
+              ]
+            },
+            "description": "Case 6."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter payments by status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/byStatus?status=Completed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "byStatus"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Completed"
+                }
+              ]
+            },
+            "description": "Case 7."
+          },
+          "response": []
+        },
+        {
+          "name": "Revenue by payment method",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Payment/revenueByMethod",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Payment",
+                "revenueByMethod"
+              ]
+            },
+            "description": "Case 8 — aggregate, sorted descending."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10 - Shipping",
+      "item": [
+        {
+          "name": "Create shipping record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "add"
+              ]
+            },
+            "description": "Case 1 — one shipping record per order; starts as 'Preparing'.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"address\": \"Way 123, Building 45, Muscat, Oman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update shipping address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/update?id={{shippingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{shippingId}}"
+                }
+              ]
+            },
+            "description": "Case 2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"Way 456, Building 78, Muscat, Oman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update shipping status",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/updateStatus?id={{shippingId}}&status=Shipped",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "updateStatus"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{shippingId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "Shipped"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case; 'Delivered' also completes the order and sends the shipping-update email."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete shipping record",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/delete?id={{shippingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{shippingId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — blocked once Delivered."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all shipping records",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes Order."
+          },
+          "response": []
+        },
+        {
+          "name": "Get shipping record by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/getById?id={{shippingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{shippingId}}"
+                }
+              ]
+            },
+            "description": "Case 6."
+          },
+          "response": []
+        },
+        {
+          "name": "Filter shipping records by status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/byStatus?status=Delivered",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "byStatus"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Delivered"
+                }
+              ]
+            },
+            "description": "Case 7."
+          },
+          "response": []
+        },
+        {
+          "name": "Average delivery time",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Shipping/avgDeliveryTime",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Shipping",
+                "avgDeliveryTime"
+              ]
+            },
+            "description": "Case 8 — aggregate average in days."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11 - Review",
+      "item": [
+        {
+          "name": "Add review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Review/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "add"
+              ]
+            },
+            "description": "Case 1 — only for a product the user has actually purchased.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"productId\": \"{{productId}}\",\n  \"rating\": 5,\n  \"comment\": \"Great product, fast shipping!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update review",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Review/update?id={{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{reviewId}}"
+                }
+              ]
+            },
+            "description": "Case 2.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Updating my review after a week of use.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reassign review to another product",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Review/changeProduct?id={{reviewId}}&newProductId={{productId2}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "changeProduct"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{reviewId}}"
+                },
+                {
+                  "key": "newProductId",
+                  "value": "{{productId2}}"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case (moderation correction via FK)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete review",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Review/delete?id={{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{reviewId}}"
+                }
+              ]
+            },
+            "description": "Case 4."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Review/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "all"
+              ]
+            },
+            "description": "Case 5 — public; includes User + Product.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get review by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Review/getById?id={{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{reviewId}}"
+                }
+              ]
+            },
+            "description": "Case 6 — public.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter reviews by category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Review/byCategory?categoryId={{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "byCategory"
+              ],
+              "query": [
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId}}"
+                }
+              ]
+            },
+            "description": "Case 7 — public.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Average rating for a product",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Review/averageRating?productId={{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Review",
+                "averageRating"
+              ],
+              "query": [
+                {
+                  "key": "productId",
+                  "value": "{{productId}}"
+                }
+              ]
+            },
+            "description": "Case 8 — public aggregate.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12 - Coupon",
+      "item": [
+        {
+          "name": "Create coupon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "add"
+              ]
+            },
+            "description": "Case 1.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"WELCOME10\",\n  \"discountPercent\": 10,\n  \"expiryDate\": \"2026-12-31T00:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update coupon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/update?id={{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "update"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{couponId}}"
+                }
+              ]
+            },
+            "description": "Case 2 — edits discount/expiry (code is immutable).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discountPercent\": 15,\n  \"expiryDate\": \"2027-01-31T00:00:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Expire coupon now",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/expireNow?id={{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "expireNow"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{couponId}}"
+                }
+              ]
+            },
+            "description": "Case 3 — second, distinct update case (deactivate by expiring immediately)."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/delete?id={{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "delete"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{couponId}}"
+                }
+              ]
+            },
+            "description": "Case 4 — blocked while orders still reference it."
+          },
+          "response": []
+        },
+        {
+          "name": "Get all coupons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "all"
+              ]
+            },
+            "description": "Case 5 — includes Orders that used them."
+          },
+          "response": []
+        },
+        {
+          "name": "Get coupon by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/getById?id={{couponId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "getById"
+              ],
+              "query": [
+                {
+                  "key": "id",
+                  "value": "{{couponId}}"
+                }
+              ]
+            },
+            "description": "Case 6."
+          },
+          "response": []
+        },
+        {
+          "name": "Get active (non-expired) coupons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/active",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "active"
+              ]
+            },
+            "description": "Case 7 — filter."
+          },
+          "response": []
+        },
+        {
+          "name": "Coupons by usage",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/Coupon/byUsage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "Coupon",
+                "byUsage"
+              ]
+            },
+            "description": "Case 8 — aggregate, sorted by usage count."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

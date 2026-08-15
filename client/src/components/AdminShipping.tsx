@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import { useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
 
 // A shipping record as returned by GET /Shipping/all.
 interface Shipping {
@@ -27,6 +28,7 @@ const SHIPPING_STATUSES = ["Preparing", "Shipped", "Delivered"];
 // (which triggers the buyer email on the backend), and track delivery time.
 export default function AdminShipping() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [shipments, setShipments] = useState<Shipping[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [avgDays, setAvgDays] = useState<number | null>(null);
@@ -107,7 +109,7 @@ export default function AdminShipping() {
   }
 
   async function remove(s: Shipping) {
-    if (!confirm(`Delete shipment #${s.shippingId}?`)) return;
+    if (!(await confirm(`Delete shipment #${s.shippingId}?`))) return;
     try {
       // Backend returns 409 once a shipment is Delivered; surface that.
       await apiFetch(`/Shipping/delete?id=${s.shippingId}`, "DELETE");

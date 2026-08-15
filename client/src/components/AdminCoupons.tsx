@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import { useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
 
 // A coupon as returned by GET /Coupon/all.
 interface Coupon {
@@ -24,6 +25,7 @@ const emptyForm = { code: "", discountPercent: 10, expiryDate: "" };
 // coupon immediately, or delete it. Rendered inside the admin-guarded Admin page.
 export default function AdminCoupons() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   // couponId -> how many orders used it (merged in from /Coupon/byUsage).
   const [usage, setUsage] = useState<Record<number, number>>({});
@@ -98,7 +100,7 @@ export default function AdminCoupons() {
   }
 
   async function remove(c: Coupon) {
-    if (!confirm(`Delete coupon "${c.code}"?`)) return;
+    if (!(await confirm(`Delete coupon "${c.code}"?`))) return;
     try {
       // The backend returns 409 if any order used this coupon; surface that.
       await apiFetch(`/Coupon/delete?id=${c.couponId}`, "DELETE");

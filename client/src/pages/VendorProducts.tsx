@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { apiFetch, isLoggedIn, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
+import { useConfirm } from "../components/ConfirmDialog";
 import NavBar from "../components/NavBar";
 
 interface Product {
@@ -34,6 +35,7 @@ const emptyForm = {
 // Vendor products page — lists and manages only this vendor's products.
 export default function VendorProducts() {
   const toast = useToast();
+  const confirm = useConfirm();
   const userId = Number(localStorage.getItem("userId"));
   const isVendor = localStorage.getItem("role") === "Vendor";
 
@@ -132,7 +134,7 @@ export default function VendorProducts() {
   }
 
   async function remove(p: Product) {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    if (!(await confirm(`Delete "${p.name}"? This cannot be undone.`))) return;
     try {
       await apiFetch(`/Product/delete?id=${p.productId}`, "DELETE");
       toast(`Product "${p.name}" deleted.`, "success");

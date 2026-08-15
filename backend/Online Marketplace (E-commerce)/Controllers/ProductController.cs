@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
+using System.Security.Claims;
 
 namespace Online_Marketplace__E_commerce_.Controllers
 {
@@ -19,6 +20,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 1 — Create a product.
+        [Authorize(Roles = "Admin,Vendor")]
         [HttpPost("add")]
         public IActionResult AddProduct(ProductCreateDto dto)
         {
@@ -27,6 +29,15 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             if (!_context.VendorProfiles.Any(v => v.VendorProfileId == dto.vendorProfileId))
                 return NotFound("Vendor profile not found");
+
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (role == "Vendor")
+            {
+                var myVendorProfile = _context.VendorProfiles.FirstOrDefault(v => v.UserId == callerId);
+                if (myVendorProfile == null || myVendorProfile.VendorProfileId != dto.vendorProfileId)
+                    return Forbid();
+            }
 
             var product = new Product
             {
@@ -46,12 +57,22 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 2 — Update a product's core details.
+        [Authorize(Roles = "Admin,Vendor")]
         [HttpPut("update")]
         public IActionResult UpdateProduct(int id, ProductUpdateDto dto)
         {
             var product = _context.Products.Find(id);
             if (product == null)
                 return NotFound("Product not found");
+
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (role == "Vendor")
+            {
+                var myVendorProfile = _context.VendorProfiles.FirstOrDefault(v => v.UserId == callerId);
+                if (myVendorProfile == null || myVendorProfile.VendorProfileId != product.vendorProfileId)
+                    return Forbid();
+            }
 
             product.name = dto.name;
             product.description = dto.description;
@@ -62,6 +83,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 3 — Activate/deactivate a product without deleting it.
+        [Authorize(Roles = "Admin,Vendor")]
         [HttpPatch("setActive")]
         public IActionResult SetProductActive(int id, bool isActive)
         {
@@ -69,12 +91,22 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (product == null)
                 return NotFound("Product not found");
 
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (role == "Vendor")
+            {
+                var myVendorProfile = _context.VendorProfiles.FirstOrDefault(v => v.UserId == callerId);
+                if (myVendorProfile == null || myVendorProfile.VendorProfileId != product.vendorProfileId)
+                    return Forbid();
+            }
+
             product.isActive = isActive;
             _context.SaveChanges();
             return Ok(product.ToDto());
         }
 
         // Case 4 — Delete a product. Blocked if it has order/cart/review history; deactivate (case 3) instead.
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public IActionResult DeleteProduct(int id)
         {

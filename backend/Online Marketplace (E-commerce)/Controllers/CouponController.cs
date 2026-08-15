@@ -25,9 +25,6 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (_context.Coupons.Any(c => c.code == dto.code))
                 return Conflict("A coupon with this code already exists");
 
-            if (dto.discountPercent <= 0 || dto.discountPercent > 100)
-                return BadRequest("discountPercent must be between 0 and 100");
-
             if (dto.expiryDate <= DateTime.Now)
                 return BadRequest("expiryDate must be in the future");
 
@@ -49,6 +46,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var coupon = _context.Coupons.Find(id);
             if (coupon == null)
                 return NotFound("Coupon not found");
+
+            if (dto.expiryDate <= DateTime.Now)
+                return BadRequest("expiryDate must be in the future");
 
             coupon.discountPercent = dto.discountPercent;
             coupon.expiryDate = dto.expiryDate;

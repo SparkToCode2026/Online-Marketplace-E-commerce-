@@ -12,8 +12,10 @@ namespace Online_Marketplace__E_commerce_.DTOs
         public string? description { get; set; }
 
         [Required]
+        [Range(0.001, double.MaxValue, ErrorMessage = "price must be greater than 0")]
         public decimal price { get; set; }
 
+        [Range(0, int.MaxValue, ErrorMessage = "stockQuantity cannot be negative")]
         public int stockQuantity { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, formatOMR } from "../api";
 import { useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
 
 // A payment as returned by GET /Payment/all.
 interface Payment {
@@ -26,6 +27,7 @@ const PAYMENT_STATUSES = ["Pending", "Completed", "Refunded"];
 // inline status editor and delete. Rendered inside the admin-guarded page.
 export default function AdminPayments() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [revenue, setRevenue] = useState<MethodRevenue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ export default function AdminPayments() {
   }
 
   async function remove(p: Payment) {
-    if (!confirm(`Delete payment #${p.paymentId}?`)) return;
+    if (!(await confirm(`Delete payment #${p.paymentId}?`))) return;
     try {
       // Backend returns 409 when the payment status is "Completed"; surface it.
       await apiFetch(`/Payment/delete?id=${p.paymentId}`, "DELETE");
