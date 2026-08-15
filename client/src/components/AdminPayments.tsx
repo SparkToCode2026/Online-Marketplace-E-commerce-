@@ -81,29 +81,29 @@ export default function AdminPayments() {
 
   const totalRevenue = revenue.reduce((s, r) => s + r.totalAmount, 0);
 
-  if (loading) return <p className="text-sm text-gray-400">Loading…</p>;
+  if (loading) return <p className="text-sm text-ink/40">Loading…</p>;
 
   return (
     <div>
       {/* --- Revenue-by-method summary cards --- */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <div className="rounded-2xl bg-gray-900 p-4 text-white shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-gray-300">Total collected</p>
+        <div className="rounded-2xl bg-ink p-4 text-white shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-white/70">Total collected</p>
           <p className="mt-1 text-xl font-bold">{formatOMR(totalRevenue)}</p>
-          <p className="mt-1 text-xs text-gray-400">{payments.length} payments</p>
+          <p className="mt-1 text-xs text-white/60">{payments.length} payments</p>
         </div>
         {revenue.map((r) => (
-          <div key={r.method} className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-gray-400">{r.method}</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{formatOMR(r.totalAmount)}</p>
+          <div key={r.method} className="rounded-2xl bg-white/60 p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-ink/40">{r.method}</p>
+            <p className="mt-1 text-xl font-bold text-ink">{formatOMR(r.totalAmount)}</p>
           </div>
         ))}
       </div>
 
       {/* --- Payments table --- */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Payment</th>
               <th className="px-4 py-3">Order</th>
@@ -114,21 +114,21 @@ export default function AdminPayments() {
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-ink/10">
             {payments.map((p) => (
-              <tr key={p.paymentId} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">#{p.paymentId}</td>
-                <td className="px-4 py-3 text-gray-500">#{p.orderId}</td>
+              <tr key={p.paymentId} className="hover:bg-ink/5">
+                <td className="px-4 py-3 font-medium text-ink">#{p.paymentId}</td>
+                <td className="px-4 py-3 text-ink/50">#{p.orderId}</td>
                 <td className="px-4 py-3 font-medium">{formatOMR(p.amount)}</td>
-                <td className="px-4 py-3 text-gray-500">{p.method}</td>
-                <td className="px-4 py-3 text-gray-500">
+                <td className="px-4 py-3 text-ink/50">{p.method}</td>
+                <td className="px-4 py-3 text-ink/50">
                   {new Date(p.paidAt).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3">
                   <select
                     value={p.status}
                     onChange={(e) => changeStatus(p, e.target.value)}
-                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                   >
                     {/* Keep an unknown saved status visible instead of snapping. */}
                     {!PAYMENT_STATUSES.includes(p.status) && (
@@ -145,7 +145,7 @@ export default function AdminPayments() {
                   <div className="flex justify-end">
                     <button
                       onClick={() => remove(p)}
-                      className="rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                      className="rounded-full border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
                     >
                       Delete
                     </button>
@@ -155,7 +155,7 @@ export default function AdminPayments() {
             ))}
             {payments.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink/40">
                   No payments yet.
                 </td>
               </tr>

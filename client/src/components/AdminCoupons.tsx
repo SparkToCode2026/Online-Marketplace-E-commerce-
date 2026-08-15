@@ -112,34 +112,34 @@ export default function AdminCoupons() {
   return (
     <div>
       {/* --- Create form --- */}
-      <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
-        <h3 className="mb-3 font-bold text-gray-900">New coupon</h3>
+      <div className="mb-6 rounded-2xl bg-white/60 p-5 shadow-sm">
+        <h3 className="mb-3 font-bold text-ink">New coupon</h3>
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-xs text-gray-500">
+          <label className="text-xs text-ink/50">
             Code
             <input
-              className="mt-1 block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
               placeholder="WELCOME10"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
             />
           </label>
-          <label className="text-xs text-gray-500">
+          <label className="text-xs text-ink/50">
             Discount %
             <input
               type="number"
               min={1}
               max={100}
-              className="mt-1 block w-28 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 block w-28 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
               value={form.discountPercent}
               onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })}
             />
           </label>
-          <label className="text-xs text-gray-500">
+          <label className="text-xs text-ink/50">
             Expires
             <input
               type="date"
-              className="mt-1 block rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 block rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
               value={form.expiryDate}
               onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
             />
@@ -147,7 +147,7 @@ export default function AdminCoupons() {
           <button
             onClick={create}
             disabled={adding}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+            className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/5"
           >
             {adding ? "Adding…" : "Add coupon"}
           </button>
@@ -156,11 +156,11 @@ export default function AdminCoupons() {
 
       {/* --- Coupons table --- */}
       {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-ink/40">Loading…</p>
       ) : (
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+            <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
               <tr>
                 <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Discount</th>
@@ -170,38 +170,38 @@ export default function AdminCoupons() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-ink/10">
               {coupons.map((c) => (
-                <tr key={c.couponId} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{c.code}</td>
+                <tr key={c.couponId} className="hover:bg-ink/5">
+                  <td className="px-4 py-3 font-medium text-ink">{c.code}</td>
                   <td className="px-4 py-3">{c.discountPercent}%</td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-ink/50">
                     {new Date(c.expiryDate).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
                     {isActive(c) ? (
-                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <span className="rounded-full bg-sage-100 px-2 py-0.5 text-xs font-medium text-sage-700">
                         Active
                       </span>
                     ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                      <span className="rounded-full bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/50">
                         Expired
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{usage[c.couponId] ?? 0} orders</td>
+                  <td className="px-4 py-3 text-ink/50">{usage[c.couponId] ?? 0} orders</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => expireNow(c)}
                         disabled={!isActive(c)}
-                        className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="rounded-full border border-ink/15 px-2.5 py-1 text-xs font-medium text-ink/70 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Expire now
                       </button>
                       <button
                         onClick={() => remove(c)}
-                        className="rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                        className="rounded-full border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
                       >
                         Delete
                       </button>
@@ -211,7 +211,7 @@ export default function AdminCoupons() {
               ))}
               {coupons.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
                     No coupons yet.
                   </td>
                 </tr>

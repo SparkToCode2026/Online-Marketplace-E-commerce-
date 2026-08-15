@@ -32,7 +32,6 @@ interface Vendor {
   storeName: string;
 }
 
-// Blank form used when opening the "add product" modal.
 const emptyForm = {
   name: "",
   description: "",
@@ -43,11 +42,10 @@ const emptyForm = {
   vendorProfileId: 0,
 };
 
-// Styling for a tab button: filled blue when it's the active view, plain
-// otherwise. Kept as a helper so both tabs stay visually in sync.
+// Tab pill styling: filled terracotta when active, plain otherwise.
 function tabClass(active: boolean) {
-  return `rounded-lg px-4 py-2 text-sm font-medium transition ${
-    active ? "bg-blue-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+  return `rounded-full px-4 py-2 text-sm font-medium transition ${
+    active ? "bg-terracotta-500 text-white" : "bg-white/60 text-ink/70 hover:bg-ink/5"
   }`;
 }
 
@@ -58,13 +56,10 @@ export default function Admin() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
 
-  // Which admin view is showing.
   const [tab, setTab] = useState<
     "products" | "orders" | "coupons" | "payments" | "shipping" | "items"
   >("products");
 
-  // editing === null means the modal is closed. A product means "edit that
-  // one"; the sentinel below means "add a new one".
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [form, setForm] = useState(emptyForm);
 
@@ -111,7 +106,6 @@ export default function Admin() {
         await apiFetch("/Product/add", "POST", form);
         toast(`Product "${form.name}" created.`, "success");
       } else if (editing) {
-        // The update endpoint only accepts these four editable fields.
         await apiFetch(`/Product/update?id=${editing.productId}`, "PUT", {
           name: form.name,
           description: form.description,
@@ -148,12 +142,11 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream font-body text-ink">
       <NavBar />
 
       <div className="mx-auto max-w-6xl p-6">
-        {/* Tab bar — switch between product management and the orders view. */}
-        <div className="mb-5 flex gap-2">
+        <div className="mb-5 flex flex-wrap gap-2">
           <button onClick={() => setTab("products")} className={tabClass(tab === "products")}>
             Products
           </button>
@@ -184,20 +177,20 @@ export default function Admin() {
           <>
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-            <p className="text-sm text-gray-400">{products.length} total</p>
+            <h1 className="font-heading text-2xl">Products</h1>
+            <p className="text-sm text-ink/50">{products.length} total</p>
           </div>
           <button
             onClick={openAdd}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600"
           >
             + Add product
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+            <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
               <tr>
                 <th className="px-4 py-3">Product</th>
                 <th className="px-4 py-3">Category</th>
@@ -207,29 +200,29 @@ export default function Admin() {
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-ink/10">
               {products.map((p) => (
-                <tr key={p.productId} className="hover:bg-gray-50">
+                <tr key={p.productId} className="hover:bg-ink/5">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <img
                         src={p.productUrl}
                         alt={p.name}
-                        className="h-10 w-10 rounded object-cover"
+                        className="h-10 w-10 rounded-full object-cover saturate-[.85] brightness-[.97]"
                       />
-                      <span className="font-medium text-gray-900">{p.name}</span>
+                      <span className="font-medium">{p.name}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{p.category?.name ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink/60">{p.category?.name ?? "—"}</td>
                   <td className="px-4 py-3 font-medium">{formatOMR(p.price)}</td>
                   <td className="px-4 py-3">{p.stockQuantity}</td>
                   <td className="px-4 py-3">
                     {p.isActive ? (
-                      <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                      <span className="rounded-full bg-sage-100 px-2 py-0.5 text-xs font-medium text-sage-700">
                         Active
                       </span>
                     ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                      <span className="rounded-full bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/50">
                         Inactive
                       </span>
                     )}
@@ -238,19 +231,19 @@ export default function Admin() {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => openEdit(p)}
-                        className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                        className="rounded-full border border-ink/15 px-3 py-1 text-xs font-medium text-ink/70 hover:bg-ink/5"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => toggleActive(p)}
-                        className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                        className="rounded-full border border-ink/15 px-3 py-1 text-xs font-medium text-ink/70 hover:bg-ink/5"
                       >
                         {p.isActive ? "Deactivate" : "Activate"}
                       </button>
                       <button
                         onClick={() => remove(p)}
-                        className="rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                        className="rounded-full border border-terracotta-200 px-3 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
                       >
                         Delete
                       </button>
@@ -260,7 +253,7 @@ export default function Admin() {
               ))}
               {products.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
                     No products yet.
                   </td>
                 </tr>
@@ -273,45 +266,45 @@ export default function Admin() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-10 flex items-center justify-center bg-ink/40 p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">
+            <h2 className="mb-4 font-heading text-lg">
               {editing === "new" ? "Add product" : `Edit "${editing.name}"`}
             </h2>
             <form onSubmit={save} className="space-y-3">
               <input
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 placeholder="Name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
               />
               <textarea
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-2xl border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 placeholder="Description"
                 rows={2}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs text-gray-500">
+                <label className="text-xs text-ink/60">
                   Price (OMR)
                   <input
                     type="number"
                     min={0}
                     step="0.01"
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
                     required
                   />
                 </label>
-                <label className="text-xs text-gray-500">
+                <label className="text-xs text-ink/60">
                   Stock
                   <input
                     type="number"
                     min={0}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                     value={form.stockQuantity}
                     onChange={(e) => setForm({ ...form, stockQuantity: Number(e.target.value) })}
                     required
@@ -322,16 +315,16 @@ export default function Admin() {
               {editing === "new" && (
                 <>
                   <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                     placeholder="Image URL (optional)"
                     value={form.productUrl}
                     onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
                   />
                   <div className="grid grid-cols-2 gap-3">
-                    <label className="text-xs text-gray-500">
+                    <label className="text-xs text-ink/60">
                       Category
                       <select
-                        className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                         value={form.categoryId}
                         onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
                         required
@@ -346,10 +339,10 @@ export default function Admin() {
                         ))}
                       </select>
                     </label>
-                    <label className="text-xs text-gray-500">
+                    <label className="text-xs text-ink/60">
                       Vendor
                       <select
-                        className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                         value={form.vendorProfileId}
                         onChange={(e) =>
                           setForm({ ...form, vendorProfileId: Number(e.target.value) })
@@ -374,13 +367,13 @@ export default function Admin() {
                 <button
                   type="button"
                   onClick={() => setEditing(null)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                  className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
                 >
                   {editing === "new" ? "Create" : "Save changes"}
                 </button>

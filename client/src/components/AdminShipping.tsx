@@ -118,29 +118,29 @@ export default function AdminShipping() {
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-400">Loading…</p>;
+  if (loading) return <p className="text-sm text-ink/40">Loading…</p>;
 
   return (
     <div>
       {/* --- Summary + create form --- */}
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-2xl bg-gray-900 p-4 text-white shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-gray-300">Avg delivery time</p>
+        <div className="rounded-2xl bg-ink p-4 text-white shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-white/70">Avg delivery time</p>
           <p className="mt-1 text-xl font-bold">
             {avgDays === null ? "—" : `${avgDays.toFixed(1)} days`}
           </p>
-          <p className="mt-1 text-xs text-gray-400">{shipments.length} shipments</p>
+          <p className="mt-1 text-xs text-white/60">{shipments.length} shipments</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
-          <h3 className="mb-3 font-bold text-gray-900">New shipment</h3>
+        <div className="rounded-2xl bg-white/60 p-5 shadow-sm lg:col-span-2">
+          <h3 className="mb-3 font-bold text-ink">New shipment</h3>
           <div className="flex flex-wrap items-end gap-3">
-            <label className="text-xs text-gray-500">
+            <label className="text-xs text-ink/50">
               Order
               <select
                 value={orderId}
                 onChange={(e) => setOrderId(Number(e.target.value))}
-                className="mt-1 block w-40 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
               >
                 <option value={0} disabled>
                   Select…
@@ -152,10 +152,10 @@ export default function AdminShipping() {
                 ))}
               </select>
             </label>
-            <label className="flex-1 text-xs text-gray-500">
+            <label className="flex-1 text-xs text-ink/50">
               Address
               <input
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 block w-full rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 placeholder="123 Main St, Muscat"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -164,21 +164,21 @@ export default function AdminShipping() {
             <button
               onClick={create}
               disabled={adding}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+              className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/20"
             >
               {adding ? "Adding…" : "Create"}
             </button>
           </div>
           {unshippedOrders.length === 0 && (
-            <p className="mt-2 text-xs text-gray-400">Every order already has a shipment.</p>
+            <p className="mt-2 text-xs text-ink/40">Every order already has a shipment.</p>
           )}
         </div>
       </div>
 
       {/* --- Shipments table --- */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Shipment</th>
               <th className="px-4 py-3">Order</th>
@@ -189,23 +189,23 @@ export default function AdminShipping() {
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-ink/10">
             {shipments.map((s) => (
-              <tr key={s.shippingId} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">#{s.shippingId}</td>
-                <td className="px-4 py-3 text-gray-500">#{s.orderId}</td>
-                <td className="px-4 py-3 text-gray-500">{s.address}</td>
-                <td className="px-4 py-3 text-gray-500">
+              <tr key={s.shippingId} className="hover:bg-ink/5">
+                <td className="px-4 py-3 font-medium text-ink">#{s.shippingId}</td>
+                <td className="px-4 py-3 text-ink/50">#{s.orderId}</td>
+                <td className="px-4 py-3 text-ink/50">{s.address}</td>
+                <td className="px-4 py-3 text-ink/50">
                   {s.shippedAt ? new Date(s.shippedAt).toLocaleDateString() : "—"}
                 </td>
-                <td className="px-4 py-3 text-gray-500">
+                <td className="px-4 py-3 text-ink/50">
                   {s.deliveredAt ? new Date(s.deliveredAt).toLocaleDateString() : "—"}
                 </td>
                 <td className="px-4 py-3">
                   <select
                     value={s.status ?? "Preparing"}
                     onChange={(e) => changeStatus(s, e.target.value)}
-                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                   >
                     {s.status && !SHIPPING_STATUSES.includes(s.status) && (
                       <option value={s.status}>{s.status}</option>
@@ -221,7 +221,7 @@ export default function AdminShipping() {
                   <div className="flex justify-end">
                     <button
                       onClick={() => remove(s)}
-                      className="rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                      className="rounded-full border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
                     >
                       Delete
                     </button>
@@ -231,7 +231,7 @@ export default function AdminShipping() {
             ))}
             {shipments.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink/40">
                   No shipments yet.
                 </td>
               </tr>

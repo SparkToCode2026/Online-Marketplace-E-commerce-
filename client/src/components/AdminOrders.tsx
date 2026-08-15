@@ -84,30 +84,30 @@ export default function AdminOrders() {
   // Grand total across every status bucket — the headline revenue number.
   const totalRevenue = stats.reduce((s, x) => s + x.totalRevenue, 0);
 
-  if (loading) return <p className="text-sm text-gray-400">Loading…</p>;
+  if (loading) return <p className="text-sm text-ink/40">Loading…</p>;
 
   return (
     <div>
       {/* --- Revenue summary cards (one per status + a grand total) --- */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <div className="rounded-2xl bg-gray-900 p-4 text-white shadow-sm">
-          <p className="text-xs uppercase tracking-wide text-gray-300">Total revenue</p>
+        <div className="rounded-2xl bg-ink p-4 text-white shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-white/70">Total revenue</p>
           <p className="mt-1 text-xl font-bold">{formatOMR(totalRevenue)}</p>
-          <p className="mt-1 text-xs text-gray-400">{orders.length} orders</p>
+          <p className="mt-1 text-xs text-white/60">{orders.length} orders</p>
         </div>
         {stats.map((s) => (
-          <div key={s.status} className="rounded-2xl bg-white p-4 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-gray-400">{s.status}</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{formatOMR(s.totalRevenue)}</p>
-            <p className="mt-1 text-xs text-gray-400">{s.orderCount} orders</p>
+          <div key={s.status} className="rounded-2xl bg-white/60 p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-ink/40">{s.status}</p>
+            <p className="mt-1 text-xl font-bold text-ink">{formatOMR(s.totalRevenue)}</p>
+            <p className="mt-1 text-xs text-ink/40">{s.orderCount} orders</p>
           </div>
         ))}
       </div>
 
       {/* --- Orders table --- */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Order</th>
               <th className="px-4 py-3">User</th>
@@ -117,15 +117,15 @@ export default function AdminOrders() {
               <th className="px-4 py-3">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-ink/10">
             {orders.map((o) => (
-              <tr key={o.orderId} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-900">#{o.orderId}</td>
-                <td className="px-4 py-3 text-gray-500">#{o.userId}</td>
-                <td className="px-4 py-3 text-gray-500">
+              <tr key={o.orderId} className="hover:bg-ink/5">
+                <td className="px-4 py-3 font-medium text-ink">#{o.orderId}</td>
+                <td className="px-4 py-3 text-ink/50">#{o.userId}</td>
+                <td className="px-4 py-3 text-ink/50">
                   {new Date(o.orderDate).toLocaleDateString()}
                 </td>
-                <td className="px-4 py-3 text-gray-500">
+                <td className="px-4 py-3 text-ink/50">
                   {(o.orderItems ?? []).reduce((s, it) => s + it.quantity, 0)}
                 </td>
                 <td className="px-4 py-3 font-medium">{formatOMR(o.totalAmount)}</td>
@@ -134,7 +134,7 @@ export default function AdminOrders() {
                   <select
                     value={o.status}
                     onChange={(e) => changeStatus(o, e.target.value)}
-                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                   >
                     {/* A saved status could be something not in our list (older
                         data). Show it as an extra option so the select still
@@ -153,7 +153,7 @@ export default function AdminOrders() {
             ))}
             {orders.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
                   No orders yet.
                 </td>
               </tr>

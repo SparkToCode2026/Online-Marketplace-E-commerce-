@@ -12,9 +12,7 @@ interface Profile {
   userId: number;
 }
 
-// Vendor store page — find this vendor's profile (via /VendorProfile/all, since
-// the API keys it by profile id not user id), then view/create/edit it. The
-// backend only stores store name and address.
+// Vendor store page — find this vendor's profile, then view/create/edit it.
 export default function VendorProfile() {
   const toast = useToast();
   const userId = Number(localStorage.getItem("userId"));
@@ -33,7 +31,7 @@ export default function VendorProfile() {
       const all = (await apiFetch("/VendorProfile/all")) as Profile[];
       const mine = all.find((p) => p.userId === userId) ?? null;
       setProfile(mine);
-      setEditing(!mine); // no profile yet -> start in create mode
+      setEditing(!mine);
       if (mine) {
         setStoreName(mine.storeName);
         setAddress(mine.address);
@@ -81,55 +79,55 @@ export default function VendorProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream font-body text-ink">
       <NavBar />
       <div className="mx-auto max-w-xl p-6">
-        <h2 className="mb-4 text-2xl font-bold text-gray-900">My Store</h2>
+        <h2 className="mb-4 font-heading text-2xl">My Store</h2>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          <p className="text-sm text-ink/50">Loading…</p>
         ) : profile && !editing ? (
-          <div className="rounded-2xl bg-white p-6 shadow-sm">
+          <div className="rounded-2xl bg-white/60 p-6 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">{profile.storeName}</h3>
+                <h3 className="font-heading text-lg">{profile.storeName}</h3>
                 {profile.isVerified ? (
-                  <span className="mt-1 inline-block rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                  <span className="mt-1 inline-block rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700">
                     Verified
                   </span>
                 ) : (
-                  <span className="mt-1 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                  <span className="mt-1 inline-block rounded-full bg-terracotta-100 px-3 py-1 text-xs font-medium text-terracotta-700">
                     Pending verification
                   </span>
                 )}
               </div>
               <button
                 onClick={() => setEditing(true)}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                className="rounded-full border border-ink/15 px-3 py-1.5 text-sm font-medium text-ink/70 hover:bg-ink/5"
               >
                 Edit
               </button>
             </div>
             <dl className="mt-4 text-sm">
-              <dt className="text-gray-500">Address</dt>
-              <dd className="mt-1 text-gray-900">{profile.address || "—"}</dd>
+              <dt className="text-ink/60">Address</dt>
+              <dd className="mt-1">{profile.address || "—"}</dd>
             </dl>
           </div>
         ) : (
-          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
+          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white/60 p-6 shadow-sm">
             <label className="block text-sm">
-              <span className="text-gray-500">Store name</span>
+              <span className="text-ink/60">Store name</span>
               <input
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 required
               />
             </label>
             <label className="block text-sm">
-              <span className="text-gray-500">Address</span>
+              <span className="text-ink/60">Address</span>
               <input
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 required
@@ -139,7 +137,7 @@ export default function VendorProfile() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+                className="rounded-full bg-terracotta-500 px-4 py-2 font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/15"
               >
                 {saving ? "Saving…" : profile ? "Save changes" : "Create store"}
               </button>
@@ -147,7 +145,7 @@ export default function VendorProfile() {
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                  className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink/70 hover:bg-ink/5"
                 >
                   Cancel
                 </button>

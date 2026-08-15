@@ -54,6 +54,25 @@ export function logout() {
   localStorage.clear();
 }
 
+// --- Cart change signal ---------------------------------------------------
+// A lightweight way for pages to tell the NavBar "the cart changed, refresh
+// your badge" without pulling in a global state library. It rides on the
+// browser's own event system: bumpCart() fires a custom event, and the NavBar
+// subscribes with onCartChange(). Any page that adds/removes/clears cart items
+// calls bumpCart() right after the successful request.
+const CART_EVENT = "cart-changed";
+
+export function bumpCart() {
+  window.dispatchEvent(new Event(CART_EVENT));
+}
+
+// Subscribe to cart changes. Returns an unsubscribe function so callers (React
+// effects) can clean up the listener on unmount.
+export function onCartChange(handler: () => void): () => void {
+  window.addEventListener(CART_EVENT, handler);
+  return () => window.removeEventListener(CART_EVENT, handler);
+}
+
 // Resolves this user's cart id (cached in localStorage). Creates one on
 // first use; if the user already has a cart (create returns 409, e.g. the
 // seeded demo accounts) it looks theirs up from /Cart/all instead.

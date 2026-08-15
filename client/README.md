@@ -1,61 +1,44 @@
-# Client — Online Marketplace (React + TypeScript)
+# Organic redesign — apply to your project
 
-واجهة المستخدم (Frontend) لمشروع المتجر الإلكتروني، مبنية بـ **Vite + React + TypeScript**.
+These files are drop-in replacements for your existing `client/` files, restyled with the
+Organic design system (cream background, terracotta/sage accents, Caprasimo + Figtree type,
+pill-shaped buttons/inputs, rounded cards). All logic, state, API calls, and routes are
+**unchanged** — only `className` strings, a couple of icons, and the Tailwind/font setup
+changed.
 
-## التقنيات المستخدمة
+## How to apply
 
-| الأداة            | الغرض                                      |
-| ----------------- | ------------------------------------------ |
-| **Vite**          | أداة البناء والتشغيل السريع                 |
-| **React 18 + TS** | بناء الواجهة بأنواع آمنة                    |
-| **React Router**  | التنقل بين الصفحات                          |
-| **Axios**         | الاتصال بالـ backend API                    |
-| **Zustand**       | إدارة الحالة (تسجيل الدخول + السلة)         |
-| **Tailwind CSS**  | التنسيق                                     |
+1. Copy `tailwind.config.js` over `client/tailwind.config.js` (adds the Organic color/font tokens).
+2. Copy `index.html` over `client/index.html` (adds the Google Fonts `<link>` for Caprasimo + Figtree).
+3. Copy everything under `src/` into your `client/src/`, overwriting the matching files:
+   - `components/NavBar.tsx`
+   - `components/HeroSlider.tsx`
+   - `components/icons.tsx`
+   - `components/OrderStatusBadge.tsx`
+   - `pages/Shop.tsx`
+   - `pages/ProductDetail.tsx`
+   - `pages/Cart.tsx`
+   - `pages/Orders.tsx`
+   - `pages/Account.tsx`
+   - `pages/VendorProducts.tsx`
+   - `pages/VendorProfile.tsx`
+   - `pages/Admin.tsx`
+   - `pages/Categories.tsx`
+   - `pages/Login.tsx`
+4. No new npm packages are required — fonts load via the `<link>` tag, icons are still inline SVG.
+5. `npm run dev` and check each route.
 
-## التشغيل
+## Not restyled here (apply the same treatment yourself)
+- `Register.tsx` — mirror the Login.tsx pattern (same card/pill/gradient-panel treatment).
+- `ProductReviews.tsx`, `Toast.tsx` — restyle borders/pills/colors to match (rounded-2xl cards, terracotta accents, pill tags).
+- `AdminOrders.tsx`, `AdminCoupons.tsx`, `AdminPayments.tsx`, `AdminShipping.tsx`, `AdminOrderItems.tsx` — apply the same table/tag/button classes used in the restyled `Admin.tsx` products table.
 
-```bash
-# 1) ثبّت الاعتماديات (مرة واحدة)
-npm install
-
-# 2) انسخ ملف البيئة وعدّل رابط الـ API
-cp .env.example .env
-
-# 3) شغّل خادم التطوير
-npm run dev
-```
-
-يفتح على: http://localhost:5173
-
-> ملاحظة: عدّل `target` في `vite.config.ts` ليطابق منفذ الـ backend عندك (ASP.NET Core).
-
-## هيكلة المجلدات
-
-```
-src/
-├── api/          # اتصال axios + دوال الـ API لكل مورد
-│   ├── axios.ts        # نسخة axios موحّدة + interceptors (توكن/401)
-│   ├── auth.api.ts     # login / register
-│   └── products.api.ts # جلب المنتجات
-├── components/
-│   ├── common/   # مكونات UI عامة (Button...)
-│   └── layout/   # Navbar + Layout
-├── hooks/        # custom hooks (useProducts...)
-├── pages/        # صفحات الراوتر (Home, Products, Cart, Login...)
-├── routes/       # AppRoutes + ProtectedRoute (حماية الصفحات)
-├── store/        # Zustand stores (authStore, cartStore)
-├── types/        # تعريفات TypeScript المشتركة
-├── utils/        # دوال مساعدة
-├── App.tsx       # المكوّن الجذر
-├── main.tsx      # نقطة الدخول + BrowserRouter
-└── index.css     # توجيهات Tailwind
-```
-
-## أوامر مفيدة
-
-```bash
-npm run dev      # تشغيل خادم التطوير
-npm run build    # بناء نسخة الإنتاج (فحص أنواع + build)
-npm run preview  # معاينة نسخة الإنتاج محليًا
-```
+## What changed, in one paragraph
+Every `bg-gray-50` page background is now `bg-cream`. The dark `bg-gray-800` navbar is now
+transparent on the cream page with terracotta active-link color. All `bg-blue-600` /
+`bg-orange-*` primary actions are now `bg-terracotta-500` pill buttons (`rounded-full`)
+instead of `rounded-lg`. Cards keep `rounded-2xl` (already close to the system's 16px) but
+swap `shadow-sm` accents to the warmer palette. Category/status/tag pills use `terracotta`
+or `sage` tints instead of blue/orange/green. Headings use `font-heading` (Caprasimo);
+body text uses `font-body` (Figtree). The homepage feature-strip icons were swapped from
+Heroicons to Lucide-style icons at a bolder stroke width (2.75) per the system's icon guidance.

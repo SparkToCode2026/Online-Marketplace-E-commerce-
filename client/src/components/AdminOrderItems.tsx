@@ -149,38 +149,38 @@ export default function AdminOrderItems() {
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-400">Loading…</p>;
+  if (loading) return <p className="text-sm text-ink/40">Loading…</p>;
 
   return (
     <div>
       {/* --- Revenue per product (top sellers by money) --- */}
       <div className="mb-6">
-        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-400">
+        <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-ink/40">
           Revenue by product
         </h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {revenue.map((r) => (
-            <div key={r.productId} className="rounded-2xl bg-white p-4 shadow-sm">
-              <p className="truncate text-sm font-medium text-gray-700">
+            <div key={r.productId} className="rounded-2xl bg-white/60 p-4 shadow-sm">
+              <p className="truncate text-sm font-medium text-ink/70">
                 {productMap[r.productId] ?? `Product #${r.productId}`}
               </p>
-              <p className="mt-1 text-lg font-bold text-gray-900">{formatOMR(r.totalRevenue)}</p>
+              <p className="mt-1 text-lg font-bold text-ink">{formatOMR(r.totalRevenue)}</p>
             </div>
           ))}
-          {revenue.length === 0 && <p className="text-sm text-gray-400">No sales yet.</p>}
+          {revenue.length === 0 && <p className="text-sm text-ink/40">No sales yet.</p>}
         </div>
       </div>
 
       {/* --- Add a line item to a pending order --- */}
-      <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
-        <h3 className="mb-3 font-bold text-gray-900">Add line item</h3>
+      <div className="mb-6 rounded-2xl bg-white/60 p-5 shadow-sm">
+        <h3 className="mb-3 font-bold text-ink">Add line item</h3>
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-xs text-gray-500">
+          <label className="text-xs text-ink/50">
             Order (pending)
             <select
               value={addOrderId}
               onChange={(e) => setAddOrderId(Number(e.target.value))}
-              className="mt-1 block w-36 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 block w-36 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
             >
               <option value={0} disabled>
                 Select…
@@ -192,12 +192,12 @@ export default function AdminOrderItems() {
               ))}
             </select>
           </label>
-          <label className="text-xs text-gray-500">
+          <label className="text-xs text-ink/50">
             Product
             <select
               value={addProductId}
               onChange={(e) => setAddProductId(Number(e.target.value))}
-              className="mt-1 block w-52 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 block w-52 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
             >
               <option value={0} disabled>
                 Select…
@@ -209,32 +209,32 @@ export default function AdminOrderItems() {
               ))}
             </select>
           </label>
-          <label className="text-xs text-gray-500">
+          <label className="text-xs text-ink/50">
             Qty
             <input
               type="number"
               min={1}
               value={addQty}
               onChange={(e) => setAddQty(Number(e.target.value))}
-              className="mt-1 block w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1 block w-20 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
             />
           </label>
           <button
             onClick={addItem}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600"
           >
             Add
           </button>
         </div>
         {pendingOrders.length === 0 && (
-          <p className="mt-2 text-xs text-gray-400">No pending orders to add items to.</p>
+          <p className="mt-2 text-xs text-ink/40">No pending orders to add items to.</p>
         )}
       </div>
 
       {/* --- All order lines --- */}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Line</th>
               <th className="px-4 py-3">Order</th>
@@ -245,14 +245,14 @@ export default function AdminOrderItems() {
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-ink/10">
             {items.map((it) => {
               const editing = editingId === it.orderItemId;
               return (
-                <tr key={it.orderItemId} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">#{it.orderItemId}</td>
-                  <td className="px-4 py-3 text-gray-500">#{it.orderId}</td>
-                  <td className="px-4 py-3 text-gray-700">
+                <tr key={it.orderItemId} className="hover:bg-ink/5">
+                  <td className="px-4 py-3 font-medium text-ink">#{it.orderItemId}</td>
+                  <td className="px-4 py-3 text-ink/50">#{it.orderId}</td>
+                  <td className="px-4 py-3 text-ink/70">
                     {it.product?.name ?? `Product #${it.productId}`}
                   </td>
                   <td className="px-4 py-3">
@@ -262,7 +262,7 @@ export default function AdminOrderItems() {
                         min={1}
                         value={draftQty}
                         onChange={(e) => setDraftQty(Number(e.target.value))}
-                        className="w-16 rounded border border-gray-300 px-2 py-1 text-sm outline-none focus:border-blue-500"
+                        className="w-16 rounded border border-ink/15 px-2 py-1 text-sm outline-none focus:border-terracotta-500"
                       />
                     ) : (
                       it.quantity
@@ -276,7 +276,7 @@ export default function AdminOrderItems() {
                         step="0.001"
                         value={draftPrice}
                         onChange={(e) => setDraftPrice(Number(e.target.value))}
-                        className="w-24 rounded border border-gray-300 px-2 py-1 text-sm outline-none focus:border-blue-500"
+                        className="w-24 rounded border border-ink/15 px-2 py-1 text-sm outline-none focus:border-terracotta-500"
                       />
                     ) : (
                       formatOMR(it.unitPrice)
@@ -291,13 +291,13 @@ export default function AdminOrderItems() {
                         <>
                           <button
                             onClick={() => saveEdit(it)}
-                            className="rounded bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                            className="rounded bg-terracotta-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-terracotta-600"
                           >
                             Save
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                            className="rounded border border-ink/15 px-2.5 py-1 text-xs font-medium text-ink/70 hover:bg-ink/5"
                           >
                             Cancel
                           </button>
@@ -310,14 +310,14 @@ export default function AdminOrderItems() {
                             onClick={() => startEdit(it)}
                             disabled={!isPending(it)}
                             title={isPending(it) ? "" : "Order is no longer pending"}
-                            className="rounded border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="rounded border border-ink/15 px-2.5 py-1 text-xs font-medium text-ink/70 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => remove(it)}
                             disabled={!isPending(it)}
-                            className="rounded border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="rounded border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             Remove
                           </button>
@@ -330,7 +330,7 @@ export default function AdminOrderItems() {
             })}
             {items.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink/40">
                   No order items yet.
                 </td>
               </tr>

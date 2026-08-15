@@ -3,8 +3,54 @@
 @tailwind components; /* component classes */
 @tailwind utilities; /* utility classes like flex, p-4, text-center */
 
-/* Simple global styles you can tweak */
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+/* ══════════════════════════════════════════════════════════════════════════
+   ORGANIC — global base only. Every token lives in tailwind.config.js;
+   nothing is duplicated here. These rules exist because they apply to bare
+   elements (body, h1..h6, :focus-visible, ::selection) that carry no class.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  /* body: page ground + ink, Figtree, 15px / 1.55 (text-base is tokenised to
+     exactly that pair in the config). */
+  body {
+    @apply bg-page text-ink font-body text-base;
+  }
+
+  /* Caprasimo ships at weight 400 only — font-normal keeps the browser from
+     synthesising a faux-bold face. Weight comes from the face itself. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading font-normal leading-heading tracking-heading;
+  }
+
+  /* the system's h6 is an all-caps eyebrow, not a tight display line */
+  h6 {
+    @apply uppercase tracking-label;
+  }
+
+  /* keyboard focus only — mouse clicks stay quiet */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid theme(colors.accent.DEFAULT);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: theme(colors.accent.DEFAULT / 30%);
+  }
+}
+
+@layer components {
+  /* The system's photo treatment: pulls stock imagery toward the warm,
+     low-contrast ground so photos sit inside the palette instead of on top
+     of it. Wrap the <img>'s container, not the <img>. */
+  .washed {
+    filter: saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94);
+  }
 }

@@ -56,72 +56,76 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream font-body text-ink">
       <NavBar />
 
       <div className="mx-auto max-w-5xl p-6">
         <Link
           to="/"
-          className="flex w-fit items-center gap-1 text-sm text-blue-600 hover:underline"
+          className="flex w-fit items-center gap-1 text-sm text-terracotta-700 hover:underline"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to products
         </Link>
 
-        {error && <p className="mt-4 text-sm text-red-500">{error}</p>}
+        {error && <p className="mt-4 text-sm text-terracotta-700">{error}</p>}
 
-        {!product && !error && <p className="mt-4 text-sm text-gray-400">Loading…</p>}
+        {!product && !error && <p className="mt-4 text-sm text-ink/50">Loading…</p>}
 
         {product && (
           <>
           <div className="mt-4 grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="aspect-square overflow-hidden rounded-2xl bg-gray-100 shadow-sm">
-              <img src={product.productUrl} alt={product.name} className="h-full w-full object-cover" />
+            <div className="aspect-square overflow-hidden rounded-2xl bg-terracotta-50 shadow-sm">
+              <img
+                src={product.productUrl}
+                alt={product.name}
+                className="h-full w-full object-cover saturate-[.85] brightness-[.97]"
+              />
             </div>
 
             <div className="flex flex-col">
               <div className="flex flex-wrap gap-2">
                 {product.category && (
-                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                  <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700">
                     {product.category.name}
                   </span>
                 )}
                 {product.stockQuantity > 0 ? (
-                  <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+                  <span className="rounded-full bg-ink/5 px-3 py-1 text-xs font-medium text-ink/70">
                     In stock ({product.stockQuantity})
                   </span>
                 ) : (
-                  <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
+                  <span className="rounded-full bg-terracotta-100 px-3 py-1 text-xs font-medium text-terracotta-700">
                     Out of stock
                   </span>
                 )}
               </div>
 
-              <h1 className="mt-3 text-3xl font-bold text-gray-900">{product.name}</h1>
+              <h1 className="mt-3 font-heading text-3xl">{product.name}</h1>
               {product.vendorProfile && (
-                <p className="mt-1 text-sm text-gray-400">
+                <p className="mt-1 text-sm text-ink/50">
                   Sold by {product.vendorProfile.storeName}
                 </p>
               )}
 
-              <p className="mt-4 text-2xl font-bold text-blue-600">
+              <p className="mt-4 text-2xl font-bold text-terracotta-700">
                 {formatOMR(product.price)}
               </p>
 
-              <p className="mt-4 leading-relaxed text-gray-600">{product.description}</p>
+              <p className="mt-4 leading-relaxed text-ink/70">{product.description}</p>
 
               <div className="mt-6 flex items-center gap-4">
-                <div className="flex items-center rounded-lg border border-gray-300">
+                <div className="flex items-center rounded-full border border-ink/15">
                   <button
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                    className="px-3 py-2 text-ink/70 hover:bg-ink/5 rounded-l-full"
                   >
                     −
                   </button>
                   <span className="w-10 text-center">{qty}</span>
                   <button
                     onClick={() => setQty((q) => Math.min(product.stockQuantity, q + 1))}
-                    className="px-3 py-2 text-gray-600 hover:bg-gray-100"
+                    className="px-3 py-2 text-ink/70 hover:bg-ink/5 rounded-r-full"
                   >
                     +
                   </button>
@@ -129,7 +133,7 @@ export default function ProductDetail() {
                 <button
                   onClick={addToCart}
                   disabled={product.stockQuantity <= 0}
-                  className="flex-1 rounded-lg bg-blue-600 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  className="flex-1 rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600 disabled:cursor-not-allowed disabled:bg-ink/15"
                 >
                   Add to cart
                 </button>
@@ -137,7 +141,6 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Reviews for this product: average, list, and a write-a-review form. */}
           <ProductReviews productId={product.productId} />
           </>
         )}

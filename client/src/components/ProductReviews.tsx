@@ -37,7 +37,7 @@ function Stars({
           aria-label={`${n} star${n > 1 ? "s" : ""}`}
         >
           <StarIcon
-            className={`h-5 w-5 ${n <= value ? "text-amber-400" : "text-gray-300"}`}
+            className={`h-5 w-5 ${n <= value ? "text-terracotta-500" : "text-ink/25"}`}
           />
         </button>
       ))}
@@ -136,13 +136,13 @@ export default function ProductReviews({ productId }: { productId: number }) {
   }
 
   return (
-    <div className="mt-10 border-t border-gray-200 pt-8">
+    <div className="mt-10 border-t border-ink/10 pt-8">
       <div className="mb-5 flex items-center gap-3">
-        <h2 className="text-xl font-bold text-gray-900">Reviews</h2>
+        <h2 className="text-xl font-bold text-ink">Reviews</h2>
         {average !== null && (
           <div className="flex items-center gap-1.5">
             <Stars value={Math.round(average)} />
-            <span className="text-sm font-medium text-gray-500">
+            <span className="text-sm font-medium text-ink/50">
               {average.toFixed(1)} ({reviews.length})
             </span>
           </div>
@@ -151,11 +151,11 @@ export default function ProductReviews({ productId }: { productId: number }) {
 
       {/* Write-a-review form. The product page already requires login, so we can
           assume a signed-in user here. */}
-      <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
-        <p className="mb-2 text-sm font-medium text-gray-700">Write a review</p>
+      <div className="mb-6 rounded-2xl bg-white/60 p-5 shadow-sm">
+        <p className="mb-2 text-sm font-medium text-ink/70">Write a review</p>
         <Stars value={rating} onPick={setRating} />
         <textarea
-          className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          className="mt-3 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
           placeholder="Share your thoughts (optional)…"
           rows={2}
           value={comment}
@@ -164,40 +164,40 @@ export default function ProductReviews({ productId }: { productId: number }) {
         <button
           onClick={submit}
           disabled={submitting}
-          className="mt-3 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+          className="mt-3 rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/5"
         >
           {submitting ? "Posting…" : "Post review"}
         </button>
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-ink/40">
           You can only review products you've purchased.
         </p>
       </div>
 
       {/* The list of existing reviews. */}
       {loading ? (
-        <p className="text-sm text-gray-400">Loading reviews…</p>
+        <p className="text-sm text-ink/40">Loading reviews…</p>
       ) : reviews.length === 0 ? (
-        <p className="text-sm text-gray-400">No reviews yet — be the first!</p>
+        <p className="text-sm text-ink/40">No reviews yet — be the first!</p>
       ) : (
         <div className="space-y-3">
           {reviews.map((r) => (
-            <div key={r.reviewId} className="rounded-2xl bg-white p-4 shadow-sm">
+            <div key={r.reviewId} className="rounded-2xl bg-white/60 p-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Stars value={r.rating} />
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-ink/70">
                     {r.user?.username ?? `User #${r.userId}`}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-ink/40">
                     {new Date(r.createdAt).toLocaleDateString()}
                   </span>
                   {/* Only your own reviews get a delete button. */}
                   {r.userId === myId && (
                     <button
                       onClick={() => remove(r)}
-                      className="text-gray-400 transition hover:text-red-500"
+                      className="text-ink/40 transition hover:text-terracotta-700"
                       title="Delete your review"
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -205,7 +205,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
                   )}
                 </div>
               </div>
-              {r.comment && <p className="mt-2 text-sm text-gray-600">{r.comment}</p>}
+              {r.comment && <p className="mt-2 text-sm text-ink/60">{r.comment}</p>}
             </div>
           ))}
         </div>

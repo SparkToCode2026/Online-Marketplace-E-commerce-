@@ -70,7 +70,7 @@ export default function Cart() {
     if (coupon.trim()) url += "&couponCode=" + encodeURIComponent(coupon.trim());
     try {
       const orderId = await apiFetch(url, "POST");
-      localStorage.removeItem("cartId"); // a fresh cart for the next order
+      localStorage.removeItem("cartId");
       setItems([]);
       setCoupon("");
       setCartId(null);
@@ -83,24 +83,24 @@ export default function Cart() {
   const total = items.reduce((s, i) => s + (i.product?.price ?? 0) * i.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream font-body text-ink">
       <NavBar />
 
       <div className="mx-auto max-w-4xl p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-2xl font-bold text-gray-900">
-          <CartIcon className="h-6 w-6" />
+        <h2 className="mb-4 flex items-center gap-2 font-heading text-2xl">
+          <CartIcon className="h-6 w-6 text-terracotta-500" />
           My Cart
         </h2>
 
         {loading ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          <p className="text-sm text-ink/50">Loading…</p>
         ) : items.length === 0 ? (
-          <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
-            <CartIcon className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-3 text-gray-500">Your cart is empty.</p>
+          <div className="rounded-2xl bg-white/60 p-10 text-center shadow-sm">
+            <CartIcon className="mx-auto h-12 w-12 text-ink/20" />
+            <p className="mt-3 text-ink/60">Your cart is empty.</p>
             <Link
               to="/"
-              className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="mt-4 inline-block rounded-full bg-terracotta-500 px-5 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
             >
               Browse products
             </Link>
@@ -111,43 +111,43 @@ export default function Cart() {
               {items.map((i) => (
                 <div
                   key={i.cartItemId}
-                  className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm"
+                  className="flex items-center gap-4 rounded-2xl bg-white/60 p-4 shadow-sm"
                 >
                   <img
                     src={i.product?.productUrl}
                     alt={i.product?.name}
-                    className="h-16 w-16 rounded-lg object-cover"
+                    className="h-16 w-16 rounded-full object-cover saturate-[.85] brightness-[.97]"
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{i.product?.name}</p>
-                    <p className="text-sm text-gray-400">
+                    <p className="font-medium">{i.product?.name}</p>
+                    <p className="text-sm text-ink/50">
                       {formatOMR(i.product?.price ?? 0)} each
                     </p>
                   </div>
 
-                  <div className="flex items-center rounded-lg border border-gray-300">
+                  <div className="flex items-center rounded-full border border-ink/15">
                     <button
                       onClick={() => adjust(i, -1)}
-                      className="px-3 py-1.5 text-gray-600 hover:bg-gray-100"
+                      className="rounded-l-full px-3 py-1.5 text-ink/70 hover:bg-ink/5"
                     >
                       −
                     </button>
                     <span className="w-8 text-center text-sm">{i.quantity}</span>
                     <button
                       onClick={() => adjust(i, 1)}
-                      className="px-3 py-1.5 text-gray-600 hover:bg-gray-100"
+                      className="rounded-r-full px-3 py-1.5 text-ink/70 hover:bg-ink/5"
                     >
                       +
                     </button>
                   </div>
 
-                  <span className="w-24 text-right font-semibold text-gray-900">
+                  <span className="w-24 text-right font-semibold text-terracotta-700">
                     {formatOMR((i.product?.price ?? 0) * i.quantity)}
                   </span>
 
                   <button
                     onClick={() => remove(i)}
-                    className="text-gray-400 transition hover:text-red-500"
+                    className="text-ink/30 transition hover:text-terracotta-600"
                     title="Remove"
                   >
                     <TrashIcon className="h-5 w-5" />
@@ -156,9 +156,9 @@ export default function Cart() {
               ))}
             </div>
 
-            <div className="h-fit rounded-2xl bg-white p-5 shadow-sm">
-              <h3 className="mb-3 font-bold text-gray-900">Order summary</h3>
-              <div className="flex justify-between border-b pb-3 text-sm text-gray-500">
+            <div className="h-fit rounded-2xl bg-white/60 p-5 shadow-sm">
+              <h3 className="mb-3 font-heading text-lg">Order summary</h3>
+              <div className="flex justify-between border-b border-ink/10 pb-3 text-sm text-ink/60">
                 <span>Items</span>
                 <span>{items.reduce((s, i) => s + i.quantity, 0)}</span>
               </div>
@@ -168,14 +168,14 @@ export default function Cart() {
               </div>
 
               <input
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 placeholder="Coupon code (e.g. WELCOME10)"
                 value={coupon}
                 onChange={(e) => setCoupon(e.target.value)}
               />
               <button
                 onClick={checkout}
-                className="mt-3 w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white transition hover:bg-blue-700"
+                className="mt-3 w-full rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600"
               >
                 Checkout
               </button>

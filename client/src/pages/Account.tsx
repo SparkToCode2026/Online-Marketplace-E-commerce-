@@ -12,8 +12,7 @@ interface User {
   role: string;
 }
 
-// Account page — view your details and update the editable ones. The backend's
-// /User/update only accepts username and phone, so email and role are read-only.
+// Account page — view your details and update the editable ones.
 export default function Account() {
   const toast = useToast();
   const userId = localStorage.getItem("userId");
@@ -54,19 +53,19 @@ export default function Account() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream font-body text-ink">
       <NavBar />
       <div className="mx-auto max-w-xl p-6">
-        <h2 className="mb-4 text-2xl font-bold text-gray-900">My Account</h2>
+        <h2 className="mb-4 font-heading text-2xl">My Account</h2>
 
         {!user ? (
-          <p className="text-sm text-gray-400">Loading…</p>
+          <p className="text-sm text-ink/50">Loading…</p>
         ) : (
-          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
+          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white/60 p-6 shadow-sm">
             <label className="block text-sm">
-              <span className="text-gray-500">Full name</span>
+              <span className="text-ink/60">Full name</span>
               <input
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -74,10 +73,10 @@ export default function Account() {
             </label>
 
             <label className="block text-sm">
-              <span className="text-gray-500">Phone number</span>
+              <span className="text-ink/60">Phone number</span>
               <input
                 type="tel"
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 required
@@ -85,18 +84,18 @@ export default function Account() {
             </label>
 
             <label className="block text-sm">
-              <span className="text-gray-500">Email</span>
+              <span className="text-ink/60">Email</span>
               <input
-                className="mt-1 w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-500"
+                className="mt-1 w-full cursor-not-allowed rounded-full border border-ink/10 bg-ink/5 px-4 py-2 text-ink/50"
                 value={user.email}
                 disabled
               />
             </label>
 
             <div className="text-sm">
-              <span className="text-gray-500">Role</span>
+              <span className="text-ink/60">Role</span>
               <div className="mt-1">
-                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                <span className="rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-700">
                   {user.role}
                 </span>
               </div>
@@ -105,7 +104,7 @@ export default function Account() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-lg bg-blue-600 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:bg-gray-300"
+              className="w-full rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/15"
             >
               {saving ? "Saving…" : "Save changes"}
             </button>
