@@ -110,6 +110,12 @@ export default function Admin() {
 
   async function save(e: FormEvent) {
     e.preventDefault();
+    if (!form.name.trim()) return toast("Enter a product name.", "info");
+    if (form.price <= 0) return toast("Price must be greater than 0.", "info");
+    if (form.stockQuantity < 0) return toast("Stock cannot be negative.", "info");
+    if (editing === "new" && !form.categoryId) return toast("Pick a category.", "info");
+    if (editing === "new" && !form.vendorProfileId) return toast("Pick a vendor.", "info");
+
     try {
       if (editing === "new") {
         await apiFetch("/Product/add", "POST", form);
@@ -318,7 +324,7 @@ export default function Admin() {
             <h2 className="mb-4 font-heading text-lg">
               {editing === "new" ? "Add product" : `Edit "${editing.name}"`}
             </h2>
-            <form onSubmit={save} className="space-y-3">
+            <form onSubmit={save} noValidate className="space-y-3">
               <input
                 className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Name"
