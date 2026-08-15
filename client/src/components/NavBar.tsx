@@ -28,7 +28,6 @@ export default function NavBar() {
 
   const links = [
     { to: "/", label: "Products", end: true },
-    { to: "/categories", label: "Categories" },
     { to: "/cart", label: "Cart" },
     { to: "/orders", label: "My Orders" },
   ];
