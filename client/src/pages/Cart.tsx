@@ -12,6 +12,12 @@ interface CartItem {
   product?: { name: string; price: number; productUrl: string };
 }
 
+interface Coupon {
+  couponId: number;
+  code: string;
+  discountPercent: number;
+}
+
 // Cart page — reads the real cart from the backend and checks out.
 export default function Cart() {
   const toast = useToast();
@@ -19,6 +25,7 @@ export default function Cart() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [coupon, setCoupon] = useState("");
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
 
   const startedRef = useRef(false);
   useEffect(() => {
@@ -29,6 +36,11 @@ export default function Cart() {
       if (id) load(id);
       else setLoading(false);
     });
+    // Active (non-expired) coupons, so a typed code can preview its discount
+    // before checkout.
+    apiFetch("/Coupon/active")
+      .then((d) => setCoupons(d as Coupon[]))
+      .catch(() => setCoupons([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -65,9 +77,21 @@ export default function Cart() {
     }
   }
 
+  const subtotal = items.reduce((s, i) => s + (i.product?.price ?? 0) * i.quantity, 0);
+
+  // Match the typed code against the active coupons (case-insensitive for the
+  // user; the canonical code is what gets sent to checkout). The backend
+  // recomputes the same total * (1 - discountPercent/100) authoritatively.
+  const enteredCode = coupon.trim();
+  const matchedCoupon =
+    enteredCode && coupons.find((c) => c.code.toLowerCase() === enteredCode.toLowerCase());
+  const discount = matchedCoupon ? (subtotal * matchedCoupon.discountPercent) / 100 : 0;
+  const total = subtotal - discount;
+
   async function checkout() {
     let url = "/Order/checkout?userId=" + localStorage.getItem("userId");
-    if (coupon.trim()) url += "&couponCode=" + encodeURIComponent(coupon.trim());
+    const code = matchedCoupon ? matchedCoupon.code : enteredCode;
+    if (code) url += "&couponCode=" + encodeURIComponent(code);
     try {
       const orderId = await apiFetch(url, "POST");
       localStorage.removeItem("cartId");
@@ -79,8 +103,6 @@ export default function Cart() {
       toast((e as Error).message, "error");
     }
   }
-
-  const total = items.reduce((s, i) => s + (i.product?.price ?? 0) * i.quantity, 0);
 
   return (
     <div className="min-h-screen bg-page font-body text-ink">
@@ -158,10 +180,20 @@ export default function Cart() {
 
             <div className="h-fit rounded-2xl bg-white/60 p-5 shadow-sm">
               <h3 className="mb-3 font-heading text-lg">Order summary</h3>
-              <div className="flex justify-between border-b border-ink/10 pb-3 text-sm text-ink/60">
+              <div className="flex justify-between text-sm text-ink/60">
                 <span>Items</span>
                 <span>{items.reduce((s, i) => s + i.quantity, 0)}</span>
               </div>
+              <div className="mt-2 flex justify-between border-b border-ink/10 pb-3 text-sm text-ink/60">
+                <span>Subtotal</span>
+                <span>{formatOMR(subtotal)}</span>
+              </div>
+              {matchedCoupon && (
+                <div className="flex justify-between pt-3 text-sm text-sage-700">
+                  <span>Discount ({matchedCoupon.code} −{matchedCoupon.discountPercent}%)</span>
+                  <span>−{formatOMR(discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between py-3 text-lg font-bold">
                 <span>Total</span>
                 <span>{formatOMR(total)}</span>
@@ -173,6 +205,13 @@ export default function Cart() {
                 value={coupon}
                 onChange={(e) => setCoupon(e.target.value)}
               />
+              {enteredCode && (
+                <p className={`mt-2 text-xs ${matchedCoupon ? "text-sage-700" : "text-accent-700"}`}>
+                  {matchedCoupon
+                    ? `${matchedCoupon.code} applied — ${matchedCoupon.discountPercent}% off.`
+                    : "Invalid or expired coupon code."}
+                </p>
+              )}
               <button
                 onClick={checkout}
                 className="mt-3 w-full rounded-full bg-accent-500 py-2.5 font-medium text-white transition hover:bg-accent-600"
