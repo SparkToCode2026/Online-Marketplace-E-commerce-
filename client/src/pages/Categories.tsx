@@ -28,7 +28,7 @@ export default function Categories() {
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
 
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
       <div className="mx-auto max-w-6xl p-6">
         <h2 className="mb-4 font-heading text-2xl">Categories</h2>

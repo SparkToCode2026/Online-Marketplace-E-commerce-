@@ -115,12 +115,12 @@ export default function Orders() {
   }
 
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
 
       <div className="mx-auto max-w-4xl p-6">
         <h2 className="mb-4 flex items-center gap-2 font-heading text-2xl">
-          <CartIcon className="h-6 w-6 text-terracotta-500" />
+          <CartIcon className="h-6 w-6 text-accent-500" />
           My Orders
         </h2>
 
@@ -132,7 +132,7 @@ export default function Orders() {
             <p className="mt-3 text-ink/60">You haven't placed any orders yet.</p>
             <Link
               to="/"
-              className="mt-4 inline-block rounded-full bg-terracotta-500 px-5 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
+              className="mt-4 inline-block rounded-full bg-accent-500 px-5 py-2 text-sm font-medium text-white hover:bg-accent-600"
             >
               Start shopping
             </Link>
@@ -194,7 +194,7 @@ export default function Orders() {
                       <select
                         value={method[o.orderId] ?? "Card"}
                         onChange={(e) => setMethod({ ...method, [o.orderId]: e.target.value })}
-                        className="rounded-full border border-ink/15 px-3 py-1.5 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                        className="rounded-full border border-ink/15 px-3 py-1.5 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                       >
                         <option value="Card">Card</option>
                         <option value="Cash">Cash</option>
@@ -202,7 +202,7 @@ export default function Orders() {
                       <button
                         onClick={() => pay(o)}
                         disabled={payingId === o.orderId}
-                        className="rounded-full bg-terracotta-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/15"
+                        className="rounded-full bg-accent-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/15"
                       >
                         {payingId === o.orderId ? "Paying…" : `Pay ${formatOMR(o.totalAmount)}`}
                       </button>

@@ -138,7 +138,7 @@ export default function VendorProducts() {
   }
 
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
       <div className="mx-auto max-w-5xl p-6">
         <div className="mb-4 flex items-center justify-between">
@@ -146,7 +146,7 @@ export default function VendorProducts() {
           {vendorProfileId && (
             <button
               onClick={openAdd}
-              className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600"
+              className="rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600"
             >
               + Add product
             </button>
@@ -160,7 +160,7 @@ export default function VendorProducts() {
             <p className="text-ink/60">You need a store before you can list products.</p>
             <Link
               to="/vendor/profile"
-              className="mt-4 inline-block rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
+              className="mt-4 inline-block rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-600"
             >
               Set up my store
             </Link>
@@ -168,7 +168,7 @@ export default function VendorProducts() {
         ) : (
           <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
             <table className="w-full text-left text-sm">
-              <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
+              <thead className="bg-accent-100 text-xs uppercase text-ink/50">
                 <tr>
                   <th className="px-4 py-3">Product</th>
                   <th className="px-4 py-3">Price</th>
@@ -219,7 +219,7 @@ export default function VendorProducts() {
                         </button>
                         <button
                           onClick={() => remove(p)}
-                          className="rounded-full border border-terracotta-200 px-3 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
+                          className="rounded-full border border-accent-200 px-3 py-1 text-xs font-medium text-accent-700 hover:bg-accent-100"
                         >
                           Delete
                         </button>
@@ -248,14 +248,14 @@ export default function VendorProducts() {
             </h3>
             <form onSubmit={save} className="space-y-3">
               <input
-                className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
               />
               <textarea
-                className="w-full rounded-2xl border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="w-full rounded-2xl border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Description"
                 rows={2}
                 value={form.description}
@@ -268,7 +268,7 @@ export default function VendorProducts() {
                     type="number"
                     min={0}
                     step="0.001"
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
                     required
@@ -279,7 +279,7 @@ export default function VendorProducts() {
                   <input
                     type="number"
                     min={0}
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     value={form.stockQuantity}
                     onChange={(e) => setForm({ ...form, stockQuantity: Number(e.target.value) })}
                     required
@@ -290,7 +290,7 @@ export default function VendorProducts() {
               {editing === "new" && (
                 <>
                   <input
-                    className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     placeholder="Image URL (optional)"
                     value={form.productUrl}
                     onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
@@ -298,7 +298,7 @@ export default function VendorProducts() {
                   <label className="block text-xs text-ink/60">
                     Category
                     <select
-                      className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                      className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                       value={form.categoryId}
                       onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
                       required
@@ -326,7 +326,7 @@ export default function VendorProducts() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
+                  className="rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-600"
                 >
                   {editing === "new" ? "Create" : "Save changes"}
                 </button>

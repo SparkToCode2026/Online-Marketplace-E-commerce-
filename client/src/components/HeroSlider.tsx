@@ -42,7 +42,7 @@ const SLIDES: Slide[] = [
 const INTERVAL = 4500;
 
 // Auto-advancing hero carousel, restyled to the Organic system: warm
-// terracotta panel, washed/desaturated photo, pill CTA and dots.
+// accent panel, washed/desaturated photo, pill CTA and dots.
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
   const pausedRef = useRef(false);
@@ -71,7 +71,7 @@ export default function HeroSlider() {
           {SLIDES.map((s) => (
             <div
               key={s.title}
-              className="flex w-full shrink-0 items-center gap-8 bg-terracotta-500 px-8 py-14 text-white sm:px-14 sm:py-16"
+              className="flex w-full shrink-0 items-center gap-8 bg-accent-500 px-8 py-14 text-white sm:px-14 sm:py-16"
             >
               <div className="max-w-xl flex-1">
                 <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/80">
@@ -81,20 +81,26 @@ export default function HeroSlider() {
                 <p className="mt-4 text-base text-white/90 sm:text-lg">{s.subtitle}</p>
                 <a
                   href={s.href}
-                  className="mt-8 inline-block rounded-full bg-white px-7 py-3 text-sm font-bold text-terracotta-600 shadow transition hover:bg-cream"
+                  className="mt-8 inline-block rounded-full bg-white px-7 py-3 text-sm font-bold text-accent-600 shadow transition hover:bg-page"
                 >
                   {s.cta}
                 </a>
               </div>
 
-              <img
-                src={s.image}
-                alt=""
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-                className="hidden h-52 w-80 shrink-0 rounded-2xl object-cover shadow-xl saturate-[.85] brightness-[.97] lg:block"
-              />
+              <div className="relative hidden h-80 w-80 shrink-0 items-center justify-center lg:flex">
+                <div className="absolute h-80 w-80 rounded-full border-2 border-white/30" />
+                <div className="absolute h-60 w-60 rounded-full border-2 border-white/20" />
+                <div className="relative flex h-72 w-72 items-center justify-center overflow-hidden rounded-full bg-page shadow-xl">
+                  <img
+                    src={s.image}
+                    alt=""
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                    className="h-[85%] w-[85%] rounded-full object-cover saturate-[.85] brightness-[.97]"
+                  />
+                </div>
+              </div>
             </div>
           ))}
         </div>

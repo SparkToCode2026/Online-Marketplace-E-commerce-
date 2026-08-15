@@ -30,7 +30,7 @@ export function useToast() {
 
 const styles: Record<ToastType, string> = {
   success: "border-sage-500 bg-sage-100 text-sage-700",
-  error: "border-terracotta-500 bg-terracotta-100 text-terracotta-700",
+  error: "border-accent-500 bg-accent-100 text-accent-700",
   info: "border-ink/15 bg-ink/5 text-ink/70",
 };
 

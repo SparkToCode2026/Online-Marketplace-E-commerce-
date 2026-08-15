@@ -118,7 +118,7 @@ export default function AdminCoupons() {
           <label className="text-xs text-ink/50">
             Code
             <input
-              className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               placeholder="WELCOME10"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
@@ -130,7 +130,7 @@ export default function AdminCoupons() {
               type="number"
               min={1}
               max={100}
-              className="mt-1 block w-28 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="mt-1 block w-28 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               value={form.discountPercent}
               onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })}
             />
@@ -139,7 +139,7 @@ export default function AdminCoupons() {
             Expires
             <input
               type="date"
-              className="mt-1 block rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="mt-1 block rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               value={form.expiryDate}
               onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
             />
@@ -147,7 +147,7 @@ export default function AdminCoupons() {
           <button
             onClick={create}
             disabled={adding}
-            className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/5"
+            className="rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/5"
           >
             {adding ? "Adding…" : "Add coupon"}
           </button>
@@ -160,7 +160,7 @@ export default function AdminCoupons() {
       ) : (
         <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
+            <thead className="bg-accent-100 text-xs uppercase text-ink/50">
               <tr>
                 <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Discount</th>
@@ -201,7 +201,7 @@ export default function AdminCoupons() {
                       </button>
                       <button
                         onClick={() => remove(c)}
-                        className="rounded-full border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
+                        className="rounded-full border border-accent-200 px-2.5 py-1 text-xs font-medium text-accent-700 hover:bg-accent-100"
                       >
                         Delete
                       </button>

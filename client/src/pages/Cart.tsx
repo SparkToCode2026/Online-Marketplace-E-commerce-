@@ -83,12 +83,12 @@ export default function Cart() {
   const total = items.reduce((s, i) => s + (i.product?.price ?? 0) * i.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
 
       <div className="mx-auto max-w-4xl p-6">
         <h2 className="mb-4 flex items-center gap-2 font-heading text-2xl">
-          <CartIcon className="h-6 w-6 text-terracotta-500" />
+          <CartIcon className="h-6 w-6 text-accent-500" />
           My Cart
         </h2>
 
@@ -100,7 +100,7 @@ export default function Cart() {
             <p className="mt-3 text-ink/60">Your cart is empty.</p>
             <Link
               to="/"
-              className="mt-4 inline-block rounded-full bg-terracotta-500 px-5 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
+              className="mt-4 inline-block rounded-full bg-accent-500 px-5 py-2 text-sm font-medium text-white hover:bg-accent-600"
             >
               Browse products
             </Link>
@@ -141,13 +141,13 @@ export default function Cart() {
                     </button>
                   </div>
 
-                  <span className="w-24 text-right font-semibold text-terracotta-700">
+                  <span className="w-24 text-right font-semibold text-accent-700">
                     {formatOMR((i.product?.price ?? 0) * i.quantity)}
                   </span>
 
                   <button
                     onClick={() => remove(i)}
-                    className="text-ink/30 transition hover:text-terracotta-600"
+                    className="text-ink/30 transition hover:text-accent-600"
                     title="Remove"
                   >
                     <TrashIcon className="h-5 w-5" />
@@ -168,14 +168,14 @@ export default function Cart() {
               </div>
 
               <input
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Coupon code (e.g. WELCOME10)"
                 value={coupon}
                 onChange={(e) => setCoupon(e.target.value)}
               />
               <button
                 onClick={checkout}
-                className="mt-3 w-full rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600"
+                className="mt-3 w-full rounded-full bg-accent-500 py-2.5 font-medium text-white transition hover:bg-accent-600"
               >
                 Checkout
               </button>

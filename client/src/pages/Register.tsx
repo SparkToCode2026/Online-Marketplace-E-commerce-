@@ -40,25 +40,25 @@ export default function Register() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen font-body text-ink">
       <div className="hidden flex-col justify-center bg-gradient-to-br from-sage-500 to-sage-700 p-12 text-white md:flex md:w-1/2">
-        <div className="flex items-center gap-2 text-3xl font-bold">
+        <div className="flex items-center gap-2 font-heading text-3xl">
           <BrandIcon className="h-8 w-8" />
           Online Marketplace
         </div>
-        <h1 className="mt-6 text-4xl font-extrabold leading-tight">Join the marketplace.</h1>
-        <p className="mt-4 max-w-sm text-white/70">
+        <h1 className="mt-6 font-heading text-4xl leading-tight">Join the marketplace.</h1>
+        <p className="mt-4 max-w-sm text-white/85">
           Create an account to start building your cart and checking out.
         </p>
       </div>
 
-      <div className="flex flex-1 items-center justify-center bg-cream p-4">
-        <div className="w-full max-w-sm rounded-xl bg-white/60 p-8 shadow-lg">
-          <h2 className="mb-1 text-2xl font-bold text-ink">Register</h2>
-          <p className="mb-6 text-sm text-ink/50">Create your account to get started.</p>
+      <div className="flex flex-1 items-center justify-center bg-page p-4">
+        <div className="w-full max-w-sm rounded-2xl bg-white/70 p-8 shadow-lg">
+          <h2 className="mb-1 font-heading text-2xl">Register</h2>
+          <p className="mb-6 text-sm text-ink/60">Create your account to get started.</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
-              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -66,7 +66,7 @@ export default function Register() {
             />
             <input
               type="email"
-              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -74,23 +74,23 @@ export default function Register() {
             />
             <input
               type="password"
-              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p className="text-sm text-terracotta-700">{error}</p>}
+            {error && <p className="text-sm text-accent-700">{error}</p>}
             <button
               type="submit"
-              className="w-full rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600"
+              className="w-full rounded-full bg-accent-500 py-2.5 font-medium text-white transition hover:bg-accent-600"
             >
               Create account &amp; login
             </button>
           </form>
-          <p className="mt-4 text-sm text-ink/50">
+          <p className="mt-4 text-sm text-ink/60">
             Have an account?{" "}
-            <Link to="/login" className="font-medium text-terracotta-600 hover:underline">
+            <Link to="/login" className="font-medium text-accent-700 hover:underline">
               Login
             </Link>
           </p>

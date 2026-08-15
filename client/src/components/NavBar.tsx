@@ -50,9 +50,9 @@ export default function NavBar() {
   }
 
   return (
-    <nav className="flex flex-wrap items-center gap-3 bg-cream px-6 py-4">
+    <nav className="flex flex-wrap items-center gap-3 bg-page px-6 py-4">
       <NavLink to="/" className="flex items-center gap-2 font-heading text-lg text-ink">
-        <BrandIcon className="h-6 w-6 text-terracotta-500" />
+        <BrandIcon className="h-6 w-6 text-accent-500" />
         Online Marketplace
       </NavLink>
 
@@ -73,7 +73,7 @@ export default function NavBar() {
             to={l.to}
             end={l.end}
             className={({ isActive }) =>
-              `text-sm hover:text-terracotta-500 ${isActive ? "font-semibold text-terracotta-500" : "text-ink/70"}`
+              `text-sm hover:text-accent-500 ${isActive ? "font-semibold text-accent-500" : "text-ink/70"}`
             }
           >
             {l.label}
@@ -83,7 +83,7 @@ export default function NavBar() {
           <NavLink
             to="/admin"
             className={({ isActive }) =>
-              `text-sm hover:text-terracotta-500 ${isActive ? "font-semibold text-terracotta-500" : "text-sage-700"}`
+              `text-sm hover:text-accent-500 ${isActive ? "font-semibold text-accent-500" : "text-sage-700"}`
             }
           >
             Admin
@@ -102,7 +102,7 @@ export default function NavBar() {
           {accountOpen && (
             <div className="absolute right-0 top-11 z-30 w-64 rounded-2xl bg-white p-4 shadow-lg">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-terracotta-100 text-terracotta-700">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700">
                   <UserIcon className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
@@ -122,7 +122,7 @@ export default function NavBar() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="rounded-lg px-2 py-2 text-left text-sm text-terracotta-700 hover:bg-ink/5"
+                  className="rounded-lg px-2 py-2 text-left text-sm text-accent-700 hover:bg-ink/5"
                 >
                   Sign out
                 </button>

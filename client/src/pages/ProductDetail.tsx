@@ -56,26 +56,26 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
 
       <div className="mx-auto max-w-5xl p-6">
         <Link
           to="/"
-          className="flex w-fit items-center gap-1 text-sm text-terracotta-700 hover:underline"
+          className="flex w-fit items-center gap-1 text-sm text-accent-700 hover:underline"
         >
           <ArrowLeftIcon className="h-4 w-4" />
           Back to products
         </Link>
 
-        {error && <p className="mt-4 text-sm text-terracotta-700">{error}</p>}
+        {error && <p className="mt-4 text-sm text-accent-700">{error}</p>}
 
         {!product && !error && <p className="mt-4 text-sm text-ink/50">Loading…</p>}
 
         {product && (
           <>
           <div className="mt-4 grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div className="aspect-square overflow-hidden rounded-2xl bg-terracotta-50 shadow-sm">
+            <div className="aspect-square overflow-hidden rounded-2xl bg-accent-100 shadow-sm">
               <img
                 src={product.productUrl}
                 alt={product.name}
@@ -95,7 +95,7 @@ export default function ProductDetail() {
                     In stock ({product.stockQuantity})
                   </span>
                 ) : (
-                  <span className="rounded-full bg-terracotta-100 px-3 py-1 text-xs font-medium text-terracotta-700">
+                  <span className="rounded-full bg-accent-100 px-3 py-1 text-xs font-medium text-accent-700">
                     Out of stock
                   </span>
                 )}
@@ -108,7 +108,7 @@ export default function ProductDetail() {
                 </p>
               )}
 
-              <p className="mt-4 text-2xl font-bold text-terracotta-700">
+              <p className="mt-4 text-2xl font-bold text-accent-700">
                 {formatOMR(product.price)}
               </p>
 
@@ -133,7 +133,7 @@ export default function ProductDetail() {
                 <button
                   onClick={addToCart}
                   disabled={product.stockQuantity <= 0}
-                  className="flex-1 rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600 disabled:cursor-not-allowed disabled:bg-ink/15"
+                  className="flex-1 rounded-full bg-accent-500 py-2.5 font-medium text-white transition hover:bg-accent-600 disabled:cursor-not-allowed disabled:bg-ink/15"
                 >
                   Add to cart
                 </button>

@@ -32,6 +32,13 @@ interface Vendor {
   storeName: string;
 }
 
+// One bucket from /Order/statsByStatus — used here just for the revenue tile.
+interface StatusStat {
+  status: string;
+  orderCount: number;
+  totalRevenue: number;
+}
+
 const emptyForm = {
   name: "",
   description: "",
@@ -42,10 +49,10 @@ const emptyForm = {
   vendorProfileId: 0,
 };
 
-// Tab pill styling: filled terracotta when active, plain otherwise.
+// Tab pill styling: filled accent when active, plain otherwise.
 function tabClass(active: boolean) {
   return `rounded-full px-4 py-2 text-sm font-medium transition ${
-    active ? "bg-terracotta-500 text-white" : "bg-white/60 text-ink/70 hover:bg-ink/5"
+    active ? "bg-accent-500 text-white" : "bg-white/60 text-ink/70 hover:bg-ink/5"
   }`;
 }
 
@@ -55,6 +62,7 @@ export default function Admin() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [orderStats, setOrderStats] = useState<StatusStat[]>([]);
 
   const [tab, setTab] = useState<
     "products" | "orders" | "coupons" | "payments" | "shipping" | "items"
@@ -70,6 +78,7 @@ export default function Admin() {
     loadProducts();
     apiFetch("/Category/all").then((d) => setCategories(d as Category[])).catch(() => {});
     apiFetch("/VendorProfile/all").then((d) => setVendors(d as Vendor[])).catch(() => {});
+    apiFetch("/Order/statsByStatus").then((d) => setOrderStats(d as StatusStat[])).catch(() => {});
   }, []);
 
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
@@ -141,8 +150,14 @@ export default function Admin() {
     }
   }
 
+  const categoryCounts = categories.map((c) => ({
+    ...c,
+    count: products.filter((p) => p.categoryId === c.categoryId).length,
+  }));
+  const maxCatCount = Math.max(1, ...categoryCounts.map((c) => c.count));
+
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
 
       <div className="mx-auto max-w-6xl p-6">
@@ -175,6 +190,38 @@ export default function Admin() {
 
         {tab === "products" && (
           <>
+        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            { label: "Products", value: String(products.length) },
+            { label: "Categories", value: String(categories.length) },
+            { label: "Vendors", value: String(vendors.length) },
+            { label: "Revenue", value: formatOMR(orderStats.reduce((s, x) => s + x.totalRevenue, 0)) },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-white/60 p-4 shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-ink/40">{s.label}</p>
+              <p className="mt-1 font-heading text-2xl">{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {categories.length > 0 && (
+          <div className="mb-6 rounded-2xl bg-white/60 p-5 shadow-sm">
+            <h3 className="mb-4 text-sm font-bold text-ink/70">Products per category</h3>
+            <div className="flex h-36 items-end gap-4">
+              {categoryCounts.map((c) => (
+                <div key={c.categoryId} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
+                  <span className="text-xs font-bold text-accent-700">{c.count}</span>
+                  <div
+                    className="w-full max-w-[44px] rounded-t-md bg-accent-400"
+                    style={{ height: `${Math.max(8, Math.round((c.count / maxCatCount) * 100))}%` }}
+                  />
+                  <span className="text-center text-[11px] text-ink/50">{c.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="font-heading text-2xl">Products</h1>
@@ -182,7 +229,7 @@ export default function Admin() {
           </div>
           <button
             onClick={openAdd}
-            className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600"
+            className="rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600"
           >
             + Add product
           </button>
@@ -190,7 +237,7 @@ export default function Admin() {
 
         <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
           <table className="w-full text-left text-sm">
-            <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
+            <thead className="bg-accent-100 text-xs uppercase text-ink/50">
               <tr>
                 <th className="px-4 py-3">Product</th>
                 <th className="px-4 py-3">Category</th>
@@ -243,7 +290,7 @@ export default function Admin() {
                       </button>
                       <button
                         onClick={() => remove(p)}
-                        className="rounded-full border border-terracotta-200 px-3 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
+                        className="rounded-full border border-accent-200 px-3 py-1 text-xs font-medium text-accent-700 hover:bg-accent-100"
                       >
                         Delete
                       </button>
@@ -273,14 +320,14 @@ export default function Admin() {
             </h2>
             <form onSubmit={save} className="space-y-3">
               <input
-                className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
               />
               <textarea
-                className="w-full rounded-2xl border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="w-full rounded-2xl border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Description"
                 rows={2}
                 value={form.description}
@@ -293,7 +340,7 @@ export default function Admin() {
                     type="number"
                     min={0}
                     step="0.01"
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     value={form.price}
                     onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
                     required
@@ -304,7 +351,7 @@ export default function Admin() {
                   <input
                     type="number"
                     min={0}
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     value={form.stockQuantity}
                     onChange={(e) => setForm({ ...form, stockQuantity: Number(e.target.value) })}
                     required
@@ -315,7 +362,7 @@ export default function Admin() {
               {editing === "new" && (
                 <>
                   <input
-                    className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     placeholder="Image URL (optional)"
                     value={form.productUrl}
                     onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
@@ -324,7 +371,7 @@ export default function Admin() {
                     <label className="text-xs text-ink/60">
                       Category
                       <select
-                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                         value={form.categoryId}
                         onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
                         required
@@ -342,7 +389,7 @@ export default function Admin() {
                     <label className="text-xs text-ink/60">
                       Vendor
                       <select
-                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                         value={form.vendorProfileId}
                         onChange={(e) =>
                           setForm({ ...form, vendorProfileId: Number(e.target.value) })
@@ -373,7 +420,7 @@ export default function Admin() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
+                  className="rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white hover:bg-accent-600"
                 >
                   {editing === "new" ? "Create" : "Save changes"}
                 </button>

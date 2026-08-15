@@ -79,7 +79,7 @@ export default function VendorProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
       <div className="mx-auto max-w-xl p-6">
         <h2 className="mb-4 font-heading text-2xl">My Store</h2>
@@ -96,7 +96,7 @@ export default function VendorProfile() {
                     Verified
                   </span>
                 ) : (
-                  <span className="mt-1 inline-block rounded-full bg-terracotta-100 px-3 py-1 text-xs font-medium text-terracotta-700">
+                  <span className="mt-1 inline-block rounded-full bg-accent-100 px-3 py-1 text-xs font-medium text-accent-700">
                     Pending verification
                   </span>
                 )}
@@ -118,7 +118,7 @@ export default function VendorProfile() {
             <label className="block text-sm">
               <span className="text-ink/60">Store name</span>
               <input
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 required
@@ -127,7 +127,7 @@ export default function VendorProfile() {
             <label className="block text-sm">
               <span className="text-ink/60">Address</span>
               <input
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 required
@@ -137,7 +137,7 @@ export default function VendorProfile() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-full bg-terracotta-500 px-4 py-2 font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/15"
+                className="rounded-full bg-accent-500 px-4 py-2 font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/15"
               >
                 {saving ? "Saving…" : profile ? "Save changes" : "Create store"}
               </button>

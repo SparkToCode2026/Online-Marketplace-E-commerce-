@@ -7,11 +7,11 @@ export const ORDER_STATUSES = ["Pending", "Processing", "Shipped", "Delivered", 
 // Maps each status to its Tailwind colours (Organic palette). Anything not
 // listed falls back to a neutral tint (see `styles[...] ?? fallback` below).
 const styles: Record<string, string> = {
-  Pending: "bg-terracotta-50 text-terracotta-700",
+  Pending: "bg-accent-100 text-accent-700",
   Processing: "bg-sage-50 text-sage-700",
   Shipped: "bg-sage-100 text-sage-700",
   Delivered: "bg-sage-100 text-sage-700 font-semibold",
-  Cancelled: "bg-terracotta-100 text-terracotta-700",
+  Cancelled: "bg-accent-100 text-accent-700",
 };
 
 export default function OrderStatusBadge({ status }: { status: string }) {

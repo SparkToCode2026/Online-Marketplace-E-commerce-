@@ -53,7 +53,7 @@ export default function Account() {
   }
 
   return (
-    <div className="min-h-screen bg-cream font-body text-ink">
+    <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
       <div className="mx-auto max-w-xl p-6">
         <h2 className="mb-4 font-heading text-2xl">My Account</h2>
@@ -65,7 +65,7 @@ export default function Account() {
             <label className="block text-sm">
               <span className="text-ink/60">Full name</span>
               <input
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -76,7 +76,7 @@ export default function Account() {
               <span className="text-ink/60">Phone number</span>
               <input
                 type="tel"
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
                 required
@@ -104,7 +104,7 @@ export default function Account() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/15"
+              className="w-full rounded-full bg-accent-500 py-2.5 font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/15"
             >
               {saving ? "Saving…" : "Save changes"}
             </button>

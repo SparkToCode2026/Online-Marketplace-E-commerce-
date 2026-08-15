@@ -140,7 +140,7 @@ export default function AdminShipping() {
               <select
                 value={orderId}
                 onChange={(e) => setOrderId(Number(e.target.value))}
-                className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               >
                 <option value={0} disabled>
                   Select…
@@ -155,7 +155,7 @@ export default function AdminShipping() {
             <label className="flex-1 text-xs text-ink/50">
               Address
               <input
-                className="mt-1 block w-full rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                className="mt-1 block w-full rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="123 Main St, Muscat"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
@@ -164,7 +164,7 @@ export default function AdminShipping() {
             <button
               onClick={create}
               disabled={adding}
-              className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/20"
+              className="rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/20"
             >
               {adding ? "Adding…" : "Create"}
             </button>
@@ -178,7 +178,7 @@ export default function AdminShipping() {
       {/* --- Shipments table --- */}
       <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
+          <thead className="bg-accent-100 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Shipment</th>
               <th className="px-4 py-3">Order</th>
@@ -205,7 +205,7 @@ export default function AdminShipping() {
                   <select
                     value={s.status ?? "Preparing"}
                     onChange={(e) => changeStatus(s, e.target.value)}
-                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                   >
                     {s.status && !SHIPPING_STATUSES.includes(s.status) && (
                       <option value={s.status}>{s.status}</option>
@@ -221,7 +221,7 @@ export default function AdminShipping() {
                   <div className="flex justify-end">
                     <button
                       onClick={() => remove(s)}
-                      className="rounded-full border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
+                      className="rounded-full border border-accent-200 px-2.5 py-1 text-xs font-medium text-accent-700 hover:bg-accent-100"
                     >
                       Delete
                     </button>

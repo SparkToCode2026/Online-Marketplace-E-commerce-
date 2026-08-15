@@ -107,7 +107,7 @@ export default function AdminOrders() {
       {/* --- Orders table --- */}
       <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
+          <thead className="bg-accent-100 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Order</th>
               <th className="px-4 py-3">User</th>
@@ -134,7 +134,7 @@ export default function AdminOrders() {
                   <select
                     value={o.status}
                     onChange={(e) => changeStatus(o, e.target.value)}
-                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                   >
                     {/* A saved status could be something not in our list (older
                         data). Show it as an extra option so the select still

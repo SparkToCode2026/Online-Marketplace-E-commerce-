@@ -18,12 +18,14 @@ interface Review {
 
 // A row of 5 stars. `value` is how many are filled; when `onPick` is supplied the
 // stars become clickable (used by the "write a review" form).
-function Stars({
+export function Stars({
   value,
   onPick,
+  size = "h-5 w-5",
 }: {
   value: number;
   onPick?: (n: number) => void;
+  size?: string;
 }) {
   return (
     <div className="flex">
@@ -36,9 +38,7 @@ function Stars({
           className={onPick ? "cursor-pointer" : "cursor-default"}
           aria-label={`${n} star${n > 1 ? "s" : ""}`}
         >
-          <StarIcon
-            className={`h-5 w-5 ${n <= value ? "text-terracotta-500" : "text-ink/25"}`}
-          />
+          <StarIcon className={`${size} ${n <= value ? "text-accent-500" : "text-ink/25"}`} />
         </button>
       ))}
     </div>
@@ -155,7 +155,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
         <p className="mb-2 text-sm font-medium text-ink/70">Write a review</p>
         <Stars value={rating} onPick={setRating} />
         <textarea
-          className="mt-3 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+          className="mt-3 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
           placeholder="Share your thoughts (optional)…"
           rows={2}
           value={comment}
@@ -164,7 +164,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
         <button
           onClick={submit}
           disabled={submitting}
-          className="mt-3 rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600 disabled:bg-ink/5"
+          className="mt-3 rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/5"
         >
           {submitting ? "Posting…" : "Post review"}
         </button>
@@ -197,7 +197,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
                   {r.userId === myId && (
                     <button
                       onClick={() => remove(r)}
-                      className="text-ink/40 transition hover:text-terracotta-700"
+                      className="text-ink/40 transition hover:text-accent-700"
                       title="Delete your review"
                     >
                       <TrashIcon className="h-4 w-4" />

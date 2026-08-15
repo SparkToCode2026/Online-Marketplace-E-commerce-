@@ -103,7 +103,7 @@ export default function AdminPayments() {
       {/* --- Payments table --- */}
       <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
+          <thead className="bg-accent-100 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Payment</th>
               <th className="px-4 py-3">Order</th>
@@ -128,7 +128,7 @@ export default function AdminPayments() {
                   <select
                     value={p.status}
                     onChange={(e) => changeStatus(p, e.target.value)}
-                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+                    className="rounded-full border border-ink/15 px-2 py-1 text-xs outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                   >
                     {/* Keep an unknown saved status visible instead of snapping. */}
                     {!PAYMENT_STATUSES.includes(p.status) && (
@@ -145,7 +145,7 @@ export default function AdminPayments() {
                   <div className="flex justify-end">
                     <button
                       onClick={() => remove(p)}
-                      className="rounded-full border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50"
+                      className="rounded-full border border-accent-200 px-2.5 py-1 text-xs font-medium text-accent-700 hover:bg-accent-100"
                     >
                       Delete
                     </button>

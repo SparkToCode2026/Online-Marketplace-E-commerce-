@@ -180,7 +180,7 @@ export default function AdminOrderItems() {
             <select
               value={addOrderId}
               onChange={(e) => setAddOrderId(Number(e.target.value))}
-              className="mt-1 block w-36 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="mt-1 block w-36 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
             >
               <option value={0} disabled>
                 Select…
@@ -197,7 +197,7 @@ export default function AdminOrderItems() {
             <select
               value={addProductId}
               onChange={(e) => setAddProductId(Number(e.target.value))}
-              className="mt-1 block w-52 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="mt-1 block w-52 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
             >
               <option value={0} disabled>
                 Select…
@@ -216,12 +216,12 @@ export default function AdminOrderItems() {
               min={1}
               value={addQty}
               onChange={(e) => setAddQty(Number(e.target.value))}
-              className="mt-1 block w-20 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="mt-1 block w-20 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
             />
           </label>
           <button
             onClick={addItem}
-            className="rounded-full bg-terracotta-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-terracotta-600"
+            className="rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600"
           >
             Add
           </button>
@@ -234,7 +234,7 @@ export default function AdminOrderItems() {
       {/* --- All order lines --- */}
       <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-terracotta-50 text-xs uppercase text-ink/50">
+          <thead className="bg-accent-100 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Line</th>
               <th className="px-4 py-3">Order</th>
@@ -262,7 +262,7 @@ export default function AdminOrderItems() {
                         min={1}
                         value={draftQty}
                         onChange={(e) => setDraftQty(Number(e.target.value))}
-                        className="w-16 rounded border border-ink/15 px-2 py-1 text-sm outline-none focus:border-terracotta-500"
+                        className="w-16 rounded border border-ink/15 px-2 py-1 text-sm outline-none focus:border-accent-500"
                       />
                     ) : (
                       it.quantity
@@ -276,7 +276,7 @@ export default function AdminOrderItems() {
                         step="0.001"
                         value={draftPrice}
                         onChange={(e) => setDraftPrice(Number(e.target.value))}
-                        className="w-24 rounded border border-ink/15 px-2 py-1 text-sm outline-none focus:border-terracotta-500"
+                        className="w-24 rounded border border-ink/15 px-2 py-1 text-sm outline-none focus:border-accent-500"
                       />
                     ) : (
                       formatOMR(it.unitPrice)
@@ -291,7 +291,7 @@ export default function AdminOrderItems() {
                         <>
                           <button
                             onClick={() => saveEdit(it)}
-                            className="rounded bg-terracotta-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-terracotta-600"
+                            className="rounded bg-accent-500 px-2.5 py-1 text-xs font-medium text-white hover:bg-accent-600"
                           >
                             Save
                           </button>
@@ -317,7 +317,7 @@ export default function AdminOrderItems() {
                           <button
                             onClick={() => remove(it)}
                             disabled={!isPending(it)}
-                            className="rounded border border-terracotta-200 px-2.5 py-1 text-xs font-medium text-terracotta-700 hover:bg-terracotta-50 disabled:cursor-not-allowed disabled:opacity-40"
+                            className="rounded border border-accent-200 px-2.5 py-1 text-xs font-medium text-accent-700 hover:bg-accent-100 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             Remove
                           </button>

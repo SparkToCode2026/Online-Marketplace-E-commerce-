@@ -49,7 +49,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen font-body text-ink">
-      <div className="hidden flex-col justify-center bg-terracotta-500 p-12 text-white md:flex md:w-1/2">
+      <div className="hidden flex-col justify-center bg-accent-500 p-12 text-white md:flex md:w-1/2">
         <div className="flex items-center gap-2 font-heading text-3xl">
           <BrandIcon className="h-8 w-8" />
           Online Marketplace
@@ -60,14 +60,14 @@ export default function Login() {
         </p>
       </div>
 
-      <div className="flex flex-1 items-center justify-center bg-cream p-4">
+      <div className="flex flex-1 items-center justify-center bg-page p-4">
         <div className="w-full max-w-sm rounded-2xl bg-white/70 p-8 shadow-lg">
           <h2 className="mb-1 font-heading text-2xl">Login</h2>
           <p className="mb-6 text-sm text-ink/60">Enter your details to continue.</p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="email"
-              className="w-full rounded-full border border-ink/15 px-4 py-2.5 outline-none transition focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="w-full rounded-full border border-ink/15 px-4 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -75,23 +75,23 @@ export default function Login() {
             />
             <input
               type="password"
-              className="w-full rounded-full border border-ink/15 px-4 py-2.5 outline-none transition focus:border-terracotta-500 focus:ring-2 focus:ring-terracotta-100"
+              className="w-full rounded-full border border-ink/15 px-4 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            {error && <p className="text-sm text-terracotta-700">{error}</p>}
+            {error && <p className="text-sm text-accent-700">{error}</p>}
             <button
               type="submit"
-              className="w-full rounded-full bg-terracotta-500 py-2.5 font-medium text-white transition hover:bg-terracotta-600"
+              className="w-full rounded-full bg-accent-500 py-2.5 font-medium text-white transition hover:bg-accent-600"
             >
               Login
             </button>
           </form>
           <p className="mt-4 text-sm text-ink/60">
             No account?{" "}
-            <Link to="/register" className="font-medium text-terracotta-700 hover:underline">
+            <Link to="/register" className="font-medium text-accent-700 hover:underline">
               Register
             </Link>
           </p>
@@ -106,7 +106,7 @@ export default function Login() {
                   key={a.email}
                   type="button"
                   onClick={() => demoLogin(a.email)}
-                  className="rounded-full border border-ink/15 py-2 text-xs font-medium text-ink/70 transition hover:border-terracotta-500 hover:text-terracotta-700"
+                  className="rounded-full border border-ink/15 py-2 text-xs font-medium text-ink/70 transition hover:border-accent-500 hover:text-accent-700"
                 >
                   {a.label}
                 </button>
