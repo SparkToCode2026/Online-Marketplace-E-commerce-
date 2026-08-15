@@ -133,5 +133,36 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .ToList();
             return Ok(result);
         }
+
+        // Case 9 — Filter carts (admin) with an optional owner and activity
+        // status. status: "active" = has items; "abandoned" = has items but was
+        // created more than `abandonedDays` ago; "empty" = has no items.
+        [HttpGet("filter")]
+        public IActionResult FilterCarts(int? userId, string? status, int abandonedDays = 7)
+        {
+            var query = _context.Carts
+                .Include(c => c.user)
+                .Include(c => c.cartItems)
+                .ThenInclude(ci => ci.product)
+                .AsQueryable();
+
+            if (userId.HasValue)
+                query = query.Where(c => c.userId == userId.Value);
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                var cutoff = DateTime.Now.AddDays(-abandonedDays);
+                query = status.ToLower() switch
+                {
+                    "active" => query.Where(c => c.cartItems.Any()),
+                    "abandoned" => query.Where(c => c.cartItems.Any() && c.createdAt < cutoff),
+                    "empty" => query.Where(c => !c.cartItems.Any()),
+                    _ => query
+                };
+            }
+
+            var carts = query.ToList();
+            return Ok(carts.Select(c => c.ToDto()));
+        }
     }
 }
