@@ -1,59 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 
-// One hero slide. We keep the copy + its background colour as plain data, so
-// the component below is just a loop: add or remove a banner by editing this
-// array — no JSX changes needed.
+// Each slide is just a promo image — no copy. Add or remove a banner by editing
+// this array. `alt` is read by screen readers only; it is never shown on screen.
 interface Slide {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  cta: string;
-  href: string;
   image: string;
-  // Product-promo slides drop the photo wash so the item stays crisp and bold.
-  crisp?: boolean;
+  href: string;
+  alt: string;
 }
 
 const SLIDES: Slide[] = [
   {
-    eyebrow: "Featured product",
-    title: "Protect your tablet",
-    subtitle: "Tablet Air 10 — stylus support and all-day battery in one sleek device.",
-    cta: "Shop now",
+    image: "https://images.unsplash.com/photo-1623126908029-58cb08a2b272?w=1600&h=560&fit=crop",
     href: "#products",
-    image: "https://images.unsplash.com/photo-1623126908029-58cb08a2b272?w=800",
-    crisp: true,
+    alt: "Tablet Air 10",
   },
   {
-    eyebrow: "Online Marketplace",
-    title: "Your one-stop market",
-    subtitle: "Great products from trusted vendors — everything you need, in one place.",
-    cta: "Shop now",
+    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1600&h=560&fit=crop",
     href: "#products",
-    image: "https://picsum.photos/seed/marketplace/640/480",
+    alt: "Wireless Headphones",
   },
   {
-    eyebrow: "Limited sale",
-    title: "Deals you'll love",
-    subtitle: "Save big on top electronics — this week only.",
-    cta: "Shop deals",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=1600&h=560&fit=crop",
     href: "#products",
-    image: "https://picsum.photos/seed/deals/640/480",
+    alt: "Laptop Pro 15",
   },
   {
-    eyebrow: "New arrivals",
-    title: "Fresh picks, just in",
-    subtitle: "Discover the latest products from our vendors.",
-    cta: "Explore now",
+    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=1600&h=560&fit=crop",
     href: "#products",
-    image: "https://picsum.photos/seed/arrivals/640/480",
+    alt: "Denim Jeans",
   },
 ];
 
 const INTERVAL = 4500;
 
-// Auto-advancing hero carousel, restyled to the Organic system: warm
-// accent panel, washed/desaturated photo, pill CTA and dots.
+// Auto-advancing, image-only hero carousel: each slide is a full-bleed product
+// banner with arrows, dots and pause-on-hover.
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
   const pausedRef = useRef(false);
@@ -80,41 +61,16 @@ export default function HeroSlider() {
           style={{ transform: `translateX(-${current * 100}%)` }}
         >
           {SLIDES.map((s) => (
-            <div
-              key={s.title}
-              className="flex w-full shrink-0 items-center gap-8 bg-accent-500 px-8 py-14 text-white sm:px-14 sm:py-16"
-            >
-              <div className="max-w-xl flex-1">
-                <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/80">
-                  {s.eyebrow}
-                </p>
-                <h1 className="font-heading text-4xl leading-tight sm:text-5xl">{s.title}</h1>
-                <p className="mt-4 text-base text-white/90 sm:text-lg">{s.subtitle}</p>
-                <a
-                  href={s.href}
-                  className="mt-8 inline-block rounded-full bg-white px-7 py-3 text-sm font-bold text-accent-600 shadow transition hover:bg-page"
-                >
-                  {s.cta}
-                </a>
-              </div>
-
-              <div className="relative hidden h-96 w-96 shrink-0 items-center justify-center lg:flex">
-                <div className="absolute h-96 w-96 rounded-full border-2 border-white/30" />
-                <div className="absolute h-72 w-72 rounded-full border-2 border-white/20" />
-                <div className="relative flex h-80 w-80 items-center justify-center overflow-hidden rounded-full bg-page shadow-xl">
-                  <img
-                    src={s.image}
-                    alt=""
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                    className={`h-[90%] w-[90%] rounded-full object-cover ${
-                      s.crisp ? "" : "saturate-[.85] brightness-[.97]"
-                    }`}
-                  />
-                </div>
-              </div>
-            </div>
+            <a key={s.image} href={s.href} className="block w-full shrink-0 bg-accent-500">
+              <img
+                src={s.image}
+                alt={s.alt}
+                onError={(e) => {
+                  e.currentTarget.style.visibility = "hidden";
+                }}
+                className="h-56 w-full object-cover sm:h-72 lg:h-[420px]"
+              />
+            </a>
           ))}
         </div>
 
@@ -138,7 +94,7 @@ export default function HeroSlider() {
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
           {SLIDES.map((s, i) => (
             <button
-              key={s.title}
+              key={s.image}
               type="button"
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => go(i)}
