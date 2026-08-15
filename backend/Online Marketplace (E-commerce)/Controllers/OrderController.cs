@@ -54,6 +54,12 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             foreach (var item in cartItems)
             {
+                // Guard against overselling: never let an order take more units
+                // than the product currently has in stock.
+                if (item.quantity > item.product.stockQuantity)
+                    return BadRequest(
+                        $"Not enough stock for \"{item.product.name}\". Only {item.product.stockQuantity} left.");
+
                 subtotal += item.product.price * item.quantity;
                 orderItems.Add(new OrderItem
                 {
@@ -61,6 +67,11 @@ namespace Online_Marketplace__E_commerce_.Controllers
                     quantity = item.quantity,
                     unitPrice = item.product.price
                 });
+
+                // Reserve the purchased units by reducing the product's stock.
+                // The product is tracked (Included above), so this change is
+                // persisted by the SaveChanges call below.
+                item.product.stockQuantity -= item.quantity;
             }
 
             var order = new Order
