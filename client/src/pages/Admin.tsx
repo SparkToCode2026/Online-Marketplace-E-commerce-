@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 import { SearchIcon } from "../components/icons";
 import NavBar from "../components/NavBar";
 import AdminOrders from "../components/AdminOrders";
+import AdminCategories from "../components/AdminCategories";
 import AdminCoupons from "../components/AdminCoupons";
 import AdminPayments from "../components/AdminPayments";
 import AdminShipping from "../components/AdminShipping";
@@ -69,7 +70,7 @@ export default function Admin() {
   const [orderStats, setOrderStats] = useState<StatusStat[]>([]);
 
   const [tab, setTab] = useState<
-    "products" | "orders" | "coupons" | "payments" | "shipping" | "items"
+    "products" | "categories" | "orders" | "coupons" | "payments" | "shipping" | "items"
   >("products");
 
   const [editing, setEditing] = useState<Product | "new" | null>(null);
@@ -215,6 +216,9 @@ export default function Admin() {
           <button onClick={() => setTab("products")} className={tabClass(tab === "products")}>
             Products
           </button>
+          <button onClick={() => setTab("categories")} className={tabClass(tab === "categories")}>
+            Categories
+          </button>
           <button onClick={() => setTab("orders")} className={tabClass(tab === "orders")}>
             Orders
           </button>
@@ -232,6 +236,7 @@ export default function Admin() {
           </button>
         </div>
 
+        {tab === "categories" && <AdminCategories />}
         {tab === "orders" && <AdminOrders />}
         {tab === "coupons" && <AdminCoupons />}
         {tab === "payments" && <AdminPayments />}
