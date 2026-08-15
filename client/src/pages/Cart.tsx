@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
+import { useConfirm } from "../components/ConfirmDialog";
 import NavBar from "../components/NavBar";
 import { CartIcon, TrashIcon } from "../components/icons";
 
@@ -21,6 +22,7 @@ interface Coupon {
 // Cart page — reads the real cart from the backend and checks out.
 export default function Cart() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [cartId, setCartId] = useState<number | null>(null);
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +74,21 @@ export default function Cart() {
       await apiFetch(`/CartItem/remove?id=${item.cartItemId}`, "DELETE");
       toast(`Removed "${item.product?.name ?? "item"}".`, "info");
       if (cartId) load(cartId);
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  }
+
+  // Empty the whole cart in one call (PATCH /Cart/clear keeps the cart record,
+  // just drops its items). Confirm first since it wipes every line at once.
+  async function clearCart() {
+    if (!cartId) return;
+    if (!(await confirm("Remove all items from your cart?"))) return;
+    try {
+      await apiFetch(`/Cart/clear?id=${cartId}`, "PATCH");
+      setItems([]);
+      setCoupon("");
+      toast("Cart cleared.", "info");
     } catch (e) {
       toast((e as Error).message, "error");
     }
@@ -130,6 +147,15 @@ export default function Cart() {
         ) : (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="space-y-3 lg:col-span-2">
+              <div className="flex justify-end">
+                <button
+                  onClick={clearCart}
+                  className="flex items-center gap-1.5 rounded-full border border-accent-200 px-3 py-1.5 text-xs font-medium text-accent-700 transition hover:bg-accent-100"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                  Clear cart
+                </button>
+              </div>
               {items.map((i) => (
                 <div
                   key={i.cartItemId}
