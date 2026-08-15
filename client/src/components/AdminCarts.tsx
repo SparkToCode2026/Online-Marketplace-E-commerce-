@@ -19,25 +19,37 @@ interface Cart {
   cartItems?: CartItem[] | null;
 }
 
+// The activity filters offered in the UI. "all" hits /Cart/all; the rest hit
+// /Cart/filter?status=… which the backend translates into a Where clause.
+const FILTERS = [
+  { key: "all", label: "All" },
+  { key: "active", label: "Active" },
+  { key: "abandoned", label: "Abandoned" },
+  { key: "empty", label: "Empty" },
+] as const;
+type FilterKey = (typeof FILTERS)[number]["key"];
+
 // Admin "Carts" tab: a read-only overview of every user's cart — owner, item
-// count, contents, running total and when it was created.
+// count, contents, running total and when it was created — with an activity filter.
 export default function AdminCarts() {
   const toast = useToast();
   const [carts, setCarts] = useState<Cart[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<FilterKey>("all");
 
   const startedRef = useRef(false);
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    load();
+    load(filter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function load() {
+  async function load(f: FilterKey) {
     setLoading(true);
     try {
-      const data = (await apiFetch("/Cart/all")) as Cart[];
+      const path = f === "all" ? "/Cart/all" : `/Cart/filter?status=${f}`;
+      const data = (await apiFetch(path)) as Cart[];
       // Busiest carts first, so active shoppers surface at the top.
       setCarts(data.sort((a, b) => (b.cartItems?.length ?? 0) - (a.cartItems?.length ?? 0)));
     } catch (e) {
@@ -47,17 +59,41 @@ export default function AdminCarts() {
     }
   }
 
+  function changeFilter(f: FilterKey) {
+    setFilter(f);
+    load(f);
+  }
+
   const units = (c: Cart) => (c.cartItems ?? []).reduce((s, i) => s + i.quantity, 0);
   const total = (c: Cart) =>
     (c.cartItems ?? []).reduce((s, i) => s + (i.product?.price ?? 0) * i.quantity, 0);
 
-  if (loading) return <p className="text-sm text-ink/40">Loading…</p>;
-
   return (
     <div>
-      <p className="mb-3 text-sm text-ink/50">{carts.length} carts</p>
-      <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
-        <table className="w-full text-left text-sm">
+      {/* Activity filter pills — each reloads from the backend Where filter. */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key}
+            onClick={() => changeFilter(f.key)}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              filter === f.key
+                ? "bg-accent-500 text-white"
+                : "bg-white/60 text-ink/70 hover:bg-ink/5"
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-ink/40">Loading…</p>
+      ) : (
+        <>
+          <p className="mb-3 text-sm text-ink/50">{carts.length} carts</p>
+          <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
+            <table className="w-full text-left text-sm">
           <thead className="bg-accent-100 text-xs uppercase text-ink/50">
             <tr>
               <th className="px-4 py-3">Owner</th>
@@ -91,9 +127,11 @@ export default function AdminCarts() {
                 </td>
               </tr>
             )}
-          </tbody>
-        </table>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }
