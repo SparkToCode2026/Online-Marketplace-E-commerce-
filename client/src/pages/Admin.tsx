@@ -185,6 +185,11 @@ export default function Admin() {
   }));
   const maxCatCount = Math.max(1, ...categoryCounts.map((c) => c.count));
 
+  // Look up a product's vendor store name from the already-loaded vendors list,
+  // so each row can show its owner without an extra request per product.
+  const vendorName = (id: number) =>
+    vendors.find((v) => v.vendorProfileId === id)?.storeName ?? "—";
+
   function updateSearch(value: string) {
     setSearch(value);
     setPage(1);
@@ -296,6 +301,7 @@ export default function Admin() {
               <tr>
                 <th className="px-4 py-3">Product</th>
                 <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Vendor</th>
                 <th className="px-4 py-3">Price</th>
                 <th className="px-4 py-3">Stock</th>
                 <th className="px-4 py-3">Status</th>
@@ -316,6 +322,7 @@ export default function Admin() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-ink/60">{p.category?.name ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink/60">{vendorName(p.vendorProfileId)}</td>
                   <td className="px-4 py-3 font-medium">{formatOMR(p.price)}</td>
                   <td className="px-4 py-3">{p.stockQuantity}</td>
                   <td className="px-4 py-3">
@@ -355,7 +362,7 @@ export default function Admin() {
               ))}
               {pagedProducts.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink/40">
                     {search ? "No products match your search." : "No products yet."}
                   </td>
                 </tr>
