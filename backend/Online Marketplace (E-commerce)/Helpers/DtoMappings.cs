@@ -110,6 +110,7 @@ namespace Online_Marketplace__E_commerce_.Helpers
             cartId = c.cartId,
             userId = c.userId,
             createdAt = c.createdAt,
+            user = c.user?.ToDtoFlat(),
             cartItems = c.cartItems?.Select(ci => ci.ToDto()).ToList()
         };
 

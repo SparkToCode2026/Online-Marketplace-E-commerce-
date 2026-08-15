@@ -82,11 +82,16 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok("Cart deleted successfully");
         }
 
-        // Case 5 — Get all carts, including their items.
+        // Case 5 — Get all carts (admin view), including each cart's owner and
+        // its items with their products.
         [HttpGet("all")]
         public IActionResult GetAllCarts()
         {
-            var carts = _context.Carts.Include(c => c.cartItems).ToList();
+            var carts = _context.Carts
+                .Include(c => c.user)
+                .Include(c => c.cartItems)
+                .ThenInclude(ci => ci.product)
+                .ToList();
             return Ok(carts.Select(c => c.ToDto()));
         }
 

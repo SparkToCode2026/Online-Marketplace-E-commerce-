@@ -6,6 +6,7 @@ namespace Online_Marketplace__E_commerce_.DTOs
         public int userId { get; set; }
         public DateTime createdAt { get; set; }
 
+        public UserDto? user { get; set; }
         public List<CartItemDto>? cartItems { get; set; }
     }
 }
