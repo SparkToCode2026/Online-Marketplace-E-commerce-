@@ -2,6 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { apiFetch, isLoggedIn, isAdmin, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
+import { useConfirm } from "../components/ConfirmDialog";
+import Pagination from "../components/Pagination";
+import { SearchIcon } from "../components/icons";
 import NavBar from "../components/NavBar";
 import AdminOrders from "../components/AdminOrders";
 import AdminCoupons from "../components/AdminCoupons";
@@ -59,6 +62,7 @@ function tabClass(active: boolean) {
 // Admin dashboard — product CRUD plus an orders/revenue view, switched by tabs.
 export default function Admin() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -70,6 +74,9 @@ export default function Admin() {
 
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof emptyForm, string>>>({});
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   const startedRef = useRef(false);
   useEffect(() => {
@@ -92,6 +99,7 @@ export default function Admin() {
 
   function openAdd() {
     setForm({ ...emptyForm });
+    setErrors({});
     setEditing("new");
   }
 
@@ -105,16 +113,31 @@ export default function Admin() {
       categoryId: p.categoryId,
       vendorProfileId: p.vendorProfileId,
     });
+    setErrors({});
     setEditing(p);
+  }
+
+  // Updates one form field and clears its error as soon as the user edits it.
+  function updateForm<K extends keyof typeof emptyForm>(key: K, value: (typeof emptyForm)[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((errs) => (errs[key] ? { ...errs, [key]: undefined } : errs));
+  }
+
+  function validate() {
+    const errs: Partial<Record<keyof typeof emptyForm, string>> = {};
+    if (!form.name.trim()) errs.name = "Name is required.";
+    if (form.price <= 0) errs.price = "Price must be greater than 0.";
+    if (form.stockQuantity < 0) errs.stockQuantity = "Stock cannot be negative.";
+    if (editing === "new" && !form.categoryId) errs.categoryId = "Category is required.";
+    if (editing === "new" && !form.vendorProfileId) errs.vendorProfileId = "Vendor is required.";
+    return errs;
   }
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) return toast("Enter a product name.", "info");
-    if (form.price <= 0) return toast("Price must be greater than 0.", "info");
-    if (form.stockQuantity < 0) return toast("Stock cannot be negative.", "info");
-    if (editing === "new" && !form.categoryId) return toast("Pick a category.", "info");
-    if (editing === "new" && !form.vendorProfileId) return toast("Pick a vendor.", "info");
+    const errs = validate();
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
 
     try {
       if (editing === "new") {
@@ -146,7 +169,7 @@ export default function Admin() {
   }
 
   async function remove(p: Product) {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    if (!(await confirm(`Delete "${p.name}"? This cannot be undone.`))) return;
     try {
       await apiFetch(`/Product/delete?id=${p.productId}`, "DELETE");
       toast(`Product "${p.name}" deleted.`, "success");
@@ -161,6 +184,22 @@ export default function Admin() {
     count: products.filter((p) => p.categoryId === c.categoryId).length,
   }));
   const maxCatCount = Math.max(1, ...categoryCounts.map((c) => c.count));
+
+  function updateSearch(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+  const PAGE_SIZE = 10;
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedProducts = filteredProducts.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   return (
     <div className="min-h-screen bg-page font-body text-ink">
@@ -241,6 +280,16 @@ export default function Admin() {
           </button>
         </div>
 
+        <div className="mb-4 flex max-w-md items-center gap-2 rounded-full border border-ink/15 bg-white px-3.5 py-2">
+          <SearchIcon className="h-4 w-4 shrink-0 text-ink/40" />
+          <input
+            value={search}
+            onChange={(e) => updateSearch(e.target.value)}
+            placeholder="Search products…"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
+          />
+        </div>
+
         <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
           <table className="w-full text-left text-sm">
             <thead className="bg-accent-100 text-xs uppercase text-ink/50">
@@ -254,7 +303,7 @@ export default function Admin() {
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/10">
-              {products.map((p) => (
+              {pagedProducts.map((p) => (
                 <tr key={p.productId} className="hover:bg-ink/5">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -304,16 +353,18 @@ export default function Admin() {
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && (
+              {pagedProducts.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
-                    No products yet.
+                    {search ? "No products match your search." : "No products yet."}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
           </>
         )}
       </div>
@@ -325,19 +376,26 @@ export default function Admin() {
               {editing === "new" ? "Add product" : `Edit "${editing.name}"`}
             </h2>
             <form onSubmit={save} noValidate className="space-y-3">
-              <input
-                className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-                placeholder="Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
+              <div>
+                <input
+                  className={`w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${
+                    errors.name
+                      ? "border-accent-500 ring-2 ring-accent-100"
+                      : "border-ink/15 focus:border-accent-500 focus:ring-accent-100"
+                  }`}
+                  placeholder="Name"
+                  value={form.name}
+                  onChange={(e) => updateForm("name", e.target.value)}
+                  required
+                />
+                {errors.name && <p className="mt-1 pl-1 text-xs text-accent-700">{errors.name}</p>}
+              </div>
               <textarea
                 className="w-full rounded-2xl border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Description"
                 rows={2}
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) => updateForm("description", e.target.value)}
               />
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-xs text-ink/60">
@@ -346,22 +404,34 @@ export default function Admin() {
                     type="number"
                     min={0}
                     step="0.01"
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                    className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${
+                      errors.price
+                        ? "border-accent-500 ring-2 ring-accent-100"
+                        : "border-ink/15 focus:border-accent-500 focus:ring-accent-100"
+                    }`}
                     value={form.price}
-                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                    onChange={(e) => updateForm("price", Number(e.target.value))}
                     required
                   />
+                  {errors.price && <span className="mt-1 block text-xs text-accent-700">{errors.price}</span>}
                 </label>
                 <label className="text-xs text-ink/60">
                   Stock
                   <input
                     type="number"
                     min={0}
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                    className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${
+                      errors.stockQuantity
+                        ? "border-accent-500 ring-2 ring-accent-100"
+                        : "border-ink/15 focus:border-accent-500 focus:ring-accent-100"
+                    }`}
                     value={form.stockQuantity}
-                    onChange={(e) => setForm({ ...form, stockQuantity: Number(e.target.value) })}
+                    onChange={(e) => updateForm("stockQuantity", Number(e.target.value))}
                     required
                   />
+                  {errors.stockQuantity && (
+                    <span className="mt-1 block text-xs text-accent-700">{errors.stockQuantity}</span>
+                  )}
                 </label>
               </div>
 
@@ -371,15 +441,19 @@ export default function Admin() {
                     className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     placeholder="Image URL (optional)"
                     value={form.productUrl}
-                    onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
+                    onChange={(e) => updateForm("productUrl", e.target.value)}
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <label className="text-xs text-ink/60">
                       Category
                       <select
-                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                        className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${
+                          errors.categoryId
+                            ? "border-accent-500 ring-2 ring-accent-100"
+                            : "border-ink/15 focus:border-accent-500 focus:ring-accent-100"
+                        }`}
                         value={form.categoryId}
-                        onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
+                        onChange={(e) => updateForm("categoryId", Number(e.target.value))}
                         required
                       >
                         <option value={0} disabled>
@@ -391,15 +465,20 @@ export default function Admin() {
                           </option>
                         ))}
                       </select>
+                      {errors.categoryId && (
+                        <span className="mt-1 block text-xs text-accent-700">{errors.categoryId}</span>
+                      )}
                     </label>
                     <label className="text-xs text-ink/60">
                       Vendor
                       <select
-                        className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                        className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${
+                          errors.vendorProfileId
+                            ? "border-accent-500 ring-2 ring-accent-100"
+                            : "border-ink/15 focus:border-accent-500 focus:ring-accent-100"
+                        }`}
                         value={form.vendorProfileId}
-                        onChange={(e) =>
-                          setForm({ ...form, vendorProfileId: Number(e.target.value) })
-                        }
+                        onChange={(e) => updateForm("vendorProfileId", Number(e.target.value))}
                         required
                       >
                         <option value={0} disabled>
@@ -411,6 +490,9 @@ export default function Admin() {
                           </option>
                         ))}
                       </select>
+                      {errors.vendorProfileId && (
+                        <span className="mt-1 block text-xs text-accent-700">{errors.vendorProfileId}</span>
+                      )}
                     </label>
                   </div>
                 </>
