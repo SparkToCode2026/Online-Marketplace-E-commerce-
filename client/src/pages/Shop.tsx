@@ -4,7 +4,7 @@ import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
 import HeroSlider from "../components/HeroSlider";
-import { SupportIcon, ShieldCheckIcon, TruckIcon, InfoIcon } from "../components/icons";
+import { SupportIcon, ShieldCheckIcon, TruckIcon, InfoIcon, SearchIcon } from "../components/icons";
 import { Stars } from "../components/ProductReviews";
 
 interface Product {
@@ -47,7 +47,7 @@ const FEATURES = [
 export default function Shop() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const categoryFilter = searchParams.get("category");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -97,6 +97,13 @@ export default function Shop() {
         ? "bg-accent-100 font-bold text-accent-700"
         : "text-ink/70 hover:bg-ink/5"
     }`;
+
+  function updateSearch(value: string) {
+    const params = new URLSearchParams(searchParams);
+    if (value) params.set("search", value);
+    else params.delete("search");
+    setSearchParams(params, { replace: true });
+  }
 
   async function addToCart(p: Product) {
     if (!cartId) {
@@ -152,6 +159,16 @@ export default function Shop() {
 
       {/* ===== Products ===== */}
       <div id="products" className="mx-auto max-w-6xl px-6 py-8">
+        <div className="mb-6 flex max-w-md items-center gap-2 rounded-full border border-ink/15 bg-white px-3.5 py-2">
+          <SearchIcon className="h-4 w-4 shrink-0 text-ink/40" />
+          <input
+            value={searchParams.get("search") ?? ""}
+            onChange={(e) => updateSearch(e.target.value)}
+            placeholder="Search products…"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-ink/40"
+          />
+        </div>
+
         <div className="flex flex-col gap-6 lg:flex-row">
           <aside className="lg:w-56 lg:shrink-0">
             <div className="rounded-2xl bg-white/60 p-4 shadow-sm">

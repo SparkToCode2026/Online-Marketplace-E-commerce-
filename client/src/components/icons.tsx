@@ -105,6 +105,14 @@ export function UserIcon({ className }: { className?: string }) {
   );
 }
 
+export function MenuIcon({ className }: { className?: string }) {
+  return (
+    <SvgIcon className={className}>
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </SvgIcon>
+  );
+}
+
 // Solid star — a decorative 5-star rating on product cards.
 export function StarIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
