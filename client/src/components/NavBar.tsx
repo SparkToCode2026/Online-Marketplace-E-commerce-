@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { isAdmin, logout } from "../api";
+import { isAdmin, isLoggedIn, logout } from "../api";
 import { BrandIcon, UserIcon, MenuIcon, XIcon } from "./icons";
 
 // Shared top navigation. Links adapt to the user's role (vendor/admin extras).
@@ -26,11 +26,14 @@ export default function NavBar() {
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, []);
 
-  const links = [
+  const loggedIn = isLoggedIn();
+  const links: { to: string; label: string; end?: boolean }[] = [
     { to: "/", label: "Products", end: true },
-    { to: "/cart", label: "Cart" },
-    { to: "/orders", label: "My Orders" },
   ];
+  if (loggedIn) {
+    links.push({ to: "/cart", label: "Cart" });
+    links.push({ to: "/orders", label: "My Orders" });
+  }
   if (role === "Vendor") {
     links.push({ to: "/vendor/products", label: "My Products" });
     links.push({ to: "/vendor/profile", label: "My Store" });
@@ -69,6 +72,15 @@ export default function NavBar() {
             </NavLink>
           ))}
 
+          {!loggedIn && (
+            <Link
+              to="/login"
+              className="rounded-full bg-accent-500 px-4 py-1.5 text-sm font-medium text-white transition hover:bg-accent-600"
+            >
+              Sign in
+            </Link>
+          )}
+          {loggedIn && (
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setAccountOpen((o) => !o)}
@@ -109,6 +121,7 @@ export default function NavBar() {
               </div>
             )}
           </div>
+          )}
         </div>
 
         {/* Mobile hamburger */}
@@ -141,6 +154,8 @@ export default function NavBar() {
             ))}
           </div>
 
+          {loggedIn ? (
+          <>
           <div className="flex items-center gap-3 border-t border-ink/10 pt-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-100 text-accent-700">
               <UserIcon className="h-5 w-5" />
@@ -167,6 +182,16 @@ export default function NavBar() {
               Sign out
             </button>
           </div>
+          </>
+          ) : (
+            <Link
+              to="/login"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-full bg-accent-500 px-4 py-2 text-center text-sm font-medium text-white transition hover:bg-accent-600"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       )}
     </nav>
