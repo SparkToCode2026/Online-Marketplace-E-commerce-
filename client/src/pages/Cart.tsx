@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, Link, useNavigate } from "react-router-dom";
-import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR, bumpCart } from "../api";
 import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmDialog";
 import NavBar from "../components/NavBar";
@@ -64,6 +64,7 @@ export default function Cart() {
   async function adjust(item: CartItem, delta: number) {
     try {
       await apiFetch(`/CartItem/adjustQuantity?id=${item.cartItemId}&delta=${delta}`, "PATCH");
+      bumpCart(); // refresh the NavBar cart badge
       if (cartId) load(cartId);
     } catch (e) {
       toast((e as Error).message, "error");
@@ -73,6 +74,7 @@ export default function Cart() {
   async function remove(item: CartItem) {
     try {
       await apiFetch(`/CartItem/remove?id=${item.cartItemId}`, "DELETE");
+      bumpCart(); // refresh the NavBar cart badge
       toast(`Removed "${item.product?.name ?? "item"}".`, "info");
       if (cartId) load(cartId);
     } catch (e) {
@@ -87,6 +89,7 @@ export default function Cart() {
     if (!(await confirm("Remove all items from your cart?"))) return;
     try {
       await apiFetch(`/Cart/clear?id=${cartId}`, "PATCH");
+      bumpCart(); // refresh the NavBar cart badge
       setItems([]);
       setCoupon("");
       toast("Cart cleared.", "info");
@@ -113,6 +116,7 @@ export default function Cart() {
     try {
       const orderId = await apiFetch(url, "POST");
       localStorage.removeItem("cartId");
+      bumpCart(); // cart emptied on checkout — reset the NavBar badge
       setItems([]);
       setCoupon("");
       setCartId(null);

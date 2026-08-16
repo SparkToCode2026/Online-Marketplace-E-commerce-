@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { isAdmin, isLoggedIn, logout } from "../api";
-import { BrandIcon, UserIcon, MenuIcon, XIcon } from "./icons";
+import { isAdmin, isLoggedIn, logout, apiFetch, ensureCart, onCartChange } from "../api";
+import { BrandIcon, UserIcon, MenuIcon, XIcon, CartIcon } from "./icons";
 
 // Shared top navigation. Links adapt to the user's role (vendor/admin extras).
 // On desktop the links and account menu sit inline; below md they collapse
@@ -13,6 +13,8 @@ export default function NavBar() {
 
   const [accountOpen, setAccountOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Total quantity in the cart, shown as a badge on the cart icon.
+  const [cartCount, setCartCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close the account menu on any click outside it.
@@ -26,12 +28,35 @@ export default function NavBar() {
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, []);
 
+  // Load the cart badge count, and keep it in sync: onCartChange fires whenever
+  // any page adds/removes/clears items (via bumpCart), so the badge updates
+  // live without a page reload.
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+
+    async function refreshCount() {
+      try {
+        const id = await ensureCart();
+        if (!id) return setCartCount(0);
+        const cart = (await apiFetch(`/Cart/getById?id=${id}`)) as {
+          cartItems?: { quantity: number }[];
+        };
+        const total = (cart.cartItems ?? []).reduce((s, i) => s + i.quantity, 0);
+        setCartCount(total);
+      } catch {
+        setCartCount(0);
+      }
+    }
+
+    refreshCount();
+    return onCartChange(refreshCount); // unsubscribe on unmount
+  }, []);
+
   const loggedIn = isLoggedIn();
   const links: { to: string; label: string; end?: boolean }[] = [
     { to: "/", label: "Products", end: true },
   ];
   if (loggedIn) {
-    links.push({ to: "/cart", label: "Cart" });
     links.push({ to: "/orders", label: "My Orders" });
   }
   if (role === "Vendor") {
@@ -71,6 +96,24 @@ export default function NavBar() {
               {l.label}
             </NavLink>
           ))}
+
+          {/* Cart icon with a live item-count badge. */}
+          {loggedIn && (
+            <NavLink
+              to="/cart"
+              aria-label={`Cart (${cartCount} items)`}
+              className={({ isActive }) =>
+                `relative hover:text-accent-500 ${isActive ? "text-accent-500" : "text-ink/70"}`
+              }
+            >
+              <CartIcon className="h-6 w-6" />
+              {cartCount > 0 && (
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-accent-500 px-1 text-[11px] font-semibold leading-none text-white">
+                  {cartCount}
+                </span>
+              )}
+            </NavLink>
+          )}
 
           {!loggedIn && (
             <Link
@@ -152,6 +195,23 @@ export default function NavBar() {
                 {l.label}
               </NavLink>
             ))}
+            {loggedIn && (
+              <NavLink
+                to="/cart"
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 rounded-lg px-2 py-2 text-sm hover:bg-ink/5 ${isActive ? "font-semibold text-accent-500" : "text-ink/70"}`
+                }
+              >
+                <CartIcon className="h-5 w-5" />
+                Cart
+                {cartCount > 0 && (
+                  <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-accent-500 px-1 text-[11px] font-semibold leading-none text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </NavLink>
+            )}
           </div>
 
           {loggedIn ? (

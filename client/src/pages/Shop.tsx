@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR, bumpCart } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
 import HeroSlider from "../components/HeroSlider";
@@ -134,6 +134,7 @@ export default function Shop() {
     }
     try {
       await apiFetch("/CartItem/add", "POST", { cartId, productId: p.productId, quantity: 1 });
+      bumpCart(); // refresh the NavBar cart badge
       toast(`Added "${p.name}" to the cart.`, "success");
     } catch (e) {
       toast((e as Error).message, "error");

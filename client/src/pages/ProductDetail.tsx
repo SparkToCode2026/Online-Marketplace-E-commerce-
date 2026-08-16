@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
+import { apiFetch, isLoggedIn, ensureCart, formatOMR, bumpCart } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
 import ProductReviews from "../components/ProductReviews";
@@ -53,6 +53,7 @@ export default function ProductDetail() {
         productId: product.productId,
         quantity: qty,
       });
+      bumpCart(); // refresh the NavBar cart badge
       toast(`Added ${qty} × "${product.name}" to the cart.`, "success");
     } catch (e) {
       toast((e as Error).message, "error");
