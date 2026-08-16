@@ -83,8 +83,10 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(payment.ToDto());
         }
 
-        // Case 4 — Delete a payment. Blocked once it's Completed, since a
-        // successful payment should be refunded, not erased.
+        // Case 4 — Soft-delete a payment: flip isDeleted instead of removing the
+        // row, so financial history is preserved (a global query filter hides it
+        // from every read). Still blocked once Completed — a successful payment
+        // should be refunded, not hidden.
         [HttpDelete("delete")]
         public IActionResult DeletePayment(int id)
         {
@@ -95,7 +97,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (payment.status == "Completed")
                 return Conflict("Cannot delete a completed payment. Refund it instead.");
 
-            _context.Payments.Remove(payment);
+            payment.isDeleted = true;
             _context.SaveChanges();
             return Ok("Payment deleted successfully");
         }

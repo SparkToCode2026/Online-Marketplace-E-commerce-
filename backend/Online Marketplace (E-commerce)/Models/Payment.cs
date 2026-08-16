@@ -20,5 +20,10 @@ namespace Online_Marketplace__E_commerce_.Models
         public string status { get; set; }
 
         public DateTime paidAt { get; set; }
+
+        // Soft-delete flag. A "deleted" payment stays in the table but is hidden
+        // from every query by a global filter (see ProjectContext), preserving
+        // financial history instead of erasing the row.
+        public bool isDeleted { get; set; }
     }
 }

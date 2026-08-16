@@ -111,6 +111,11 @@ namespace Online_Marketplace__E_commerce_
                 .WithOne(o => o.payment)
                 .HasForeignKey<Payment>(p => p.orderId);
 
+            // Soft-delete: hide "deleted" payments from every query automatically.
+            // Any _context.Payments query (including Order.payment includes) skips
+            // rows where isDeleted == true, without each query having to say so.
+            modelBuilder.Entity<Payment>().HasQueryFilter(p => !p.isDeleted);
+
             // One Shipping record per Order.
             modelBuilder.Entity<Shipping>()
                 .HasOne(s => s.order)
