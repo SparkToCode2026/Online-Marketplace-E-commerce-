@@ -146,6 +146,24 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profiles.Select(v => v.ToDto()));
         }
 
+        // case 9 — Combined Where-filter: verification state and a store-name
+        // search can be mixed freely. Any omitted parameter is skipped, so no
+        // arguments returns every profile. Mirrors User/filter.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("filter")]
+        public IActionResult FilterVendorProfiles(bool? isVerified = null, string? search = null)
+        {
+            var query = _context.VendorProfiles.Include(v => v.Users).AsQueryable();
+
+            if (isVerified.HasValue)
+                query = query.Where(v => v.isVerified == isVerified.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(v => v.StoreName.Contains(search));
+
+            return Ok(query.ToList().Select(v => v.ToDto()));
+        }
+
         //case 8 -Get Newest Vendor Profiles
         [HttpGet("newest")]
         public IActionResult GetNewestVendorProfiles()
