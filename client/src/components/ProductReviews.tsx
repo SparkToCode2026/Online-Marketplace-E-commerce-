@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { apiFetch } from "../api";
+import { Link } from "react-router-dom";
+import { apiFetch, isLoggedIn } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
 import { StarIcon, TrashIcon } from "./icons";
@@ -151,29 +152,38 @@ export default function ProductReviews({ productId }: { productId: number }) {
         )}
       </div>
 
-      {/* Write-a-review form. The product page already requires login, so we can
-          assume a signed-in user here. */}
-      <div className="mb-6 rounded-2xl bg-white/60 p-5 shadow-sm">
-        <p className="mb-2 text-sm font-medium text-ink/70">Write a review</p>
-        <Stars value={rating} onPick={setRating} />
-        <textarea
-          className="mt-3 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-          placeholder="Share your thoughts (optional)…"
-          rows={2}
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
-        <button
-          onClick={submit}
-          disabled={submitting}
-          className="mt-3 rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/5"
-        >
-          {submitting ? "Posting…" : "Post review"}
-        </button>
-        <p className="mt-2 text-xs text-ink/40">
-          You can only review products you've purchased.
-        </p>
-      </div>
+      {/* Write-a-review form — only for signed-in users. Guests are prompted to
+          log in, since posting a review needs an account and a prior order. */}
+      {isLoggedIn() ? (
+        <div className="mb-6 rounded-2xl bg-white/60 p-5 shadow-sm">
+          <p className="mb-2 text-sm font-medium text-ink/70">Write a review</p>
+          <Stars value={rating} onPick={setRating} />
+          <textarea
+            className="mt-3 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+            placeholder="Share your thoughts (optional)…"
+            rows={2}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+          <button
+            onClick={submit}
+            disabled={submitting}
+            className="mt-3 rounded-full bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-600 disabled:bg-ink/5"
+          >
+            {submitting ? "Posting…" : "Post review"}
+          </button>
+          <p className="mt-2 text-xs text-ink/40">
+            You can only review products you've purchased.
+          </p>
+        </div>
+      ) : (
+        <div className="mb-6 rounded-2xl bg-white/60 p-5 text-sm text-ink/60 shadow-sm">
+          <Link to="/login" className="font-medium text-accent-700 hover:underline">
+            Log in
+          </Link>{" "}
+          to write a review.
+        </div>
+      )}
 
       {/* The list of existing reviews. */}
       {loading ? (

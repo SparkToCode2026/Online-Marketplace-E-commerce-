@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Navigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
@@ -21,6 +21,7 @@ interface Product {
 export default function ProductDetail() {
   const { id } = useParams();
   const toast = useToast();
+  const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [cartId, setCartId] = useState<number | null>(null);
   const [qty, setQty] = useState(1);
@@ -32,13 +33,16 @@ export default function ProductDetail() {
     apiFetch(`/Product/getById?id=${id}`)
       .then((data) => setProduct(data as Product))
       .catch((e) => setError((e as Error).message));
-    ensureCart().then(setCartId);
+    if (isLoggedIn()) ensureCart().then(setCartId);
   }, [id]);
-
-  if (!isLoggedIn()) return <Navigate to="/login" replace />;
 
   async function addToCart() {
     if (!product) return;
+    if (!isLoggedIn()) {
+      toast("Please log in to add items to your cart.", "info");
+      navigate("/login");
+      return;
+    }
     if (!cartId) {
       toast("This account already has a cart. Register a new account for the full demo.", "error");
       return;

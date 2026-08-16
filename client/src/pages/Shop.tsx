@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, Navigate, Link, useSearchParams } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
@@ -63,7 +63,7 @@ export default function Shop() {
     apiFetch("/Review/all")
       .then((data) => setReviews(data as Review[]))
       .catch(() => setReviews([]));
-    ensureCart().then(setCartId);
+    if (isLoggedIn()) ensureCart().then(setCartId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -71,8 +71,6 @@ export default function Shop() {
   useEffect(() => {
     setPage(1);
   }, [categoryFilter, searchParams.get("search"), searchParams.get("maxPrice")]);
-
-  if (!isLoggedIn()) return <Navigate to="/login" replace />;
 
   const searchQuery = (searchParams.get("search") ?? "").trim().toLowerCase();
   // Max-price filter: keep the raw string for the input, and a parsed number
@@ -125,6 +123,11 @@ export default function Shop() {
   }
 
   async function addToCart(p: Product) {
+    if (!isLoggedIn()) {
+      toast("Please log in to add items to your cart.", "info");
+      navigate("/login");
+      return;
+    }
     if (!cartId) {
       toast("This account already has a cart. Register a new account for the full demo.", "error");
       return;
