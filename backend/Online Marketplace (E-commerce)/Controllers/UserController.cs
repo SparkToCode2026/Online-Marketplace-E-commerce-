@@ -38,6 +38,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 01 — Register a new user.
+        // ملاحظة: بفضل [ApiController]، أي مخالفة لشروط الـ DataAnnotations
+        // في UserRegister ترجّع 400 تلقائياً قبل ما نوصل لهنا.
         [AllowAnonymous]
         [HttpPost("register")]
         public IActionResult Register(UserRegister register)
@@ -45,19 +47,46 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (_context.Users.Any(u => u.Email == register.email))
                 return BadRequest("Email already registered");
 
+            // نحدد الـ role: لو المستخدم ما أرسل شي، يصير "Customer" افتراضياً.
+            // نسمح بس بـ Customer و Vendor للتسجيل الذاتي — نمنع "Admin"
+            // عشان ما يقدر أي أحد يرفّع نفسه لصلاحية أدمن (ثغرة أمنية).
+            var role = string.IsNullOrWhiteSpace(register.role) ? "Customer" : register.role;
+            if (role != "Customer" && role != "Vendor")
+                return BadRequest("Role must be either 'Customer' or 'Vendor'");
+
             User user = new User
             {
                 Username = register.userName,
                 Email = register.email,
                 PasswordHash = PasswordHasher.Hash(register.password),
                 Phonenumber = 0, // Assuming phone number is optional
-                Role = register.role,
+                Role = role,
                 isActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(user);
             _context.SaveChanges();
+
+            // لو سجّل كـ Vendor، ننشئ له VendorProfile تلقائياً.
+            // السبب: ميثود AddProduct في ProductController يرفض البائع
+            // اللي ما عنده profile (يرجّع Forbid). فبإنشائه هنا، البائع
+            // يقدر يضيف منتجات مباشرة بعد التسجيل.
+            // المتجر يبدأ غير موثّق (isVerified=false) لين الأدمن يعتمده،
+            // والبائع يقدر يعدّل اسم المتجر والعنوان لاحقاً.
+            if (user.Role == "Vendor")
+            {
+                var profile = new VendorProfile
+                {
+                    UserId = user.UserId,
+                    StoreName = user.Username + "'s Store",
+                    Address = "",
+                    CreatedaAt = DateTime.UtcNow,
+                    isVerified = false
+                };
+                _context.VendorProfiles.Add(profile);
+                _context.SaveChanges();
+            }
 
             //(self-study): send activation email
             return Ok(user.UserId);
