@@ -156,6 +156,27 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(users.Select(u => u.ToDto()));
         }
 
+        // Combined Where-filter: role, active state and an email/username search
+        // can be mixed freely. Any omitted parameter is skipped, so no arguments
+        // returns every user.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("filter")]
+        public IActionResult FilterUsers(string? role = null, bool? isActive = null, string? search = null)
+        {
+            var query = _context.Users.Include(u => u.vendorProfile).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(role))
+                query = query.Where(u => u.Role == role);
+
+            if (isActive.HasValue)
+                query = query.Where(u => u.isActive == isActive.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(u => u.Email.Contains(search) || u.Username.Contains(search));
+
+            return Ok(query.ToList().Select(u => u.ToDto()));
+        }
+
         // Aggregate: number of users per role.
         [Authorize(Roles = "Admin")]
         [HttpGet("countByRole")]
@@ -167,6 +188,31 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .ToList();
 
             return Ok(counts);
+        }
+
+        // Dashboard stats: per-role counts, the grand total, and the newest
+        // registrations ordered by CreatedAt.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("stats")]
+        public IActionResult GetUserStats()
+        {
+            var byRole = _context.Users
+                .GroupBy(u => u.Role)
+                .Select(g => new { role = g.Key, count = g.Count() })
+                .ToList();
+
+            var recent = _context.Users
+                .OrderByDescending(u => u.CreatedAt)
+                .Take(5)
+                .ToList()
+                .Select(u => u.ToDto());
+
+            return Ok(new
+            {
+                total = _context.Users.Count(),
+                byRole,
+                recent
+            });
         }
 
 
