@@ -244,5 +244,58 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .ToList();
             return Ok(stats);
         }
+
+        // Case 9 — Combined Where-filter: status, a date range and a specific
+        // user can be mixed freely. Any omitted parameter is skipped, so no
+        // arguments returns every order. Mirrors User/filter. Admin-only.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("filter")]
+        public IActionResult FilterOrders(
+            string? status = null, DateTime? from = null, DateTime? to = null, int? userId = null)
+        {
+            var query = _context.Orders
+                .Include(o => o.orderItems)
+                .Include(o => o.coupon)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(o => o.status == status);
+
+            if (from.HasValue)
+                query = query.Where(o => o.orderDate >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(o => o.orderDate <= to.Value);
+
+            if (userId.HasValue)
+                query = query.Where(o => o.userId == userId.Value);
+
+            return Ok(query.ToList().Select(o => o.ToDto()));
+        }
+
+        // Case 10 — Dashboard stats in one call: grand total sales (Sum), the
+        // total order count, and the per-status breakdown (GroupBy: count +
+        // revenue). The (decimal?) cast keeps Sum from throwing on an empty set.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("stats")]
+        public IActionResult GetOrderStats()
+        {
+            var byStatus = _context.Orders
+                .GroupBy(o => o.status)
+                .Select(g => new
+                {
+                    status = g.Key,
+                    orderCount = g.Count(),
+                    totalRevenue = g.Sum(o => o.totalAmount)
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                totalSales = _context.Orders.Sum(o => (decimal?)o.totalAmount) ?? 0,
+                totalOrders = _context.Orders.Count(),
+                byStatus
+            });
+        }
     }
 }
