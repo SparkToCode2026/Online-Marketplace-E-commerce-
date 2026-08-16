@@ -164,6 +164,50 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(query.ToList().Select(v => v.ToDto()));
         }
 
+        // case 10 — Top vendors leaderboard. Each row carries both metrics
+        // (product count via GroupBy+Count, and average rating aggregated over
+        // Reviews -> Products -> vendor), and `by` picks which one to rank by.
+        //   by=products (default) -> most products first
+        //   by=rating            -> highest average rating first
+        [Authorize(Roles = "Admin")]
+        [HttpGet("top")]
+        public IActionResult GetTopVendors(string by = "products", int take = 10)
+        {
+            // Products per vendor: GroupBy the vendor FK, then Count.
+            var productCounts = _context.Products
+                .GroupBy(p => p.vendorProfileId)
+                .Select(g => new { vpid = g.Key, count = g.Count() })
+                .ToDictionary(x => x.vpid, x => x.count);
+
+            // Average rating per vendor: project each review down to its vendor
+            // (via the product), then GroupBy + Average/Count.
+            var ratingStats = _context.Reviews
+                .Select(r => new { r.rating, vpid = r.product!.vendorProfileId })
+                .GroupBy(x => x.vpid)
+                .Select(g => new { vpid = g.Key, avg = g.Average(x => x.rating), reviews = g.Count() })
+                .ToList()
+                .ToDictionary(x => x.vpid, x => x);
+
+            var vendors = _context.VendorProfiles.Include(v => v.Users).ToList();
+
+            var rows = vendors.Select(v => new
+            {
+                vendorProfileId = v.VendorProfileId,
+                storeName = v.StoreName,
+                isVerified = v.isVerified,
+                owner = v.Users?.Username,
+                productCount = productCounts.TryGetValue(v.VendorProfileId, out var c) ? c : 0,
+                averageRating = ratingStats.TryGetValue(v.VendorProfileId, out var rs) ? Math.Round(rs.avg, 2) : 0d,
+                reviewCount = ratingStats.TryGetValue(v.VendorProfileId, out var rs2) ? rs2.reviews : 0,
+            });
+
+            var ordered = by?.ToLower() == "rating"
+                ? rows.OrderByDescending(r => r.averageRating).ThenByDescending(r => r.reviewCount)
+                : rows.OrderByDescending(r => r.productCount);
+
+            return Ok(ordered.Take(take).ToList());
+        }
+
         //case 8 -Get Newest Vendor Profiles
         [HttpGet("newest")]
         public IActionResult GetNewestVendorProfiles()
