@@ -6,6 +6,7 @@ using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
 using System.Linq;
 using System;
+using System.Security.Claims;
 namespace Online_Marketplace__E_commerce_.Controllers
 {
     [ApiController]
@@ -22,9 +23,17 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         //case 1 — Register a Vendor Profile
         // POST /vendorprofile/add
+        // الأدمن ينشئ بروفايل لأي مستخدم؛ البائع ينشئ بروفايله هو بس.
+        [Authorize(Roles = "Admin,Vendor")]
         [HttpPost("add")]
         public IActionResult AddVendorProfile(VendorProfileCreateDto dto)
         {
+            // ownership: غير الأدمن ما يقدر ينشئ بروفايل باسم userId ثاني.
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (role != "Admin" && dto.UserId != callerId)
+                return Forbid();
+
             var user = _context.Users.FirstOrDefault(u => u.UserId == dto.UserId);
 
             if (user == null)
@@ -52,6 +61,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         //case 2 — Update a Vendor Profile
         //PUT /vendorprofile/update
 
+        [Authorize(Roles = "Admin,Vendor")]
         [HttpPut("update")]
         public IActionResult UpdateVendorProfile(int id, VendorProfileUpdateDto dto)
         {
@@ -60,6 +70,12 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (profile == null)
                 return NotFound("Vendor profile not found");
 
+            // ownership: البائع يعدّل بروفايله هو بس؛ الأدمن يعدّل أي بروفايل.
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (role != "Admin" && profile.UserId != callerId)
+                return Forbid();
+
             profile.StoreName = dto.StoreName;
             profile.Address = dto.Address;
 
@@ -67,6 +83,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(profile.ToDto());
         }
         //case 3 — Verify a Vendor Profile
+        [Authorize(Roles = "Admin")]
         [HttpPatch("verify")]
         public IActionResult VerifyVendorProfile(int id)
         {
@@ -82,6 +99,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         //case 4 — Delete a Vendor Profile
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public IActionResult DeleteVendorProfile(int id)
         {
