@@ -160,6 +160,40 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(revenue);
         }
 
+        // Case 9 — Combined Where-filter: lines belonging to a specific order
+        // and/or a specific product. Both optional; no arguments returns every
+        // line. (byProduct above is the product-only special case.)
+        [HttpGet("filter")]
+        public IActionResult FilterOrderItems(int? orderId = null, int? productId = null)
+        {
+            var query = _context.OrderItems
+                .Include(oi => oi.order)
+                .Include(oi => oi.product)
+                .AsQueryable();
+
+            if (orderId.HasValue)
+                query = query.Where(oi => oi.orderId == orderId.Value);
+
+            if (productId.HasValue)
+                query = query.Where(oi => oi.productId == productId.Value);
+
+            return Ok(query.ToList().Select(oi => oi.ToDto()));
+        }
+
+        // Case 10 — Best sellers by units sold: GroupBy product, Sum quantity,
+        // ranked. (revenueByProduct above is the money counterpart.)
+        [HttpGet("bestsellers")]
+        public IActionResult GetBestSellers(int take = 10)
+        {
+            var top = _context.OrderItems
+                .GroupBy(oi => oi.productId)
+                .Select(g => new { productId = g.Key, totalQuantity = g.Sum(oi => oi.quantity) })
+                .OrderByDescending(x => x.totalQuantity)
+                .Take(take)
+                .ToList();
+            return Ok(top);
+        }
+
         // Computed in memory, not via a fresh query, since a DB query would
         // miss pending unsaved changes; caller must Include orderItems first.
         private void RecalculateOrderTotal(Order order)
