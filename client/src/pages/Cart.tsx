@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate, Link } from "react-router-dom";
+import { Navigate, Link, useNavigate } from "react-router-dom";
 import { apiFetch, isLoggedIn, ensureCart, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmDialog";
@@ -23,6 +23,7 @@ interface Coupon {
 export default function Cart() {
   const toast = useToast();
   const confirm = useConfirm();
+  const navigate = useNavigate();
   const [cartId, setCartId] = useState<number | null>(null);
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +117,7 @@ export default function Cart() {
       setCoupon("");
       setCartId(null);
       toast(`Order #${orderId} placed — a confirmation email was sent to your inbox.`, "success");
+      navigate("/orders");
     } catch (e) {
       toast((e as Error).message, "error");
     }
