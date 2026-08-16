@@ -10,6 +10,7 @@ namespace Online_Marketplace__E_commerce_.DTOs
         public int Phonenumber { get; set; }
         public string Role { get; set; }
         public bool isActive { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         public VendorProfileDto? vendorProfile { get; set; }
     }

@@ -22,6 +22,7 @@ namespace Online_Marketplace__E_commerce_.Helpers
             Phonenumber = u.Phonenumber,
             Role = u.Role,
             isActive = u.isActive,
+            CreatedAt = u.CreatedAt,
             vendorProfile = u.vendorProfile?.ToDtoFlat()
         };
 
@@ -32,7 +33,8 @@ namespace Online_Marketplace__E_commerce_.Helpers
             Email = u.Email,
             Phonenumber = u.Phonenumber,
             Role = u.Role,
-            isActive = u.isActive
+            isActive = u.isActive,
+            CreatedAt = u.CreatedAt
         };
 
         // ---------- VendorProfile ----------

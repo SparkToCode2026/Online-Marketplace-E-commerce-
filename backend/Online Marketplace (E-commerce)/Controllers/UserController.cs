@@ -52,7 +52,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 PasswordHash = PasswordHasher.Hash(register.password),
                 Phonenumber = 0, // Assuming phone number is optional
                 Role = register.role,
-                isActive = true
+                isActive = true,
+                CreatedAt = DateTime.UtcNow
             };
 
             _context.Users.Add(user);

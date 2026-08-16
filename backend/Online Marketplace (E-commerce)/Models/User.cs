@@ -18,6 +18,9 @@ namespace Online_Marketplace__E_commerce_.Models
         // holds a foreign key back to this user.
          public bool isActive { get; set; }
 
+        // Registration timestamp — stamped on register, used by /User/stats ordering.
+        public DateTime CreatedAt { get; set; }
+
         public VendorProfile? vendorProfile { get; set; }
 
         public Cart? cart { get; set; }
