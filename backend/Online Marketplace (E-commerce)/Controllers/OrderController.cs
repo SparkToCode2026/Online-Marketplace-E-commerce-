@@ -98,6 +98,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 2 — Update an order's status.
+        [Authorize(Roles = "Admin")]
         [HttpPut("updateStatus")]
         public IActionResult UpdateStatus(int id, string status)
         {
@@ -142,6 +143,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 4 — Delete an order. Blocked once it has a payment on record,
         // to keep financial history intact; cancel via status instead.
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete")]
         public IActionResult DeleteOrder(int id)
         {

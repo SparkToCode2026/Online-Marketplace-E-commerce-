@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { apiFetch, formatOMR } from "../api";
 import { useToast } from "./Toast";
+import { useConfirm } from "./ConfirmDialog";
+import { TrashIcon } from "./icons";
 import { ORDER_STATUSES } from "./OrderStatusBadge";
 
 // One order row in the admin table. Same "flat" shape the /Order/all endpoint
@@ -30,6 +32,7 @@ interface StatusStat {
 // the Admin page (see Admin.tsx), which already enforces the admin-only guard.
 export default function AdminOrders() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState<StatusStat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +84,23 @@ export default function AdminOrders() {
     }
   }
 
+  // Delete an order. The backend blocks deletion once a payment exists (409),
+  // so a failed request surfaces that message via the toast. Drop the row from
+  // local state only after the server confirms, and refresh the revenue buckets.
+  async function deleteOrder(order: Order) {
+    if (!(await confirm(`Delete order #${order.orderId}? This can't be undone.`))) return;
+    try {
+      await apiFetch(`/Order/delete?id=${order.orderId}`, "DELETE");
+      setOrders((prev) => prev.filter((o) => o.orderId !== order.orderId));
+      toast(`Order #${order.orderId} deleted.`, "info");
+      apiFetch("/Order/statsByStatus")
+        .then((d) => setStats(d as StatusStat[]))
+        .catch(() => {});
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  }
+
   // Grand total across every status bucket — the headline revenue number.
   const totalRevenue = stats.reduce((s, x) => s + x.totalRevenue, 0);
 
@@ -115,6 +135,7 @@ export default function AdminOrders() {
               <th className="px-4 py-3">Items</th>
               <th className="px-4 py-3">Total</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-ink/10">
@@ -149,11 +170,23 @@ export default function AdminOrders() {
                     ))}
                   </select>
                 </td>
+                <td className="px-4 py-3">
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => deleteOrder(o)}
+                      title="Delete order"
+                      aria-label={`Delete order #${o.orderId}`}
+                      className="rounded-full p-1.5 text-ink/30 transition hover:bg-accent-100 hover:text-accent-600"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
             {orders.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-ink/40">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink/40">
                   No orders yet.
                 </td>
               </tr>
