@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Online_Marketplace__E_commerce_.DTOs;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
+using System.Security.Claims;
 
 namespace Online_Marketplace__E_commerce_.Controllers
 {
@@ -244,8 +246,96 @@ namespace Online_Marketplace__E_commerce_.Controllers
             });
         }
 
+        // ===== Vendor upgrade flow: Customer يقدّم طلب، Admin يقبل/يرفض =====
 
+        // الكستمر يقدّم طلب يصير Vendor.
+        // ناخذ هويته من الـ JWT (مو من الـ body) عشان ما يقدّم باسم غيره.
+        // النتيجة: VendorProfile غير موثّق، والـ role يظل Customer لين
+        // الأدمن يوافق.
+        [Authorize]
+        [HttpPost("request-vendor")]
+        public IActionResult RequestVendor(VendorRequestDto dto)
+        {
+            // NameIdentifier = الـ UserId المخزّن داخل التوكن وقت تسجيل الدخول.
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
+            var user = _context.Users.Find(callerId);
+            if (user == null)
+                return NotFound("User not found");
+
+            // بس الكستمر يقدّم — البائع والأدمن مالهم داعي.
+            if (user.Role != "Customer")
+                return BadRequest("Only customers can request to become a vendor");
+
+            // لو عنده profile أصلاً (طلب سابق معلّق أو صار بائع)، ما نكرّر.
+            if (_context.VendorProfiles.Any(v => v.UserId == callerId))
+                return Conflict("You already have a pending or existing vendor profile");
+
+            var profile = new VendorProfile
+            {
+                UserId = callerId,
+                StoreName = dto.StoreName,
+                Address = dto.Address,
+                CreatedaAt = DateTime.UtcNow,
+                isVerified = false // معلّق لين الأدمن يوافق
+            };
+            _context.VendorProfiles.Add(profile);
+            _context.SaveChanges();
+
+            return Ok("Vendor request submitted. Waiting for admin approval.");
+        }
+
+        // الأدمن يشوف الطلبات المعلّقة: profile غير موثّق وصاحبه لسه Customer.
+        // (نستثني البائعين اللي انسجّلوا Vendor مباشرة وما تحققوا بعد.)
+        [Authorize(Roles = "Admin")]
+        [HttpGet("vendor-requests")]
+        public IActionResult GetVendorRequests()
+        {
+            var pending = _context.VendorProfiles
+                .Include(v => v.Users)
+                .Where(v => !v.isVerified && v.Users.Role == "Customer")
+                .ToList();
+
+            return Ok(pending.Select(v => v.ToDto()));
+        }
+
+        // الأدمن يوافق: نرفّع دور المستخدم إلى Vendor ونوثّق متجره.
+        [Authorize(Roles = "Admin")]
+        [HttpPut("approve-vendor")]
+        public IActionResult ApproveVendor(int userId)
+        {
+            var user = _context.Users.Find(userId);
+            if (user == null)
+                return NotFound("User not found");
+
+            var profile = _context.VendorProfiles.FirstOrDefault(v => v.UserId == userId);
+            if (profile == null)
+                return NotFound("No vendor request found for this user");
+
+            user.Role = "Vendor";     // الترقية الفعلية
+            profile.isVerified = true; // اعتماد المتجر
+
+            _context.SaveChanges();
+            return Ok("Vendor request approved");
+        }
+
+        // الأدمن يرفض: نحذف الـ profile المعلّق (يقدر يعيد التقديم لاحقاً).
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("reject-vendor")]
+        public IActionResult RejectVendor(int userId)
+        {
+            var profile = _context.VendorProfiles.FirstOrDefault(v => v.UserId == userId);
+            if (profile == null)
+                return NotFound("No vendor request found for this user");
+
+            // نحذف بس لو لسه معلّق (ما نحذف متجر بائع معتمد بالغلط).
+            if (profile.isVerified)
+                return BadRequest("This vendor is already approved; cannot reject");
+
+            _context.VendorProfiles.Remove(profile);
+            _context.SaveChanges();
+            return Ok("Vendor request rejected");
+        }
 
 
 
