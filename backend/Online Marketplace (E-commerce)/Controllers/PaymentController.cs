@@ -141,5 +141,59 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .ToList();
             return Ok(revenue);
         }
+
+        // Case 9 — Combined Where-filter: status, method, an amount range and a
+        // date range can be mixed freely. Any omitted parameter is skipped, so
+        // no arguments returns every payment. Mirrors User/filter. Admin-only.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("filter")]
+        public IActionResult FilterPayments(
+            string? status = null, string? method = null,
+            decimal? minAmount = null, decimal? maxAmount = null,
+            DateTime? from = null, DateTime? to = null)
+        {
+            var query = _context.Payments.Include(p => p.order).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(p => p.status == status);
+
+            if (!string.IsNullOrWhiteSpace(method))
+                query = query.Where(p => p.method == method);
+
+            if (minAmount.HasValue)
+                query = query.Where(p => p.amount >= minAmount.Value);
+
+            if (maxAmount.HasValue)
+                query = query.Where(p => p.amount <= maxAmount.Value);
+
+            if (from.HasValue)
+                query = query.Where(p => p.paidAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(p => p.paidAt <= to.Value);
+
+            return Ok(query.ToList().Select(p => p.ToDto()));
+        }
+
+        // Case 10 — Payment summary in one call: grand total collected (Sum),
+        // total count, and the per-method breakdown (GroupBy: count + amount).
+        // The (decimal?) cast keeps Sum from throwing on an empty set.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("summary")]
+        public IActionResult GetPaymentSummary()
+        {
+            var byMethod = _context.Payments
+                .GroupBy(p => p.method)
+                .Select(g => new { method = g.Key, count = g.Count(), totalAmount = g.Sum(p => p.amount) })
+                .OrderByDescending(x => x.totalAmount)
+                .ToList();
+
+            return Ok(new
+            {
+                totalCollected = _context.Payments.Sum(p => (decimal?)p.amount) ?? 0,
+                totalCount = _context.Payments.Count(),
+                byMethod
+            });
+        }
     }
 }
