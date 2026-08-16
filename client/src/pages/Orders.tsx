@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { apiFetch, isLoggedIn, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
+import { useConfirm } from "../components/ConfirmDialog";
 import NavBar from "../components/NavBar";
 import OrderStatusBadge from "../components/OrderStatusBadge";
 import { CartIcon } from "../components/icons";
@@ -44,6 +45,7 @@ interface Shipping {
 // "My Orders" — the customer's own order history.
 export default function Orders() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [productMap, setProductMap] = useState<Record<number, Product>>({});
@@ -114,6 +116,20 @@ export default function Orders() {
     }
   }
 
+  // Cancel my own order (soft cancel -> status becomes "Cancelled"). The button
+  // only shows while the order is cancellable, but the backend re-checks
+  // ownership + status + "no payment" and is the real authority.
+  async function cancelOrder(o: Order) {
+    if (!(await confirm(`Cancel order #${o.orderId}? This can't be undone.`))) return;
+    try {
+      await apiFetch(`/Order/cancel?id=${o.orderId}`, "PUT");
+      toast(`Order #${o.orderId} cancelled.`, "info");
+      load();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-page font-body text-ink">
       <NavBar />
@@ -151,6 +167,15 @@ export default function Orders() {
                   <div className="flex items-center gap-3">
                     <OrderStatusBadge status={o.status} />
                     <span className="text-lg font-bold">{formatOMR(o.totalAmount)}</span>
+                    {(o.status === "Pending" || o.status === "Processing") &&
+                      !paymentByOrder[o.orderId] && (
+                        <button
+                          onClick={() => cancelOrder(o)}
+                          className="rounded-full border border-accent-200 px-3 py-1 text-xs font-medium text-accent-700 transition hover:bg-accent-100"
+                        >
+                          Cancel order
+                        </button>
+                      )}
                   </div>
                 </div>
 

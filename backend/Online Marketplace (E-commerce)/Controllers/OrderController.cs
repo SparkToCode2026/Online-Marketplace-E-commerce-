@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Online_Marketplace__E_commerce_.Helpers;
 using Online_Marketplace__E_commerce_.Models;
+using System.Security.Claims;
 
 namespace Online_Marketplace__E_commerce_.Controllers
 {
@@ -108,6 +109,37 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 return NotFound("Order not found");
 
             order.status = status;
+            _context.SaveChanges();
+            return Ok(order.ToDto());
+        }
+
+        // Case 2b — Customer cancels their OWN order. This is a soft cancel
+        // (status -> Cancelled), never a hard delete, so the record is kept.
+        // Guards: the caller must own the order (id taken from the JWT, an admin
+        // may cancel any), the order must still be early in its lifecycle
+        // (Pending/Processing), and it must have no payment on record. Anything
+        // past that must go through an admin.
+        [Authorize]
+        [HttpPut("cancel")]
+        public IActionResult CancelOrder(int id)
+        {
+            var order = _context.Orders.Find(id);
+            if (order == null)
+                return NotFound("Order not found");
+
+            // ownership: a customer can only cancel their own order.
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            if (role != "Admin" && order.userId != callerId)
+                return Forbid();
+
+            if (order.status != "Pending" && order.status != "Processing")
+                return BadRequest($"Order can't be cancelled while it is {order.status}.");
+
+            if (_context.Payments.Any(p => p.orderId == id))
+                return BadRequest("Order has a payment on record; contact support to cancel.");
+
+            order.status = "Cancelled";
             _context.SaveChanges();
             return Ok(order.ToDto());
         }
