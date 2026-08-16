@@ -71,7 +71,7 @@ export default function NavBar() {
   }
 
   return (
-    <nav className="bg-page px-6 py-4">
+    <nav className="sticky top-0 z-40 bg-page px-6 py-4 shadow-sm">
       <div className="flex items-center gap-3">
         <NavLink
           to="/"
