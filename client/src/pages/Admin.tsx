@@ -17,6 +17,7 @@ import AdminOrderItems from "../components/AdminOrderItems";
 import AdminUsers from "../components/AdminUsers";
 import AdminVendors from "../components/AdminVendors";
 import AdminVendorRequests from "../components/AdminVendorRequests";
+import AdminReviews from "../components/AdminReviews";
 
 interface Product {
   productId: number;
@@ -75,7 +76,7 @@ export default function Admin() {
   const [orderStats, setOrderStats] = useState<StatusStat[]>([]);
 
   const [tab, setTab] = useState<
-    "products" | "users" | "vendors" | "vendorRequests" | "categories" | "orders" | "carts" | "cartItems" | "coupons" | "payments" | "shipping" | "items"
+    "products" | "users" | "vendors" | "vendorRequests" | "categories" | "orders" | "carts" | "cartItems" | "coupons" | "payments" | "shipping" | "items" | "reviews"
   >("products");
 
   const [editing, setEditing] = useState<Product | "new" | null>(null);
@@ -257,6 +258,9 @@ export default function Admin() {
           <button onClick={() => setTab("items")} className={tabClass(tab === "items")}>
             Items
           </button>
+          <button onClick={() => setTab("reviews")} className={tabClass(tab === "reviews")}>
+            Reviews
+          </button>
         </div>
 
         {tab === "users" && <AdminUsers />}
@@ -270,6 +274,7 @@ export default function Admin() {
         {tab === "payments" && <AdminPayments />}
         {tab === "shipping" && <AdminShipping />}
         {tab === "items" && <AdminOrderItems />}
+        {tab === "reviews" && <AdminReviews />}
 
         {tab === "products" && (
           <>
