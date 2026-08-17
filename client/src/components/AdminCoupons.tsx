@@ -3,23 +3,23 @@ import { apiFetch } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
 
-// A coupon as returned by GET /Coupon/all.
+// A coupon row from GET /Coupon/usage. That endpoint already carries every
+// field this screen needs — the flag, the limit and the live usage count — so
+// it replaces the old /Coupon/all + /Coupon/byUsage pair with one request.
 interface Coupon {
   couponId: number;
   code: string;
   discountPercent: number;
   expiryDate: string;
-}
-
-// One row from GET /Coupon/byUsage — how many orders have used each coupon.
-interface Usage {
-  couponId: number;
-  code: string;
+  isActive: boolean;
+  usageLimit: number | null;
   usageCount: number;
+  remainingUses: number | null;
 }
 
 // A blank "new coupon" form. expiryDate is a yyyy-mm-dd string from <input type=date>.
-const emptyForm = { code: "", discountPercent: 10, expiryDate: "" };
+// usageLimit is "" for unlimited.
+const emptyForm = { code: "", discountPercent: 10, expiryDate: "", usageLimit: "" };
 
 // Admin "Coupons" tab: list coupons with their usage, create new ones, expire a
 // coupon immediately, or delete it. Rendered inside the admin-guarded Admin page.
@@ -27,8 +27,6 @@ export default function AdminCoupons() {
   const toast = useToast();
   const confirm = useConfirm();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  // couponId -> how many orders used it (merged in from /Coupon/byUsage).
-  const [usage, setUsage] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
   const [adding, setAdding] = useState(false);
@@ -44,15 +42,8 @@ export default function AdminCoupons() {
   async function load() {
     setLoading(true);
     try {
-      const [all, byUsage] = await Promise.all([
-        apiFetch("/Coupon/all") as Promise<Coupon[]>,
-        apiFetch("/Coupon/byUsage") as Promise<Usage[]>,
-      ]);
-      setCoupons(all.sort((a, b) => a.code.localeCompare(b.code)));
-      // Fold the usage list into a quick id -> count lookup.
-      const map: Record<number, number> = {};
-      for (const u of byUsage) map[u.couponId] = u.usageCount;
-      setUsage(map);
+      const rows = (await apiFetch("/Coupon/usage")) as Coupon[];
+      setCoupons(rows.sort((a, b) => a.code.localeCompare(b.code)));
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -60,8 +51,18 @@ export default function AdminCoupons() {
     }
   }
 
-  // A coupon is "active" while its expiry is still in the future.
-  const isActive = (c: Coupon) => new Date(c.expiryDate) > new Date();
+  // A coupon is usable only if it's switched on, still in date, and under its
+  // usage limit — the same three conditions the backend checks.
+  const notExpired = (c: Coupon) => new Date(c.expiryDate) > new Date();
+  const limitReached = (c: Coupon) => c.usageLimit != null && c.usageCount >= c.usageLimit;
+
+  // Label describing why a coupon isn't usable (first blocking reason wins).
+  function statusOf(c: Coupon) {
+    if (!c.isActive) return { text: "Disabled", cls: "bg-ink/5 text-ink/50" };
+    if (!notExpired(c)) return { text: "Expired", cls: "bg-ink/5 text-ink/50" };
+    if (limitReached(c)) return { text: "Limit reached", cls: "bg-accent-100 text-accent-700" };
+    return { text: "Active", cls: "bg-sage-100 text-sage-700" };
+  }
 
   async function create() {
     // Validate here because the backend's /update path skips these checks; we
@@ -78,6 +79,8 @@ export default function AdminCoupons() {
         code: form.code.trim(),
         discountPercent: form.discountPercent,
         expiryDate: form.expiryDate,
+        // Blank means unlimited; the backend takes null for that.
+        usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
       });
       toast(`Coupon "${form.code.trim()}" created.`, "success");
       setForm(emptyForm);
@@ -89,7 +92,24 @@ export default function AdminCoupons() {
     }
   }
 
+  // Reversible on/off switch, unlike expireNow which rewrites the expiry date.
+  async function toggle(c: Coupon) {
+    try {
+      await apiFetch(`/Coupon/toggle?id=${c.couponId}`, "PATCH");
+      toast(`Coupon "${c.code}" ${c.isActive ? "disabled" : "enabled"}.`, "info");
+      load();
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  }
+
+  // Hard-expire: sets the expiry to now. Irreversible, so it asks first.
   async function expireNow(c: Coupon) {
+    const ok = await confirm(
+      `Expire "${c.code}" now? Unlike disabling, this rewrites the expiry date and can't be undone.`,
+      { title: "Expire coupon", confirmLabel: "Expire" },
+    );
+    if (!ok) return;
     try {
       await apiFetch(`/Coupon/expireNow?id=${c.couponId}`, "PATCH");
       toast(`Coupon "${c.code}" expired.`, "info");
@@ -100,7 +120,11 @@ export default function AdminCoupons() {
   }
 
   async function remove(c: Coupon) {
-    if (!(await confirm(`Delete coupon "${c.code}"?`))) return;
+    const ok = await confirm(`Delete coupon "${c.code}"?`, {
+      title: "Delete coupon",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
     try {
       // The backend returns 409 if any order used this coupon; surface that.
       await apiFetch(`/Coupon/delete?id=${c.couponId}`, "DELETE");
@@ -146,6 +170,17 @@ export default function AdminCoupons() {
               onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
             />
           </label>
+          <label className="text-xs text-ink/50">
+            Usage limit
+            <input
+              type="number"
+              min={1}
+              className="mt-1 block w-32 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              placeholder="Unlimited"
+              value={form.usageLimit}
+              onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
+            />
+          </label>
           <button
             onClick={create}
             disabled={adding}
@@ -181,22 +216,31 @@ export default function AdminCoupons() {
                     {new Date(c.expiryDate).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
-                    {isActive(c) ? (
-                      <span className="rounded-full bg-sage-100 px-2 py-0.5 text-xs font-medium text-sage-700">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/50">
-                        Expired
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusOf(c).cls}`}
+                    >
+                      {statusOf(c).text}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-ink/50">
+                    {c.usageCount} {c.usageCount === 1 ? "order" : "orders"}
+                    {c.usageLimit != null && (
+                      <span className="block text-xs text-ink/40">
+                        limit {c.usageLimit} · {Math.max(c.remainingUses ?? 0, 0)} left
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-ink/50">{usage[c.couponId] ?? 0} orders</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <button
+                        onClick={() => toggle(c)}
+                        className="rounded-full border border-ink/15 px-2.5 py-1 text-xs font-medium text-ink/70 hover:bg-ink/5"
+                      >
+                        {c.isActive ? "Disable" : "Enable"}
+                      </button>
+                      <button
                         onClick={() => expireNow(c)}
-                        disabled={!isActive(c)}
+                        disabled={!notExpired(c)}
                         className="rounded-full border border-ink/15 px-2.5 py-1 text-xs font-medium text-ink/70 hover:bg-ink/5 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Expire now

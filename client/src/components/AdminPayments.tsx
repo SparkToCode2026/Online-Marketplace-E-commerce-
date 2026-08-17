@@ -13,11 +13,20 @@ interface Payment {
   paidAt: string;
 }
 
-// One row from GET /Payment/revenueByMethod.
+// GET /Payment/summary — grand total, count, and the per-method breakdown.
 interface MethodRevenue {
   method: string;
+  count: number;
   totalAmount: number;
 }
+interface PaymentSummary {
+  totalCollected: number;
+  totalCount: number;
+  byMethod: MethodRevenue[];
+}
+
+// Method options offered by the filter bar (matches what the checkout writes).
+const PAYMENT_METHODS = ["Card", "Cash"];
 
 // The statuses a payment can move through. Free text on the backend; "Completed"
 // is special — it flips the linked order to "Confirmed" and blocks deletion.
@@ -29,32 +38,61 @@ export default function AdminPayments() {
   const toast = useToast();
   const confirm = useConfirm();
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [revenue, setRevenue] = useState<MethodRevenue[]>([]);
+  const [summary, setSummary] = useState<PaymentSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Server-side filters (GET /Payment/filter).
+  const [fStatus, setFStatus] = useState("");
+  const [fMethod, setFMethod] = useState("");
+  const [fMin, setFMin] = useState("");
+  const [fMax, setFMax] = useState("");
 
   const startedRef = useRef(false);
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    load();
+    loadSummary();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-query whenever a filter changes, debounced for the amount inputs.
+  useEffect(() => {
+    const t = setTimeout(() => load(), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fStatus, fMethod, fMin, fMax]);
+
+  async function loadSummary() {
+    try {
+      setSummary((await apiFetch("/Payment/summary")) as PaymentSummary);
+    } catch {
+      setSummary(null);
+    }
+  }
 
   async function load() {
     setLoading(true);
     try {
-      const [all, byMethod] = await Promise.all([
-        apiFetch("/Payment/all") as Promise<Payment[]>,
-        apiFetch("/Payment/revenueByMethod") as Promise<MethodRevenue[]>,
-      ]);
+      const params = new URLSearchParams();
+      if (fStatus) params.set("status", fStatus);
+      if (fMethod) params.set("method", fMethod);
+      if (fMin) params.set("minAmount", fMin);
+      if (fMax) params.set("maxAmount", fMax);
+      const qs = params.toString();
+      const all = (await apiFetch(`/Payment/filter${qs ? `?${qs}` : ""}`)) as Payment[];
       all.sort((a, b) => +new Date(b.paidAt) - +new Date(a.paidAt));
       setPayments(all);
-      setRevenue(byMethod);
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
       setLoading(false);
     }
+  }
+
+  // After a mutation, refresh both the table and the summary tiles.
+  function reload() {
+    load();
+    loadSummary();
   }
 
   async function changeStatus(p: Payment, status: string) {
@@ -64,24 +102,27 @@ export default function AdminPayments() {
         prev.map((x) => (x.paymentId === p.paymentId ? { ...x, status } : x)),
       );
       toast(`Payment #${p.paymentId} → ${status}`, "success");
+      loadSummary();
     } catch (e) {
       toast((e as Error).message, "error");
     }
   }
 
   async function remove(p: Payment) {
-    if (!(await confirm(`Delete payment #${p.paymentId}?`))) return;
+    const ok = await confirm(
+      `Delete payment #${p.paymentId}? It's hidden from every view but kept on record.`,
+      { title: "Delete payment", confirmLabel: "Delete" },
+    );
+    if (!ok) return;
     try {
-      // Backend returns 409 when the payment status is "Completed"; surface it.
+      // Soft-delete on the backend; returns 409 when the payment is "Completed".
       await apiFetch(`/Payment/delete?id=${p.paymentId}`, "DELETE");
       toast(`Payment #${p.paymentId} deleted.`, "info");
-      load();
+      reload();
     } catch (e) {
       toast((e as Error).message, "error");
     }
   }
-
-  const totalRevenue = revenue.reduce((s, r) => s + r.totalAmount, 0);
 
   if (loading) return <p className="text-sm text-ink/40">Loading…</p>;
 
@@ -91,15 +132,61 @@ export default function AdminPayments() {
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <div className="rounded-2xl bg-ink p-4 text-white shadow-sm">
           <p className="text-xs uppercase tracking-wide text-white/70">Total collected</p>
-          <p className="mt-1 text-xl font-bold">{formatOMR(totalRevenue)}</p>
-          <p className="mt-1 text-xs text-white/60">{payments.length} payments</p>
+          <p className="mt-1 text-xl font-bold">{formatOMR(summary?.totalCollected ?? 0)}</p>
+          <p className="mt-1 text-xs text-white/60">{summary?.totalCount ?? 0} payments</p>
         </div>
-        {revenue.map((r) => (
+        {(summary?.byMethod ?? []).map((r) => (
           <div key={r.method} className="rounded-2xl bg-white/60 p-4 shadow-sm">
             <p className="text-xs uppercase tracking-wide text-ink/40">{r.method}</p>
             <p className="mt-1 text-xl font-bold text-ink">{formatOMR(r.totalAmount)}</p>
+            <p className="mt-1 text-xs text-ink/40">{r.count} payments</p>
           </div>
         ))}
+      </div>
+
+      {/* --- Filters (GET /Payment/filter) --- */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <select
+          value={fStatus}
+          onChange={(e) => setFStatus(e.target.value)}
+          className="rounded-full border border-ink/15 bg-white px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+        >
+          <option value="">All statuses</option>
+          {PAYMENT_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+        <select
+          value={fMethod}
+          onChange={(e) => setFMethod(e.target.value)}
+          className="rounded-full border border-ink/15 bg-white px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+        >
+          <option value="">All methods</option>
+          {PAYMENT_METHODS.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+        <input
+          type="number"
+          min={0}
+          value={fMin}
+          onChange={(e) => setFMin(e.target.value)}
+          placeholder="Min amount"
+          className="w-32 rounded-full border border-ink/15 bg-white px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+        />
+        <input
+          type="number"
+          min={0}
+          value={fMax}
+          onChange={(e) => setFMax(e.target.value)}
+          placeholder="Max amount"
+          className="w-32 rounded-full border border-ink/15 bg-white px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+        />
+        <span className="text-sm text-ink/50">{payments.length} shown</span>
       </div>
 
       {/* --- Payments table --- */}

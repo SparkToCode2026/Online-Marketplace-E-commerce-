@@ -54,9 +54,6 @@ export default function Shop() {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    apiFetch("/Product/all")
-      .then((data) => setProducts(data as Product[]))
-      .catch((e) => toast((e as Error).message, "error"));
     apiFetch("/Category/all")
       .then((data) => setCategories(data as Category[]))
       .catch(() => setCategories([]));
@@ -67,22 +64,31 @@ export default function Shop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Jump back to page 1 whenever the category, search, or price filter changes.
+  const searchQuery = (searchParams.get("search") ?? "").trim();
+  // Max-price filter: the raw string drives the input; an empty string means
+  // "no cap" and is simply left out of the query.
+  const maxPrice = searchParams.get("maxPrice") ?? "";
+
+  // Filtering happens server-side via GET /Product/filter. Debounced so typing
+  // in the search box doesn't fire a request per keystroke, and reset to page 1
+  // whenever the criteria change.
   useEffect(() => {
     setPage(1);
-  }, [categoryFilter, searchParams.get("search"), searchParams.get("maxPrice")]);
+    const t = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (categoryFilter) params.set("categoryId", categoryFilter);
+      if (searchQuery) params.set("search", searchQuery);
+      if (maxPrice) params.set("maxPrice", maxPrice);
+      const qs = params.toString();
+      apiFetch(`/Product/filter${qs ? `?${qs}` : ""}`)
+        .then((data) => setProducts(data as Product[]))
+        .catch((e) => toast((e as Error).message, "error"));
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryFilter, searchQuery, maxPrice]);
 
-  const searchQuery = (searchParams.get("search") ?? "").trim().toLowerCase();
-  // Max-price filter: keep the raw string for the input, and a parsed number
-  // for comparing. Empty string means "no cap", so every product passes.
-  const maxPrice = searchParams.get("maxPrice") ?? "";
-  const maxPriceNum = maxPrice ? Number(maxPrice) : null;
-  const shown = products.filter(
-    (p) =>
-      (!categoryFilter || p.categoryId === Number(categoryFilter)) &&
-      (!searchQuery || p.name.toLowerCase().includes(searchQuery)) &&
-      (maxPriceNum === null || p.price <= maxPriceNum),
-  );
+  const shown = products;
   const activeName = categories.find((c) => String(c.categoryId) === categoryFilter)?.name;
 
   const PAGE_SIZE = 10;

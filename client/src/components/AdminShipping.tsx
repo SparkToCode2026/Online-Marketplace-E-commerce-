@@ -3,14 +3,23 @@ import { apiFetch } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
 
-// A shipping record as returned by GET /Shipping/all.
+// A shipping record as returned by GET /Shipping/all and /Shipping/filter.
 interface Shipping {
   shippingId: number;
   orderId: number;
   address: string;
+  carrier: string | null;
+  city: string | null;
   status: string | null;
   shippedAt: string | null;
   deliveredAt: string | null;
+}
+
+// GET /Shipping/stats — per-status counts plus the delivery-time average.
+interface ShippingStats {
+  total: number;
+  byStatus: { status: string | null; count: number }[];
+  averageDeliveryDays: number | null;
 }
 
 // Just enough of an order to offer it in the "create shipping" picker.
@@ -31,47 +40,73 @@ export default function AdminShipping() {
   const confirm = useConfirm();
   const [shipments, setShipments] = useState<Shipping[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [avgDays, setAvgDays] = useState<number | null>(null);
+  const [stats, setStats] = useState<ShippingStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Server-side filters (GET /Shipping/filter).
+  const [fStatus, setFStatus] = useState("");
+  const [fCarrier, setFCarrier] = useState("");
+  const [fCity, setFCity] = useState("");
 
   // "Create shipping" form.
   const [orderId, setOrderId] = useState(0);
   const [address, setAddress] = useState("");
+  const [carrier, setCarrier] = useState("");
+  const [city, setCity] = useState("");
   const [adding, setAdding] = useState(false);
 
   const startedRef = useRef(false);
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-    load();
+    loadStatic();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-query the shipments list whenever a filter changes, debounced so typing
+  // a carrier/city doesn't fire a request per keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => load(), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fStatus, fCarrier, fCity]);
+
+  // Orders and stats don't depend on the filters.
+  async function loadStatic() {
+    try {
+      const [ords, st] = await Promise.all([
+        apiFetch("/Order/all") as Promise<Order[]>,
+        apiFetch("/Shipping/stats") as Promise<ShippingStats>,
+      ]);
+      setOrders(ords);
+      setStats(st);
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  }
 
   async function load() {
     setLoading(true);
     try {
-      const [ships, ords] = await Promise.all([
-        apiFetch("/Shipping/all") as Promise<Shipping[]>,
-        apiFetch("/Order/all") as Promise<Order[]>,
-      ]);
+      const params = new URLSearchParams();
+      if (fStatus) params.set("status", fStatus);
+      if (fCarrier.trim()) params.set("carrier", fCarrier.trim());
+      if (fCity.trim()) params.set("city", fCity.trim());
+      const qs = params.toString();
+      const ships = (await apiFetch(`/Shipping/filter${qs ? `?${qs}` : ""}`)) as Shipping[];
       ships.sort((a, b) => b.shippingId - a.shippingId);
       setShipments(ships);
-      setOrders(ords);
-
-      // The average endpoint 404s when nothing has been delivered yet.
-      try {
-        const avg = (await apiFetch("/Shipping/avgDeliveryTime")) as {
-          averageDeliveryDays: number;
-        };
-        setAvgDays(avg.averageDeliveryDays);
-      } catch {
-        setAvgDays(null);
-      }
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
       setLoading(false);
     }
+  }
+
+  // After a mutation, refresh both the list and the stats tiles.
+  function reload() {
+    load();
+    loadStatic();
   }
 
   // Orders that don't have a shipping record yet — the only ones worth creating
@@ -84,11 +119,19 @@ export default function AdminShipping() {
     if (!address.trim()) return toast("Enter a shipping address.", "info");
     setAdding(true);
     try {
-      await apiFetch("/Shipping/add", "POST", { orderId, address: address.trim() });
+      await apiFetch("/Shipping/add", "POST", {
+        orderId,
+        address: address.trim(),
+        // Optional on the backend; send null rather than an empty string.
+        carrier: carrier.trim() || null,
+        city: city.trim() || null,
+      });
       toast(`Shipment created for order #${orderId}.`, "success");
       setOrderId(0);
       setAddress("");
-      load();
+      setCarrier("");
+      setCity("");
+      reload();
     } catch (e) {
       toast((e as Error).message, "error");
     } finally {
@@ -102,7 +145,7 @@ export default function AdminShipping() {
       // Completed when Delivered), so a reload keeps timestamps in sync.
       await apiFetch(`/Shipping/updateStatus?id=${s.shippingId}&status=${status}`, "PATCH");
       toast(`Shipment #${s.shippingId} → ${status} (buyer emailed)`, "success");
-      load();
+      reload();
     } catch (e) {
       toast((e as Error).message, "error");
     }
@@ -114,7 +157,7 @@ export default function AdminShipping() {
       // Backend returns 409 once a shipment is Delivered; surface that.
       await apiFetch(`/Shipping/delete?id=${s.shippingId}`, "DELETE");
       toast(`Shipment #${s.shippingId} deleted.`, "info");
-      load();
+      reload();
     } catch (e) {
       toast((e as Error).message, "error");
     }
@@ -129,9 +172,20 @@ export default function AdminShipping() {
         <div className="rounded-2xl bg-ink p-4 text-white shadow-sm">
           <p className="text-xs uppercase tracking-wide text-white/70">Avg delivery time</p>
           <p className="mt-1 text-xl font-bold">
-            {avgDays === null ? "—" : `${avgDays.toFixed(1)} days`}
+            {stats?.averageDeliveryDays == null
+              ? "—"
+              : `${stats.averageDeliveryDays.toFixed(1)} days`}
           </p>
-          <p className="mt-1 text-xs text-white/60">{shipments.length} shipments</p>
+          <p className="mt-1 text-xs text-white/60">{stats?.total ?? 0} shipments total</p>
+          {stats && stats.byStatus.length > 0 && (
+            <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-white/60">
+              {stats.byStatus.map((b) => (
+                <span key={b.status ?? "none"}>
+                  {b.status ?? "Unset"}: <span className="font-semibold">{b.count}</span>
+                </span>
+              ))}
+            </p>
+          )}
         </div>
 
         <div className="rounded-2xl bg-white/60 p-5 shadow-sm lg:col-span-2">
@@ -158,9 +212,27 @@ export default function AdminShipping() {
               Address
               <input
                 className="mt-1 block w-full rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-                placeholder="123 Main St, Muscat"
+                placeholder="123 Main St"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+              />
+            </label>
+            <label className="text-xs text-ink/50">
+              City
+              <input
+                className="mt-1 block w-32 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                placeholder="Muscat"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+              />
+            </label>
+            <label className="text-xs text-ink/50">
+              Carrier
+              <input
+                className="mt-1 block w-32 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                placeholder="Aramex"
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
               />
             </label>
             <button
@@ -177,6 +249,35 @@ export default function AdminShipping() {
         </div>
       </div>
 
+      {/* --- Filters (GET /Shipping/filter) --- */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <select
+          value={fStatus}
+          onChange={(e) => setFStatus(e.target.value)}
+          className="rounded-full border border-ink/15 bg-white px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+        >
+          <option value="">All statuses</option>
+          {SHIPPING_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+        <input
+          value={fCarrier}
+          onChange={(e) => setFCarrier(e.target.value)}
+          placeholder="Filter by carrier…"
+          className="w-44 rounded-full border border-ink/15 bg-white px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+        />
+        <input
+          value={fCity}
+          onChange={(e) => setFCity(e.target.value)}
+          placeholder="Filter by city…"
+          className="w-44 rounded-full border border-ink/15 bg-white px-4 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+        />
+        <span className="text-sm text-ink/50">{shipments.length} shown</span>
+      </div>
+
       {/* --- Shipments table --- */}
       <div className="overflow-hidden rounded-2xl bg-white/60 shadow-sm">
         <table className="w-full text-left text-sm">
@@ -184,7 +285,8 @@ export default function AdminShipping() {
             <tr>
               <th className="px-4 py-3">Shipment</th>
               <th className="px-4 py-3">Order</th>
-              <th className="px-4 py-3">Address</th>
+              <th className="px-4 py-3">Destination</th>
+              <th className="px-4 py-3">Carrier</th>
               <th className="px-4 py-3">Shipped</th>
               <th className="px-4 py-3">Delivered</th>
               <th className="px-4 py-3">Status</th>
@@ -196,7 +298,11 @@ export default function AdminShipping() {
               <tr key={s.shippingId} className="hover:bg-ink/5">
                 <td className="px-4 py-3 font-medium text-ink">#{s.shippingId}</td>
                 <td className="px-4 py-3 text-ink/50">#{s.orderId}</td>
-                <td className="px-4 py-3 text-ink/50">{s.address}</td>
+                <td className="px-4 py-3 text-ink/50">
+                  {s.address}
+                  {s.city && <span className="block text-xs text-ink/40">{s.city}</span>}
+                </td>
+                <td className="px-4 py-3 text-ink/50">{s.carrier || "—"}</td>
                 <td className="px-4 py-3 text-ink/50">
                   {s.shippedAt ? new Date(s.shippedAt).toLocaleDateString() : "—"}
                 </td>
@@ -233,8 +339,8 @@ export default function AdminShipping() {
             ))}
             {shipments.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-ink/40">
-                  No shipments yet.
+                <td colSpan={8} className="px-4 py-8 text-center text-sm text-ink/40">
+                  No shipments match your filters.
                 </td>
               </tr>
             )}
