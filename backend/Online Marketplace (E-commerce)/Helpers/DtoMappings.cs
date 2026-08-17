@@ -141,6 +141,8 @@ namespace Online_Marketplace__E_commerce_.Helpers
             code = c.code,
             discountPercent = c.discountPercent,
             expiryDate = c.expiryDate,
+            isActive = c.isActive,
+            usageLimit = c.usageLimit,
             orders = c.orders?.Select(o => o.ToDtoFlat()).ToList()
         };
 
@@ -149,7 +151,9 @@ namespace Online_Marketplace__E_commerce_.Helpers
             couponId = c.couponId,
             code = c.code,
             discountPercent = c.discountPercent,
-            expiryDate = c.expiryDate
+            expiryDate = c.expiryDate,
+            isActive = c.isActive,
+            usageLimit = c.usageLimit
         };
 
         // ---------- Order ----------
@@ -226,6 +230,8 @@ namespace Online_Marketplace__E_commerce_.Helpers
             shippingId = s.shippingId,
             orderId = s.orderId,
             address = s.address,
+            carrier = s.carrier,
+            city = s.city,
             status = s.status,
             shippedAt = s.shippedAt,
             deliveredAt = s.deliveredAt,
@@ -237,6 +243,8 @@ namespace Online_Marketplace__E_commerce_.Helpers
             shippingId = s.shippingId,
             orderId = s.orderId,
             address = s.address,
+            carrier = s.carrier,
+            city = s.city,
             status = s.status,
             shippedAt = s.shippedAt,
             deliveredAt = s.deliveredAt
@@ -251,6 +259,7 @@ namespace Online_Marketplace__E_commerce_.Helpers
             rating = r.rating,
             comment = r.comment,
             createdAt = r.createdAt,
+            isApproved = r.isApproved,
             user = r.user?.ToDtoFlat(),
             product = r.product?.ToDtoFlat()
         };

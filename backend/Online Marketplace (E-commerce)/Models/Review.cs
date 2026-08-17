@@ -20,5 +20,9 @@ namespace Online_Marketplace__E_commerce_.Models
         public string? comment { get; set; }
 
         public DateTime createdAt { get; set; }
+
+        // Moderation flag. Defaults to true (visible); an admin can hide a
+        // review by flipping it to false via PATCH /Review/approve.
+        public bool isApproved { get; set; } = true;
     }
 }

@@ -10,5 +10,9 @@ namespace Online_Marketplace__E_commerce_.DTOs
 
         [Required]
         public string address { get; set; }
+
+        // Optional shipping details.
+        public string? carrier { get; set; }
+        public string? city { get; set; }
     }
 }

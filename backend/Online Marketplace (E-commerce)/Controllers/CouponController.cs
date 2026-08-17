@@ -18,7 +18,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             _context = context;
         }
 
-        // Case 1 — Create a coupon.
+        // Case 1 — Create a coupon. Admin-only: coupons are money.
+        [Authorize(Roles = "Admin")]
         [HttpPost("add")]
         public IActionResult AddCoupon(CouponCreateDto dto)
         {
@@ -32,7 +33,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
             {
                 code = dto.code,
                 discountPercent = dto.discountPercent,
-                expiryDate = dto.expiryDate
+                expiryDate = dto.expiryDate,
+                usageLimit = dto.usageLimit,
+                isActive = true
             };
             _context.Coupons.Add(coupon);
             _context.SaveChanges();
@@ -129,6 +132,90 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 })
                 .OrderByDescending(c => c.usageCount)
                 .ToList();
+            return Ok(result);
+        }
+
+        // Case 9 — Toggle a coupon on/off via the isActive flag. Unlike
+        // expireNow (which rewrites expiryDate), this is reversible.
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("toggle")]
+        public IActionResult ToggleCoupon(int id)
+        {
+            var coupon = _context.Coupons.Find(id);
+            if (coupon == null)
+                return NotFound("Coupon not found");
+
+            coupon.isActive = !coupon.isActive;
+            _context.SaveChanges();
+            return Ok(coupon.ToDto());
+        }
+
+        // Case 10 — Look a coupon up by its code and report whether it is
+        // usable right now (active, not expired, under its usage limit).
+        [HttpGet("code/{code}")]
+        public IActionResult GetCouponByCode(string code)
+        {
+            var coupon = _context.Coupons
+                .Include(c => c.orders)
+                .FirstOrDefault(c => c.code == code);
+
+            if (coupon == null)
+                return NotFound("Coupon not found");
+
+            var usageCount = coupon.orders?.Count ?? 0;
+            var isValid = coupon.isActive
+                && coupon.expiryDate >= DateTime.Now
+                && (coupon.usageLimit == null || usageCount < coupon.usageLimit);
+
+            return Ok(new { coupon = coupon.ToDto(), usageCount, isValid });
+        }
+
+        // Case 11 — Combined Where-filter: usable-now state and a discount
+        // range. All optional, so no arguments returns every coupon.
+        //   isValid=true  -> active, not expired
+        //   isValid=false -> inactive or expired
+        [HttpGet("filter")]
+        public IActionResult FilterCoupons(
+            bool? isValid = null, decimal? minDiscount = null, decimal? maxDiscount = null)
+        {
+            var query = _context.Coupons.AsQueryable();
+            var now = DateTime.Now;
+
+            if (isValid.HasValue)
+                query = isValid.Value
+                    ? query.Where(c => c.isActive && c.expiryDate >= now)
+                    : query.Where(c => !c.isActive || c.expiryDate < now);
+
+            if (minDiscount.HasValue)
+                query = query.Where(c => c.discountPercent >= minDiscount.Value);
+
+            if (maxDiscount.HasValue)
+                query = query.Where(c => c.discountPercent <= maxDiscount.Value);
+
+            return Ok(query.ToList().Select(c => c.ToDto()));
+        }
+
+        // Case 12 — Usage report: how many orders used each coupon, how much
+        // of its limit is left, and when it expires.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("usage")]
+        public IActionResult GetCouponUsage()
+        {
+            var result = _context.Coupons
+                .Select(c => new
+                {
+                    c.couponId,
+                    c.code,
+                    c.discountPercent,
+                    c.isActive,
+                    c.expiryDate,
+                    c.usageLimit,
+                    usageCount = c.orders!.Count(),
+                    remainingUses = c.usageLimit == null ? (int?)null : c.usageLimit - c.orders!.Count()
+                })
+                .OrderByDescending(c => c.usageCount)
+                .ToList();
+
             return Ok(result);
         }
     }

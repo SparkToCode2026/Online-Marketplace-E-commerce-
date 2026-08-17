@@ -13,6 +13,10 @@ namespace Online_Marketplace__E_commerce_.Models
         [Required]
         public string address { get; set; }
 
+        // Optional shipping details, filterable via GET /Shipping/filter.
+        public string? carrier { get; set; }
+        public string? city { get; set; }
+
         // Not required from client input: AddShipping always sets this to
         // "Preparing" itself, and UpdateShippingStatus takes it as a
         // separate parameter rather than through this model.

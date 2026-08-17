@@ -144,5 +144,60 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var average = productReviews.Average(r => r.rating);
             return Ok(new { productId, averageRating = average });
         }
+
+        // Case 9 — Approve or hide a review (moderation). Admin-only.
+        // isApproved=true shows it, false hides it.
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("approve")]
+        public IActionResult ApproveReview(int id, bool isApproved)
+        {
+            var review = _context.Reviews.Find(id);
+            if (review == null)
+                return NotFound("Review not found");
+
+            review.isApproved = isApproved;
+            _context.SaveChanges();
+            return Ok(review.ToDto());
+        }
+
+        // Case 10 — Combined Where-filter: a specific product and/or a minimum
+        // rating. Both optional; no arguments returns every review.
+        [AllowAnonymous]
+        [HttpGet("filter")]
+        public IActionResult FilterReviews(int? productId = null, int? minRating = null)
+        {
+            var query = _context.Reviews
+                .Include(r => r.user)
+                .Include(r => r.product)
+                .AsQueryable();
+
+            if (productId.HasValue)
+                query = query.Where(r => r.productId == productId.Value);
+
+            if (minRating.HasValue)
+                query = query.Where(r => r.rating >= minRating.Value);
+
+            return Ok(query.ToList().Select(r => r.ToDto()));
+        }
+
+        // Case 11 — Average rating for every product in one call
+        // (GroupBy product + Average), plus the review count.
+        [AllowAnonymous]
+        [HttpGet("avg")]
+        public IActionResult GetAverageRatingPerProduct()
+        {
+            var averages = _context.Reviews
+                .GroupBy(r => r.productId)
+                .Select(g => new
+                {
+                    productId = g.Key,
+                    averageRating = g.Average(r => r.rating),
+                    reviewCount = g.Count()
+                })
+                .OrderByDescending(x => x.averageRating)
+                .ToList();
+
+            return Ok(averages);
+        }
     }
 }

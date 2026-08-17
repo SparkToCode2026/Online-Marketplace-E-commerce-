@@ -34,6 +34,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
             {
                 orderId = dto.orderId,
                 address = dto.address,
+                carrier = dto.carrier,
+                city = dto.city,
                 status = "Preparing"
             };
             _context.Shippings.Add(shipping);
@@ -50,6 +52,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 return NotFound("Shipping record not found");
 
             shipping.address = dto.address;
+            shipping.carrier = dto.carrier;
+            shipping.city = dto.city;
             _context.SaveChanges();
             return Ok(shipping.ToDto());
         }
@@ -147,6 +151,55 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             var averageDays = delivered.Average(s => (s.deliveredAt!.Value - s.shippedAt!.Value).TotalDays);
             return Ok(new { averageDeliveryDays = averageDays });
+        }
+
+        // Case 9 — Combined Where-filter: status, carrier and city can be mixed
+        // freely. Any omitted parameter is skipped, so no arguments returns
+        // every shipment.
+        [HttpGet("filter")]
+        public IActionResult FilterShippings(
+            string? status = null, string? carrier = null, string? city = null)
+        {
+            var query = _context.Shippings.Include(s => s.order).AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(s => s.status == status);
+
+            if (!string.IsNullOrWhiteSpace(carrier))
+                query = query.Where(s => s.carrier == carrier);
+
+            if (!string.IsNullOrWhiteSpace(city))
+                query = query.Where(s => s.city == city);
+
+            return Ok(query.ToList().Select(s => s.ToDto()));
+        }
+
+        // Case 10 — Shipping stats in one call: per-status counts (GroupBy),
+        // the total, and the average delivery time across delivered shipments.
+        [Authorize(Roles = "Admin")]
+        [HttpGet("stats")]
+        public IActionResult GetShippingStats()
+        {
+            var byStatus = _context.Shippings
+                .GroupBy(s => s.status)
+                .Select(g => new { status = g.Key, count = g.Count() })
+                .ToList();
+
+            // Averaged in memory: the timestamp subtraction has no SQL translation.
+            var delivered = _context.Shippings
+                .Where(s => s.status == "Delivered" && s.shippedAt != null && s.deliveredAt != null)
+                .ToList();
+
+            double? avgDays = delivered.Any()
+                ? delivered.Average(s => (s.deliveredAt!.Value - s.shippedAt!.Value).TotalDays)
+                : null;
+
+            return Ok(new
+            {
+                total = _context.Shippings.Count(),
+                byStatus,
+                averageDeliveryDays = avgDays
+            });
         }
     }
 }
