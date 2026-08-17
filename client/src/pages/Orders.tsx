@@ -120,7 +120,12 @@ export default function Orders() {
   // only shows while the order is cancellable, but the backend re-checks
   // ownership + status + "no payment" and is the real authority.
   async function cancelOrder(o: Order) {
-    if (!(await confirm(`Cancel order #${o.orderId}? This can't be undone.`))) return;
+    const ok = await confirm(`Cancel order #${o.orderId}? This can't be undone.`, {
+      title: "Cancel order",
+      confirmLabel: "Cancel order",
+      cancelLabel: "Keep order",
+    });
+    if (!ok) return;
     try {
       await apiFetch(`/Order/cancel?id=${o.orderId}`, "PUT");
       toast(`Order #${o.orderId} cancelled.`, "info");

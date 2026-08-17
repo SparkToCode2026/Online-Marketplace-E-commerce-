@@ -67,8 +67,11 @@ export default function AdminVendors() {
   }
 
   async function verify(v: VendorProfile) {
-    if (!(await confirm(`Verify "${v.storeName}"? It will be marked as an approved storefront.`)))
-      return;
+    const ok = await confirm(
+      `Verify "${v.storeName}"? It will be marked as an approved storefront.`,
+      { title: "Verify store", confirmLabel: "Verify", tone: "default" },
+    );
+    if (!ok) return;
     try {
       await apiFetch(`/VendorProfile/verify?id=${v.vendorProfileId}`, "PATCH");
       toast(`"${v.storeName}" is now verified.`, "success");
