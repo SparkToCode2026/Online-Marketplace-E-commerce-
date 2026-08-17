@@ -168,11 +168,14 @@ namespace Online_Marketplace__E_commerce_.Controllers
             return Ok(users.Select(u => u.ToDto()));
         }
 
-        // case 7 — Get a user by ID
+        // case 7 — Get a user by ID, including their vendor profile if any
+        // (same shape as getAll, which was already including it).
         [HttpGet("getById")]
         public IActionResult GetUserById(int id)
         {
-            var user = _context.Users.Find(id);
+            var user = _context.Users
+                .Include(u => u.vendorProfile)
+                .FirstOrDefault(u => u.UserId == id);
             if (user == null)
                 return NotFound("User not found");
             return Ok(user.ToDto());
