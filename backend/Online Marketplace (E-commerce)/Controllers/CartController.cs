@@ -164,5 +164,30 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var carts = query.ToList();
             return Ok(carts.Select(c => c.ToDto()));
         }
+
+        // Case 10 — One cart's totals: line count, total units (Count/Sum) and
+        // the money total (Sum of price x quantity), priced from the products'
+        // current prices.
+        [HttpGet("total")]
+        public IActionResult GetCartTotal(int id)
+        {
+            var cart = _context.Carts
+                .Include(c => c.cartItems)
+                .ThenInclude(ci => ci.product)
+                .FirstOrDefault(c => c.cartId == id);
+
+            if (cart == null)
+                return NotFound("Cart not found");
+
+            var items = cart.cartItems ?? new List<CartItem>();
+
+            return Ok(new
+            {
+                cartId = cart.cartId,
+                lineCount = items.Count,
+                totalQuantity = items.Sum(ci => ci.quantity),
+                totalAmount = items.Sum(ci => (ci.product?.price ?? 0) * ci.quantity)
+            });
+        }
     }
 }

@@ -131,5 +131,43 @@ namespace Online_Marketplace__E_commerce_.Controllers
                 .ToList();
             return Ok(result);
         }
+
+        // Case 9 — Enable/disable a category without deleting it (and without
+        // touching its products). Admin-only.
+        [Authorize(Roles = "Admin")]
+        [HttpPatch("toggle")]
+        public IActionResult ToggleCategory(int id)
+        {
+            var category = _context.Categories.Find(id);
+            if (category == null)
+                return NotFound("Category not found");
+
+            category.isActive = !category.isActive;
+            _context.SaveChanges();
+            return Ok(category.ToDto());
+        }
+
+        // Case 10 — Combined Where-filter: active state, "has products", and a
+        // name search. All optional, so no arguments returns every category.
+        [AllowAnonymous]
+        [HttpGet("filter")]
+        public IActionResult FilterCategories(
+            bool? isActive = null, bool? hasProducts = null, string? search = null)
+        {
+            var query = _context.Categories.Include(c => c.products).AsQueryable();
+
+            if (isActive.HasValue)
+                query = query.Where(c => c.isActive == isActive.Value);
+
+            if (hasProducts.HasValue)
+                query = hasProducts.Value
+                    ? query.Where(c => c.products!.Any())
+                    : query.Where(c => !c.products!.Any());
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(c => c.name.Contains(search));
+
+            return Ok(query.ToList().Select(c => c.ToDto()));
+        }
     }
 }

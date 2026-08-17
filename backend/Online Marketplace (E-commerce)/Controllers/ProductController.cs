@@ -194,5 +194,105 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
             return Ok(result);
         }
+
+        // Case 9 — Combined Where-filter: category, price range, in-stock and
+        // active state can be mixed freely. Any omitted parameter is skipped,
+        // so no arguments returns every product.
+        [AllowAnonymous]
+        [HttpGet("filter")]
+        public IActionResult FilterProducts(
+            int? categoryId = null, decimal? minPrice = null, decimal? maxPrice = null,
+            bool? inStock = null, bool? isActive = null, string? search = null)
+        {
+            var query = _context.Products
+                .Include(p => p.category)
+                .Include(p => p.vendorProfile)
+                .AsQueryable();
+
+            if (categoryId.HasValue)
+                query = query.Where(p => p.categoryId == categoryId.Value);
+
+            if (minPrice.HasValue)
+                query = query.Where(p => p.price >= minPrice.Value);
+
+            if (maxPrice.HasValue)
+                query = query.Where(p => p.price <= maxPrice.Value);
+
+            if (inStock.HasValue)
+                query = inStock.Value
+                    ? query.Where(p => p.stockQuantity > 0)
+                    : query.Where(p => p.stockQuantity == 0);
+
+            if (isActive.HasValue)
+                query = query.Where(p => p.isActive == isActive.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p => p.name.Contains(search));
+
+            return Ok(query.ToList().Select(p => p.ToDto()));
+        }
+
+        // Case 10 — Sorting/aggregate view.
+        //   by=price    (default) -> products ordered by price
+        //   by=category          -> average price per category (GroupBy + Average)
+        [AllowAnonymous]
+        [HttpGet("sorted")]
+        public IActionResult GetSortedProducts(string by = "price", bool descending = false)
+        {
+            if (by?.ToLower() == "category")
+            {
+                var perCategory = _context.Products
+                    .GroupBy(p => p.categoryId)
+                    .Select(g => new
+                    {
+                        categoryId = g.Key,
+                        productCount = g.Count(),
+                        averagePrice = g.Average(p => p.price),
+                        minPrice = g.Min(p => p.price),
+                        maxPrice = g.Max(p => p.price)
+                    })
+                    .ToList();
+                return Ok(perCategory);
+            }
+
+            var query = _context.Products
+                .Include(p => p.category)
+                .Include(p => p.vendorProfile)
+                .AsQueryable();
+
+            query = descending
+                ? query.OrderByDescending(p => p.price)
+                : query.OrderBy(p => p.price);
+
+            return Ok(query.ToList().Select(p => p.ToDto()));
+        }
+
+        // Case 11 — Adjust stock by a delta (restock with a positive number,
+        // correct an over-count with a negative one). Vendors may only touch
+        // their own products, same ownership rule as update/setActive.
+        [Authorize(Roles = "Admin,Vendor")]
+        [HttpPatch("stock")]
+        public IActionResult UpdateStock(int id, int delta)
+        {
+            var product = _context.Products.Find(id);
+            if (product == null)
+                return NotFound("Product not found");
+
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            var callerId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            if (role == "Vendor")
+            {
+                var myVendorProfile = _context.VendorProfiles.FirstOrDefault(v => v.UserId == callerId);
+                if (myVendorProfile == null || myVendorProfile.VendorProfileId != product.vendorProfileId)
+                    return Forbid();
+            }
+
+            if (product.stockQuantity + delta < 0)
+                return BadRequest("Stock cannot go below zero");
+
+            product.stockQuantity += delta;
+            _context.SaveChanges();
+            return Ok(product.ToDto());
+        }
     }
 }

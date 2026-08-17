@@ -96,6 +96,7 @@ namespace Online_Marketplace__E_commerce_.Helpers
             categoryId = c.categoryId,
             name = c.name,
             description = c.description,
+            isActive = c.isActive,
             products = c.products?.Select(p => p.ToDtoFlat()).ToList()
         };
 
@@ -103,7 +104,8 @@ namespace Online_Marketplace__E_commerce_.Helpers
         {
             categoryId = c.categoryId,
             name = c.name,
-            description = c.description
+            description = c.description,
+            isActive = c.isActive
         };
 
         // ---------- Cart ----------

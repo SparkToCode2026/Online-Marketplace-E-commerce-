@@ -95,15 +95,22 @@ namespace Online_Marketplace__E_commerce_.Controllers
         }
 
         // Case 5 — Get all reviews, including the reviewer and the product.
+        // Hidden (unapproved) reviews are excluded, so the storefront never
+        // shows a review an admin has taken down. includeHidden=true is for the
+        // admin moderation screen.
         [AllowAnonymous]
         [HttpGet("all")]
-        public IActionResult GetAllReviews()
+        public IActionResult GetAllReviews(bool includeHidden = false)
         {
-            var reviews = _context.Reviews
+            var query = _context.Reviews
                 .Include(r => r.user)
                 .Include(r => r.product)
-                .ToList();
-            return Ok(reviews.Select(r => r.ToDto()));
+                .AsQueryable();
+
+            if (!includeHidden)
+                query = query.Where(r => r.isApproved);
+
+            return Ok(query.ToList().Select(r => r.ToDto()));
         }
 
         // Case 6 — Get a single review by id.
@@ -137,7 +144,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
         [HttpGet("averageRating")]
         public IActionResult GetAverageRating(int productId)
         {
-            var productReviews = _context.Reviews.Where(r => r.productId == productId);
+            // Hidden reviews must not sway the public average.
+            var productReviews = _context.Reviews.Where(r => r.productId == productId && r.isApproved);
             if (!productReviews.Any())
                 return NotFound("No reviews for this product yet");
 
@@ -164,7 +172,8 @@ namespace Online_Marketplace__E_commerce_.Controllers
         // rating. Both optional; no arguments returns every review.
         [AllowAnonymous]
         [HttpGet("filter")]
-        public IActionResult FilterReviews(int? productId = null, int? minRating = null)
+        public IActionResult FilterReviews(
+            int? productId = null, int? minRating = null, bool? isApproved = null)
         {
             var query = _context.Reviews
                 .Include(r => r.user)
@@ -177,6 +186,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (minRating.HasValue)
                 query = query.Where(r => r.rating >= minRating.Value);
 
+            if (isApproved.HasValue)
+                query = query.Where(r => r.isApproved == isApproved.Value);
+
             return Ok(query.ToList().Select(r => r.ToDto()));
         }
 
@@ -187,6 +199,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
         public IActionResult GetAverageRatingPerProduct()
         {
             var averages = _context.Reviews
+                .Where(r => r.isApproved)
                 .GroupBy(r => r.productId)
                 .Select(g => new
                 {

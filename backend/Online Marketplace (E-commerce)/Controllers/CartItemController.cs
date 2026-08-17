@@ -180,5 +180,28 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var items = query.ToList();
             return Ok(items.Select(ci => ci.ToDto()));
         }
+
+        // Case 10 — Value of every cart in one call: GroupBy cart, then Sum
+        // quantity x current product price. Materialised first because the
+        // multiplication reads through the product navigation.
+        [HttpGet("summary")]
+        public IActionResult GetCartSummaries()
+        {
+            var summaries = _context.CartItems
+                .Include(ci => ci.product)
+                .ToList()
+                .GroupBy(ci => ci.cartId)
+                .Select(g => new
+                {
+                    cartId = g.Key,
+                    lineCount = g.Count(),
+                    totalQuantity = g.Sum(ci => ci.quantity),
+                    totalAmount = g.Sum(ci => (ci.product?.price ?? 0) * ci.quantity)
+                })
+                .OrderByDescending(x => x.totalAmount)
+                .ToList();
+
+            return Ok(summaries);
+        }
     }
 }

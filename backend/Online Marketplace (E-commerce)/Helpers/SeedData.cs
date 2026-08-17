@@ -20,7 +20,7 @@ namespace Online_Marketplace__E_commerce_.Helpers
             var mutaz = new User { Username = "Mutaz", Email = "mutaz6991@gmail.com", PasswordHash = pwd, Phonenumber = 500000002, Role = "Admin", isActive = true };
             var hanin = new User { Username = "Hanin", Email = "hanin@marketplace.com", PasswordHash = pwd, Phonenumber = 500000003, Role = "Vendor", isActive = true };
             var nawal = new User { Username = "Nawal", Email = "nawal@marketplace.com", PasswordHash = pwd, Phonenumber = 500000004, Role = "Vendor", isActive = true };
-            var ali = new User { Username = "Ali", Email = "alijah3099@gmail.com", PasswordHash = pwd, Phonenumber = 500000005, Role = "Vendor", isActive = true };
+            var ali = new User { Username = "Ali", Email = "alijhw3099@gmail.com", PasswordHash = pwd, Phonenumber = 500000005, Role = "Vendor", isActive = true };
             var layla = new User { Username = "Layla", Email = "layla@marketplace.com", PasswordHash = pwd, Phonenumber = 500000006, Role = "Customer", isActive = true };
             var yousef = new User { Username = "Yousef", Email = "yousef@marketplace.com", PasswordHash = pwd, Phonenumber = 500000007, Role = "Customer", isActive = true };
 

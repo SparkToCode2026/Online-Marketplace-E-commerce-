@@ -12,6 +12,10 @@ namespace Online_Marketplace__E_commerce_.Models
 
         public string? description { get; set; }
 
+        // Soft on/off switch: a disabled category is hidden from browsing
+        // without deleting it or its products.
+        public bool isActive { get; set; } = true;
+
         public List<Product>? products { get; set; }
     }
 }
