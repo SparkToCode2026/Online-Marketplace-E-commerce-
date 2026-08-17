@@ -134,6 +134,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             var products = _context.Products
                 .Include(p => p.category)
                 .Include(p => p.vendorProfile)
+                .OrderByDescending(p => p.productId)
                 .ToList();
             return Ok(products.Select(p => p.ToDto()));
         }

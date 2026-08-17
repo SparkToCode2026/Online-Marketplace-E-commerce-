@@ -92,7 +92,7 @@ namespace Online_Marketplace__E_commerce_.Controllers
             EmailService.Send(
                 user.Email,
                 "Order Confirmation",
-                $"Thanks for your order! Order #{order.orderId} totaling {order.totalAmount:C} has been placed.",
+                $"Thanks for your order! Order #{order.orderId} total {order.totalAmount} Rial Omani has been placed.",
                 _configuration);
 
             return Ok(order.orderId);

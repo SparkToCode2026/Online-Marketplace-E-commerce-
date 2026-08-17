@@ -19,6 +19,9 @@ namespace Online_Marketplace__E_commerce_.Helpers
                 message.Body = new TextPart("plain") { Text = body };
 
                 using var client = new SmtpClient();
+                // OCSP/CRL lookups for Gmail's cert are blocked on this network, which
+                // fails the whole TLS handshake if MailKit insists on checking revocation.
+                client.CheckCertificateRevocation = false;
                 client.Connect(config["Smtp:Host"], int.Parse(config["Smtp:Port"]!), SecureSocketOptions.StartTls);
                 client.Authenticate(config["Smtp:Username"], config["Smtp:Password"]);
                 client.Send(message);
