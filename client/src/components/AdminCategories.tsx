@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 // A category as returned by GET /Category/all. `products` is included by the
 // backend, so we can show a live product count without a second request.
@@ -23,6 +24,7 @@ export default function AdminCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Errors<keyof typeof emptyForm>>({});
   // null = the form is creating a new category; a number = editing that id.
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -54,16 +56,21 @@ export default function AdminCategories() {
   function startEdit(c: Category) {
     setEditingId(c.categoryId);
     setForm({ name: c.name, description: c.description ?? "" });
+    setErrors({});
   }
 
   function cancelEdit() {
     setEditingId(null);
     setForm(emptyForm);
+    setErrors({});
   }
 
   // One handler for both create and edit — the only difference is the endpoint.
   async function save() {
-    if (!form.name.trim()) return toast("Enter a category name.", "info");
+    const errs: Errors<keyof typeof emptyForm> = {};
+    if (!form.name.trim()) errs.name = "Name is required.";
+    setErrors(errs);
+    if (!isClean(errs)) return;
 
     setSaving(true);
     const body = { name: form.name.trim(), description: form.description.trim() || null };
@@ -122,11 +129,16 @@ export default function AdminCategories() {
           <label className="text-xs text-ink/50">
             Name
             <input
-              className="mt-1 block w-48 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              className={`mt-1 block w-48 rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.name)}`}
               placeholder="Electronics"
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, name: e.target.value });
+                if (errors.name) setErrors((errs) => ({ ...errs, name: undefined }));
+              }}
+              aria-invalid={!!errors.name}
             />
+            <FieldError msg={errors.name} />
           </label>
           <label className="text-xs text-ink/50">
             Description

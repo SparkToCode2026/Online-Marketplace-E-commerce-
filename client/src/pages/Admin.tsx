@@ -5,6 +5,7 @@ import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmDialog";
 import Pagination from "../components/Pagination";
 import { SearchIcon } from "../components/icons";
+import { onProductImgError } from "../lib/img";
 import NavBar from "../components/NavBar";
 import AdminOrders from "../components/AdminOrders";
 import AdminCategories from "../components/AdminCategories";
@@ -354,6 +355,7 @@ export default function Admin() {
                       <img
                         src={p.productUrl}
                         alt={p.name}
+                        onError={onProductImgError(p.name)}
                         className="h-10 w-10 rounded-full object-cover saturate-[.85] brightness-[.97]"
                       />
                       <span className="font-medium">{p.name}</span>

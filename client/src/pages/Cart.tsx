@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, Link, useNavigate } from "react-router-dom";
-import { apiFetch, isLoggedIn, ensureCart, formatOMR, bumpCart } from "../api";
+import { apiFetch, isLoggedIn, isCustomer, ensureCart, formatOMR, bumpCart } from "../api";
 import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmDialog";
 import NavBar from "../components/NavBar";
 import { CartIcon, TrashIcon } from "../components/icons";
+import { onProductImgError } from "../lib/img";
 
 interface CartItem {
   cartItemId: number;
@@ -48,6 +49,8 @@ export default function Cart() {
   }, []);
 
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
+  // Only customers have a cart. Admins/vendors reaching this URL go to the shop.
+  if (!isCustomer()) return <Navigate to="/" replace />;
 
   async function load(id: number) {
     setLoading(true);
@@ -170,6 +173,7 @@ export default function Cart() {
                   <img
                     src={i.product?.productUrl}
                     alt={i.product?.name}
+                    onError={onProductImgError(i.product?.name)}
                     className="h-16 w-16 rounded-full object-cover saturate-[.85] brightness-[.97]"
                   />
                   <div className="flex-1">

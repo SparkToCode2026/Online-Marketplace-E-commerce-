@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 // A shipping record as returned by GET /Shipping/all and /Shipping/filter.
 interface Shipping {
@@ -54,6 +55,7 @@ export default function AdminShipping() {
   const [carrier, setCarrier] = useState("");
   const [city, setCity] = useState("");
   const [adding, setAdding] = useState(false);
+  const [errors, setErrors] = useState<Errors<"orderId" | "address">>({});
 
   const startedRef = useRef(false);
   useEffect(() => {
@@ -115,8 +117,12 @@ export default function AdminShipping() {
   const unshippedOrders = orders.filter((o) => !shippedOrderIds.has(o.orderId));
 
   async function create() {
-    if (!orderId) return toast("Pick an order.", "info");
-    if (!address.trim()) return toast("Enter a shipping address.", "info");
+    const errs: Errors<"orderId" | "address"> = {};
+    if (!orderId) errs.orderId = "Pick an order.";
+    if (!address.trim()) errs.address = "Address is required.";
+    setErrors(errs);
+    if (!isClean(errs)) return;
+
     setAdding(true);
     try {
       await apiFetch("/Shipping/add", "POST", {
@@ -131,6 +137,7 @@ export default function AdminShipping() {
       setAddress("");
       setCarrier("");
       setCity("");
+      setErrors({});
       reload();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -195,8 +202,12 @@ export default function AdminShipping() {
               Order
               <select
                 value={orderId}
-                onChange={(e) => setOrderId(Number(e.target.value))}
-                className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                onChange={(e) => {
+                  setOrderId(Number(e.target.value));
+                  if (errors.orderId) setErrors((errs) => ({ ...errs, orderId: undefined }));
+                }}
+                aria-invalid={!!errors.orderId}
+                className={`mt-1 block w-40 rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.orderId)}`}
               >
                 <option value={0} disabled>
                   Select…
@@ -207,15 +218,21 @@ export default function AdminShipping() {
                   </option>
                 ))}
               </select>
+              <FieldError msg={errors.orderId} />
             </label>
             <label className="flex-1 text-xs text-ink/50">
               Address
               <input
-                className="mt-1 block w-full rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                className={`mt-1 block w-full rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.address)}`}
                 placeholder="123 Main St"
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  if (errors.address) setErrors((errs) => ({ ...errs, address: undefined }));
+                }}
+                aria-invalid={!!errors.address}
               />
+              <FieldError msg={errors.address} />
             </label>
             <label className="text-xs text-ink/50">
               City

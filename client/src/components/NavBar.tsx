@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
-import { isAdmin, isLoggedIn, logout, apiFetch, ensureCart, onCartChange } from "../api";
+import { isAdmin, isCustomer, isLoggedIn, logout, apiFetch, ensureCart, onCartChange } from "../api";
 import { BrandIcon, UserIcon, MenuIcon, XIcon, CartIcon } from "./icons";
 
 // Shared top navigation. Links adapt to the user's role (vendor/admin extras).
@@ -32,7 +32,7 @@ export default function NavBar() {
   // any page adds/removes/clears items (via bumpCart), so the badge updates
   // live without a page reload.
   useEffect(() => {
-    if (!isLoggedIn()) return;
+    if (!isCustomer()) return;
 
     async function refreshCount() {
       try {
@@ -53,10 +53,13 @@ export default function NavBar() {
   }, []);
 
   const loggedIn = isLoggedIn();
+  // Only customers shop: the cart and "My Orders" are hidden from admins and
+  // vendors, who run the store and never place orders.
+  const shopper = isCustomer();
   const links: { to: string; label: string; end?: boolean }[] = [
     { to: "/", label: "Products", end: true },
   ];
-  if (loggedIn) {
+  if (shopper) {
     links.push({ to: "/orders", label: "My Orders" });
   }
   if (role === "Vendor") {
@@ -97,8 +100,8 @@ export default function NavBar() {
             </NavLink>
           ))}
 
-          {/* Cart icon with a live item-count badge. */}
-          {loggedIn && (
+          {/* Cart icon with a live item-count badge. Customers only. */}
+          {shopper && (
             <NavLink
               to="/cart"
               aria-label={`Cart (${cartCount} items)`}
@@ -195,7 +198,7 @@ export default function NavBar() {
                 {l.label}
               </NavLink>
             ))}
-            {loggedIn && (
+            {shopper && (
               <NavLink
                 to="/cart"
                 onClick={() => setMobileOpen(false)}

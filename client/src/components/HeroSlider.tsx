@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { onBannerImgError } from "../lib/img";
 
 // Each slide is just a promo image — no copy. Add or remove a banner by editing
 // this array. `alt` is read by screen readers only; it is never shown on screen.
@@ -65,9 +66,7 @@ export default function HeroSlider() {
               <img
                 src={s.image}
                 alt={s.alt}
-                onError={(e) => {
-                  e.currentTarget.style.visibility = "hidden";
-                }}
+                onError={onBannerImgError(s.alt)}
                 className="h-56 w-full object-cover sm:h-72 lg:h-[420px]"
               />
             </a>

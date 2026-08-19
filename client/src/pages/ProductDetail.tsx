@@ -5,6 +5,7 @@ import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
 import ProductReviews from "../components/ProductReviews";
 import { ArrowLeftIcon } from "../components/icons";
+import { onProductImgError } from "../lib/img";
 
 interface Product {
   productId: number;
@@ -84,6 +85,7 @@ export default function ProductDetail() {
               <img
                 src={product.productUrl}
                 alt={product.name}
+                onError={onProductImgError(product.name)}
                 className="h-full w-full object-cover saturate-[.85] brightness-[.97]"
               />
             </div>

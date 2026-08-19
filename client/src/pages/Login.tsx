@@ -2,11 +2,12 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../api";
 import { BrandIcon } from "../components/icons";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 const demoAccounts = [
-  { label: "Admin", email: "khaild.alhadi2021@gmail.com" },
-  { label: "Vendor", email: "alijah3099@gmail.com" },
-  { label: "Customer", email: "yousef@marketplace.com" },
+  { label: "Admin", email: "mutaz@marketplace.com" },
+  { label: "Vendor", email: "nawal@marketplace.com" },
+  { label: "Customer", email: "khaild.alhadi2021@gmail.com" },
 ];
 const demoPassword = "Passw0rd!23";
 
@@ -15,6 +16,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Errors<"email" | "password">>({});
   const navigate = useNavigate();
 
   async function login(em: string, pw: string) {
@@ -38,6 +40,11 @@ export default function Login() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const errs: Errors<"email" | "password"> = {};
+    if (!email.trim()) errs.email = "Email is required.";
+    if (!password) errs.password = "Password is required.";
+    setErrors(errs);
+    if (!isClean(errs)) return;
     login(email, password);
   }
 
@@ -64,23 +71,37 @@ export default function Login() {
         <div className="w-full max-w-sm rounded-2xl bg-white/70 p-8 shadow-lg">
           <h2 className="mb-1 font-heading text-2xl">Login</h2>
           <p className="mb-6 text-sm text-ink/60">Enter your details to continue.</p>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="email"
-              className="w-full rounded-full border border-ink/15 px-4 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              className="w-full rounded-full border border-ink/15 px-4 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <div>
+              <input
+                type="email"
+                className={`w-full rounded-full border px-4 py-2.5 outline-none transition focus:ring-2 ${fieldRing(!!errors.email)}`}
+                placeholder="Email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((errs) => ({ ...errs, email: undefined }));
+                }}
+                aria-invalid={!!errors.email}
+                required
+              />
+              <FieldError msg={errors.email} />
+            </div>
+            <div>
+              <input
+                type="password"
+                className={`w-full rounded-full border px-4 py-2.5 outline-none transition focus:ring-2 ${fieldRing(!!errors.password)}`}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((errs) => ({ ...errs, password: undefined }));
+                }}
+                aria-invalid={!!errors.password}
+                required
+              />
+              <FieldError msg={errors.password} />
+            </div>
             {error && <p className="text-sm text-accent-700">{error}</p>}
             <button
               type="submit"

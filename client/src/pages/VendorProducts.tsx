@@ -4,6 +4,8 @@ import { apiFetch, isLoggedIn, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmDialog";
 import NavBar from "../components/NavBar";
+import { onProductImgError } from "../lib/img";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 interface Product {
   productId: number;
@@ -45,6 +47,7 @@ export default function VendorProducts() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [editing, setEditing] = useState<Product | "new" | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Errors<keyof typeof emptyForm>>({});
 
   useEffect(() => {
     if (!isVendor) {
@@ -82,6 +85,7 @@ export default function VendorProducts() {
 
   function openAdd() {
     setForm({ ...emptyForm, categoryId: categories[0]?.categoryId ?? 0 });
+    setErrors({});
     setEditing("new");
   }
 
@@ -94,15 +98,30 @@ export default function VendorProducts() {
       stockQuantity: p.stockQuantity,
       categoryId: p.categoryId,
     });
+    setErrors({});
     setEditing(p);
+  }
+
+  // Updates one form field and clears its error as soon as the user edits it.
+  function updateForm<K extends keyof typeof emptyForm>(key: K, value: (typeof emptyForm)[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((errs) => (errs[key] ? { ...errs, [key]: undefined } : errs));
+  }
+
+  function validate() {
+    const errs: Errors<keyof typeof emptyForm> = {};
+    if (!form.name.trim()) errs.name = "Name is required.";
+    if (form.price <= 0) errs.price = "Price must be greater than 0.";
+    if (form.stockQuantity < 0) errs.stockQuantity = "Stock cannot be negative.";
+    if (editing === "new" && !form.categoryId) errs.categoryId = "Category is required.";
+    return errs;
   }
 
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!form.name.trim()) return toast("Enter a product name.", "info");
-    if (form.price <= 0) return toast("Price must be greater than 0.", "info");
-    if (form.stockQuantity < 0) return toast("Stock cannot be negative.", "info");
-    if (editing === "new" && !form.categoryId) return toast("Pick a category.", "info");
+    const errs = validate();
+    setErrors(errs);
+    if (!isClean(errs)) return;
 
     try {
       if (editing === "new") {
@@ -192,6 +211,7 @@ export default function VendorProducts() {
                         <img
                           src={p.productUrl}
                           alt={p.name}
+                          onError={onProductImgError(p.name)}
                           className="h-10 w-10 rounded-full object-cover saturate-[.85] brightness-[.97]"
                         />
                         <span className="font-medium">{p.name}</span>
@@ -254,19 +274,23 @@ export default function VendorProducts() {
               {editing === "new" ? "Add product" : `Edit "${editing.name}"`}
             </h3>
             <form onSubmit={save} noValidate className="space-y-3">
-              <input
-                className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-                placeholder="Name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                required
-              />
+              <div>
+                <input
+                  className={`w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.name)}`}
+                  placeholder="Name"
+                  value={form.name}
+                  onChange={(e) => updateForm("name", e.target.value)}
+                  aria-invalid={!!errors.name}
+                  required
+                />
+                <FieldError msg={errors.name} />
+              </div>
               <textarea
                 className="w-full rounded-2xl border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                 placeholder="Description"
                 rows={2}
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) => updateForm("description", e.target.value)}
               />
               <div className="grid grid-cols-2 gap-3">
                 <label className="text-xs text-ink/60">
@@ -275,22 +299,26 @@ export default function VendorProducts() {
                     type="number"
                     min={0}
                     step="0.001"
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                    className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.price)}`}
                     value={form.price}
-                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                    onChange={(e) => updateForm("price", Number(e.target.value))}
+                    aria-invalid={!!errors.price}
                     required
                   />
+                  <FieldError msg={errors.price} />
                 </label>
                 <label className="text-xs text-ink/60">
                   Stock
                   <input
                     type="number"
                     min={0}
-                    className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                    className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.stockQuantity)}`}
                     value={form.stockQuantity}
-                    onChange={(e) => setForm({ ...form, stockQuantity: Number(e.target.value) })}
+                    onChange={(e) => updateForm("stockQuantity", Number(e.target.value))}
+                    aria-invalid={!!errors.stockQuantity}
                     required
                   />
+                  <FieldError msg={errors.stockQuantity} />
                 </label>
               </div>
 
@@ -300,14 +328,15 @@ export default function VendorProducts() {
                     className="w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
                     placeholder="Image URL (optional)"
                     value={form.productUrl}
-                    onChange={(e) => setForm({ ...form, productUrl: e.target.value })}
+                    onChange={(e) => updateForm("productUrl", e.target.value)}
                   />
                   <label className="block text-xs text-ink/60">
                     Category
                     <select
-                      className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                      className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.categoryId)}`}
                       value={form.categoryId}
-                      onChange={(e) => setForm({ ...form, categoryId: Number(e.target.value) })}
+                      onChange={(e) => updateForm("categoryId", Number(e.target.value))}
+                      aria-invalid={!!errors.categoryId}
                       required
                     >
                       <option value={0} disabled>
@@ -319,6 +348,7 @@ export default function VendorProducts() {
                         </option>
                       ))}
                     </select>
+                    <FieldError msg={errors.categoryId} />
                   </label>
                 </>
               )}

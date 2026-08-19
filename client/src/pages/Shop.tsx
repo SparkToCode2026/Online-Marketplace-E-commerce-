@@ -6,6 +6,7 @@ import NavBar from "../components/NavBar";
 import HeroSlider from "../components/HeroSlider";
 import Pagination from "../components/Pagination";
 import { SupportIcon, ShieldCheckIcon, TruckIcon, InfoIcon, SearchIcon } from "../components/icons";
+import { onProductImgError } from "../lib/img";
 import { Stars } from "../components/ProductReviews";
 
 interface Product {
@@ -249,6 +250,7 @@ export default function Shop() {
                       <img
                         src={p.productUrl}
                         alt={p.name}
+                        onError={onProductImgError(p.name)}
                         className="h-full w-full object-cover saturate-[.85] brightness-[.97] transition duration-300 group-hover:scale-105"
                       />
                       {outOfStock && (

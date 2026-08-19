@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch, formatOMR } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 // An order line as returned by GET /OrderItem/all. On that endpoint both the
 // nested product and order ARE populated (flat), so we can read the product name
@@ -55,6 +56,7 @@ export default function AdminOrderItems() {
   const [addOrderId, setAddOrderId] = useState(0);
   const [addProductId, setAddProductId] = useState(0);
   const [addQty, setAddQty] = useState(1);
+  const [errors, setErrors] = useState<Errors<"orderId" | "productId" | "qty">>({});
 
   const startedRef = useRef(false);
   useEffect(() => {
@@ -133,9 +135,12 @@ export default function AdminOrderItems() {
   }
 
   async function addItem() {
-    if (!addOrderId) return toast("Pick an order.", "info");
-    if (!addProductId) return toast("Pick a product.", "info");
-    if (addQty < 1) return toast("Quantity must be at least 1.", "info");
+    const errs: Errors<"orderId" | "productId" | "qty"> = {};
+    if (!addOrderId) errs.orderId = "Pick an order.";
+    if (!addProductId) errs.productId = "Pick a product.";
+    if (addQty < 1) errs.qty = "Quantity must be at least 1.";
+    setErrors(errs);
+    if (!isClean(errs)) return;
     try {
       await apiFetch("/OrderItem/add", "POST", {
         orderId: addOrderId,
@@ -145,6 +150,7 @@ export default function AdminOrderItems() {
       toast(`Added product to order #${addOrderId}.`, "success");
       setAddProductId(0);
       setAddQty(1);
+      setErrors({});
       load();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -181,8 +187,12 @@ export default function AdminOrderItems() {
             Order (pending)
             <select
               value={addOrderId}
-              onChange={(e) => setAddOrderId(Number(e.target.value))}
-              className="mt-1 block w-36 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              onChange={(e) => {
+                setAddOrderId(Number(e.target.value));
+                if (errors.orderId) setErrors((errs) => ({ ...errs, orderId: undefined }));
+              }}
+              aria-invalid={!!errors.orderId}
+              className={`mt-1 block w-36 rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.orderId)}`}
             >
               <option value={0} disabled>
                 Select…
@@ -193,13 +203,18 @@ export default function AdminOrderItems() {
                 </option>
               ))}
             </select>
+            <FieldError msg={errors.orderId} />
           </label>
           <label className="text-xs text-ink/50">
             Product
             <select
               value={addProductId}
-              onChange={(e) => setAddProductId(Number(e.target.value))}
-              className="mt-1 block w-52 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              onChange={(e) => {
+                setAddProductId(Number(e.target.value));
+                if (errors.productId) setErrors((errs) => ({ ...errs, productId: undefined }));
+              }}
+              aria-invalid={!!errors.productId}
+              className={`mt-1 block w-52 rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.productId)}`}
             >
               <option value={0} disabled>
                 Select…
@@ -210,6 +225,7 @@ export default function AdminOrderItems() {
                 </option>
               ))}
             </select>
+            <FieldError msg={errors.productId} />
           </label>
           <label className="text-xs text-ink/50">
             Qty
@@ -217,9 +233,14 @@ export default function AdminOrderItems() {
               type="number"
               min={1}
               value={addQty}
-              onChange={(e) => setAddQty(Number(e.target.value))}
-              className="mt-1 block w-20 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              onChange={(e) => {
+                setAddQty(Number(e.target.value));
+                if (errors.qty) setErrors((errs) => ({ ...errs, qty: undefined }));
+              }}
+              aria-invalid={!!errors.qty}
+              className={`mt-1 block w-20 rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.qty)}`}
             />
+            <FieldError msg={errors.qty} />
           </label>
           <button
             onClick={addItem}

@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { apiFetch, isLoggedIn } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 interface Profile {
   vendorProfileId: number;
@@ -24,6 +25,7 @@ export default function VendorProfile() {
   const [storeName, setStoreName] = useState("");
   const [address, setAddress] = useState("");
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Errors<"storeName" | "address">>({});
 
   async function load() {
     setLoading(true);
@@ -54,6 +56,12 @@ export default function VendorProfile() {
 
   async function save(e: FormEvent) {
     e.preventDefault();
+    const errs: Errors<"storeName" | "address"> = {};
+    if (!storeName.trim()) errs.storeName = "Store name is required.";
+    if (!address.trim()) errs.address = "Address is required.";
+    setErrors(errs);
+    if (!isClean(errs)) return;
+
     setSaving(true);
     try {
       if (profile) {
@@ -114,24 +122,34 @@ export default function VendorProfile() {
             </dl>
           </div>
         ) : (
-          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white/60 p-6 shadow-sm">
+          <form onSubmit={save} noValidate className="space-y-4 rounded-2xl bg-white/60 p-6 shadow-sm">
             <label className="block text-sm">
               <span className="text-ink/60">Store name</span>
               <input
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.storeName)}`}
                 value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
+                onChange={(e) => {
+                  setStoreName(e.target.value);
+                  if (errors.storeName) setErrors((errs) => ({ ...errs, storeName: undefined }));
+                }}
+                aria-invalid={!!errors.storeName}
                 required
               />
+              <FieldError msg={errors.storeName} />
             </label>
             <label className="block text-sm">
               <span className="text-ink/60">Address</span>
               <input
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.address)}`}
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  if (errors.address) setErrors((errs) => ({ ...errs, address: undefined }));
+                }}
+                aria-invalid={!!errors.address}
                 required
               />
+              <FieldError msg={errors.address} />
             </label>
             <div className="flex gap-2">
               <button

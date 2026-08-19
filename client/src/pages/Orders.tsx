@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, Link } from "react-router-dom";
-import { apiFetch, isLoggedIn, formatOMR } from "../api";
+import { apiFetch, isLoggedIn, isCustomer, formatOMR } from "../api";
 import { useToast } from "../components/Toast";
 import { useConfirm } from "../components/ConfirmDialog";
 import NavBar from "../components/NavBar";
 import OrderStatusBadge from "../components/OrderStatusBadge";
 import { CartIcon } from "../components/icons";
+import { onProductImgError } from "../lib/img";
 
 interface OrderItem {
   orderItemId: number;
@@ -63,6 +64,8 @@ export default function Orders() {
   }, []);
 
   if (!isLoggedIn()) return <Navigate to="/login" replace />;
+  // "My Orders" is a customer-only page; admins/vendors go to the shop.
+  if (!isCustomer()) return <Navigate to="/" replace />;
 
   async function load() {
     setLoading(true);
@@ -192,7 +195,7 @@ export default function Orders() {
                         <img
                           src={p?.productUrl}
                           alt={p?.name ?? ""}
-                          onError={(e) => (e.currentTarget.style.visibility = "hidden")}
+                          onError={onProductImgError(p?.name)}
                           className="h-10 w-10 rounded-full object-cover saturate-[.85] brightness-[.97]"
                         />
                         <span className="flex-1 text-ink/80">

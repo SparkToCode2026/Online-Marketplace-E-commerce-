@@ -49,6 +49,13 @@ export function isAdmin() {
   return localStorage.getItem("role") === "Admin";
 }
 
+// Whether the logged-in user is a customer. Only customers shop: the cart,
+// checkout and "My Orders" are theirs alone — admins and vendors run the store
+// and never place orders, so the UI hides those features from them.
+export function isCustomer() {
+  return localStorage.getItem("role") === "Customer";
+}
+
 // Clear the session.
 export function logout() {
   localStorage.clear();

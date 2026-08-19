@@ -30,6 +30,11 @@ namespace Online_Marketplace__E_commerce_.Controllers
             if (user == null)
                 return NotFound("User not found");
 
+            // Only customers place orders. Admins and vendors run the store —
+            // they must never own an order, so block checkout for any non-customer.
+            if (user.Role != "Customer")
+                return BadRequest("Only customers can place orders. Admins and vendors cannot check out.");
+
             var cartItems = _context.CartItems
                 .Include(ci => ci.product)
                 .Where(ci => ci.cart.userId == userId)

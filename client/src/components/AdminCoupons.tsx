@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 // A coupon row from GET /Coupon/usage. That endpoint already carries every
 // field this screen needs — the flag, the limit and the live usage count — so
@@ -29,7 +30,14 @@ export default function AdminCoupons() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
+  const [errors, setErrors] = useState<Errors<keyof typeof emptyForm>>({});
   const [adding, setAdding] = useState(false);
+
+  // Update one field and clear its error as the user edits it.
+  function updateForm<K extends keyof typeof emptyForm>(key: K, value: (typeof emptyForm)[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((errs) => (errs[key] ? { ...errs, [key]: undefined } : errs));
+  }
 
   const startedRef = useRef(false);
   useEffect(() => {
@@ -64,14 +72,22 @@ export default function AdminCoupons() {
     return { text: "Active", cls: "bg-sage-100 text-sage-700" };
   }
 
-  async function create() {
+  function validate() {
     // Validate here because the backend's /update path skips these checks; we
     // keep the UI honest and give instant feedback.
-    if (!form.code.trim()) return toast("Enter a coupon code.", "info");
+    const errs: Errors<keyof typeof emptyForm> = {};
+    if (!form.code.trim()) errs.code = "Code is required.";
     if (form.discountPercent <= 0 || form.discountPercent > 100)
-      return toast("Discount must be between 1 and 100.", "info");
+      errs.discountPercent = "Discount must be between 1 and 100.";
     if (!form.expiryDate || new Date(form.expiryDate) <= new Date())
-      return toast("Pick an expiry date in the future.", "info");
+      errs.expiryDate = "Pick an expiry date in the future.";
+    return errs;
+  }
+
+  async function create() {
+    const errs = validate();
+    setErrors(errs);
+    if (!isClean(errs)) return;
 
     setAdding(true);
     try {
@@ -84,6 +100,7 @@ export default function AdminCoupons() {
       });
       toast(`Coupon "${form.code.trim()}" created.`, "success");
       setForm(emptyForm);
+      setErrors({});
       load();
     } catch (e) {
       toast((e as Error).message, "error");
@@ -144,11 +161,13 @@ export default function AdminCoupons() {
           <label className="text-xs text-ink/50">
             Code
             <input
-              className="mt-1 block w-40 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              className={`mt-1 block w-40 rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.code)}`}
               placeholder="WELCOME10"
               value={form.code}
-              onChange={(e) => setForm({ ...form, code: e.target.value })}
+              onChange={(e) => updateForm("code", e.target.value)}
+              aria-invalid={!!errors.code}
             />
+            <FieldError msg={errors.code} />
           </label>
           <label className="text-xs text-ink/50">
             Discount %
@@ -156,19 +175,23 @@ export default function AdminCoupons() {
               type="number"
               min={1}
               max={100}
-              className="mt-1 block w-28 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              className={`mt-1 block w-28 rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.discountPercent)}`}
               value={form.discountPercent}
-              onChange={(e) => setForm({ ...form, discountPercent: Number(e.target.value) })}
+              onChange={(e) => updateForm("discountPercent", Number(e.target.value))}
+              aria-invalid={!!errors.discountPercent}
             />
+            <FieldError msg={errors.discountPercent} />
           </label>
           <label className="text-xs text-ink/50">
             Expires
             <input
               type="date"
-              className="mt-1 block rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+              className={`mt-1 block rounded-full border px-3 py-2 text-sm outline-none focus:ring-2 ${fieldRing(!!errors.expiryDate)}`}
               value={form.expiryDate}
-              onChange={(e) => setForm({ ...form, expiryDate: e.target.value })}
+              onChange={(e) => updateForm("expiryDate", e.target.value)}
+              aria-invalid={!!errors.expiryDate}
             />
+            <FieldError msg={errors.expiryDate} />
           </label>
           <label className="text-xs text-ink/50">
             Usage limit
@@ -178,7 +201,7 @@ export default function AdminCoupons() {
               className="mt-1 block w-32 rounded-full border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
               placeholder="Unlimited"
               value={form.usageLimit}
-              onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
+              onChange={(e) => updateForm("usageLimit", e.target.value)}
             />
           </label>
           <button

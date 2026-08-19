@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { apiFetch } from "../api";
 import { BrandIcon } from "../components/icons";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 // Register page — creates the account, then logs in with it.
 export default function Register() {
@@ -9,11 +10,24 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Errors<"name" | "email" | "password">>({});
   const navigate = useNavigate();
+
+  function validate() {
+    const errs: Errors<"name" | "email" | "password"> = {};
+    if (!name.trim()) errs.name = "Name is required.";
+    if (!email.trim()) errs.email = "Email is required.";
+    else if (!/^\S+@\S+\.\S+$/.test(email.trim())) errs.email = "Enter a valid email address.";
+    if (!password) errs.password = "Password is required.";
+    return errs;
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    const errs = validate();
+    setErrors(errs);
+    if (!isClean(errs)) return;
     try {
       await apiFetch("/User/register", "POST", {
         userName: name,
@@ -56,30 +70,51 @@ export default function Register() {
         <div className="w-full max-w-sm rounded-2xl bg-white/70 p-8 shadow-lg">
           <h2 className="mb-1 font-heading text-2xl">Register</h2>
           <p className="mb-6 text-sm text-ink/60">Create your account to get started.</p>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-              placeholder="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <input
-              type="email"
-              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              className="w-full rounded-full border border-ink/15 px-3 py-2.5 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <div>
+              <input
+                className={`w-full rounded-full border px-3 py-2.5 outline-none transition focus:ring-2 ${fieldRing(!!errors.name)}`}
+                placeholder="Name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors((errs) => ({ ...errs, name: undefined }));
+                }}
+                aria-invalid={!!errors.name}
+                required
+              />
+              <FieldError msg={errors.name} />
+            </div>
+            <div>
+              <input
+                type="email"
+                className={`w-full rounded-full border px-3 py-2.5 outline-none transition focus:ring-2 ${fieldRing(!!errors.email)}`}
+                placeholder="Email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors((errs) => ({ ...errs, email: undefined }));
+                }}
+                aria-invalid={!!errors.email}
+                required
+              />
+              <FieldError msg={errors.email} />
+            </div>
+            <div>
+              <input
+                type="password"
+                className={`w-full rounded-full border px-3 py-2.5 outline-none transition focus:ring-2 ${fieldRing(!!errors.password)}`}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors((errs) => ({ ...errs, password: undefined }));
+                }}
+                aria-invalid={!!errors.password}
+                required
+              />
+              <FieldError msg={errors.password} />
+            </div>
             {error && <p className="text-sm text-accent-700">{error}</p>}
             <button
               type="submit"

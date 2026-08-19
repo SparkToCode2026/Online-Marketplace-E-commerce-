@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { apiFetch, isLoggedIn } from "../api";
 import { useToast } from "../components/Toast";
 import NavBar from "../components/NavBar";
+import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
 interface User {
   userId: number;
@@ -23,11 +24,13 @@ export default function Account() {
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Errors<"username" | "phone">>({});
 
   // "Become a vendor" application state.
   const [storeName, setStoreName] = useState("");
   const [storeAddress, setStoreAddress] = useState("");
   const [applying, setApplying] = useState(false);
+  const [applyErrors, setApplyErrors] = useState<Errors<"storeName" | "storeAddress">>({});
 
   useEffect(() => {
     load();
@@ -49,6 +52,12 @@ export default function Account() {
   // JWT, so the request body only carries the store details.
   async function applyAsVendor(e: FormEvent) {
     e.preventDefault();
+    const errs: Errors<"storeName" | "storeAddress"> = {};
+    if (!storeName.trim()) errs.storeName = "Store name is required.";
+    if (!storeAddress.trim()) errs.storeAddress = "Store address is required.";
+    setApplyErrors(errs);
+    if (!isClean(errs)) return;
+
     setApplying(true);
     try {
       await apiFetch("/User/request-vendor", "POST", {
@@ -68,6 +77,12 @@ export default function Account() {
 
   async function save(e: FormEvent) {
     e.preventDefault();
+    const errs: Errors<"username" | "phone"> = {};
+    if (!username.trim()) errs.username = "Full name is required.";
+    if (!phone.trim()) errs.phone = "Phone number is required.";
+    setErrors(errs);
+    if (!isClean(errs)) return;
+
     setSaving(true);
     try {
       await apiFetch(`/User/update?id=${userId}`, "PUT", {
@@ -92,26 +107,36 @@ export default function Account() {
         {!user ? (
           <p className="text-sm text-ink/50">Loading…</p>
         ) : (
-          <form onSubmit={save} className="space-y-4 rounded-2xl bg-white/60 p-6 shadow-sm">
+          <form onSubmit={save} noValidate className="space-y-4 rounded-2xl bg-white/60 p-6 shadow-sm">
             <label className="block text-sm">
               <span className="text-ink/60">Full name</span>
               <input
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.username)}`}
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (errors.username) setErrors((errs) => ({ ...errs, username: undefined }));
+                }}
+                aria-invalid={!!errors.username}
                 required
               />
+              <FieldError msg={errors.username} />
             </label>
 
             <label className="block text-sm">
               <span className="text-ink/60">Phone number</span>
               <input
                 type="tel"
-                className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!errors.phone)}`}
                 value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                onChange={(e) => {
+                  setPhone(e.target.value.replace(/\D/g, ""));
+                  if (errors.phone) setErrors((errs) => ({ ...errs, phone: undefined }));
+                }}
+                aria-invalid={!!errors.phone}
                 required
               />
+              <FieldError msg={errors.phone} />
             </label>
 
             <label className="block text-sm">
@@ -165,27 +190,39 @@ export default function Account() {
                   Open a store and start listing your own products. An admin reviews every
                   application.
                 </p>
-                <form onSubmit={applyAsVendor} className="mt-4 space-y-4">
+                <form onSubmit={applyAsVendor} noValidate className="mt-4 space-y-4">
                   <label className="block text-sm">
                     <span className="text-ink/60">Store name</span>
                     <input
-                      className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                      className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!applyErrors.storeName)}`}
                       value={storeName}
-                      onChange={(e) => setStoreName(e.target.value)}
+                      onChange={(e) => {
+                        setStoreName(e.target.value);
+                        if (applyErrors.storeName)
+                          setApplyErrors((errs) => ({ ...errs, storeName: undefined }));
+                      }}
                       placeholder="e.g. Khalid's Electronics"
+                      aria-invalid={!!applyErrors.storeName}
                       required
                     />
+                    <FieldError msg={applyErrors.storeName} />
                   </label>
 
                   <label className="block text-sm">
                     <span className="text-ink/60">Store address</span>
                     <input
-                      className="mt-1 w-full rounded-full border border-ink/15 px-4 py-2 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
+                      className={`mt-1 w-full rounded-full border px-4 py-2 outline-none focus:ring-2 ${fieldRing(!!applyErrors.storeAddress)}`}
                       value={storeAddress}
-                      onChange={(e) => setStoreAddress(e.target.value)}
+                      onChange={(e) => {
+                        setStoreAddress(e.target.value);
+                        if (applyErrors.storeAddress)
+                          setApplyErrors((errs) => ({ ...errs, storeAddress: undefined }));
+                      }}
                       placeholder="e.g. Muscat, Oman"
+                      aria-invalid={!!applyErrors.storeAddress}
                       required
                     />
+                    <FieldError msg={applyErrors.storeAddress} />
                   </label>
 
                   <button

@@ -16,20 +16,20 @@ namespace Online_Marketplace__E_commerce_.Helpers
 
             var pwd = PasswordHasher.Hash(SeedPassword);
 
-            var khalid = new User { Username = "Khalid", Email = "khaild.alhadi2021@gmail.com", PasswordHash = pwd, Phonenumber = 500000001, Role = "Admin", isActive = true };
-            var mutaz = new User { Username = "Mutaz", Email = "mutaz6991@gmail.com", PasswordHash = pwd, Phonenumber = 500000002, Role = "Admin", isActive = true };
-            var hanin = new User { Username = "Hanin", Email = "hanin@marketplace.com", PasswordHash = pwd, Phonenumber = 500000003, Role = "Vendor", isActive = true };
-            var nawal = new User { Username = "Nawal", Email = "nawal@marketplace.com", PasswordHash = pwd, Phonenumber = 500000004, Role = "Vendor", isActive = true };
-            var ali = new User { Username = "Ali", Email = "alijhw3099@gmail.com", PasswordHash = pwd, Phonenumber = 500000005, Role = "Vendor", isActive = true };
-            var layla = new User { Username = "Layla", Email = "layla@marketplace.com", PasswordHash = pwd, Phonenumber = 500000006, Role = "Customer", isActive = true };
-            var yousef = new User { Username = "Yousef", Email = "yousef@marketplace.com", PasswordHash = pwd, Phonenumber = 500000007, Role = "Customer", isActive = true };
+            var khalid = new User { Username = "Khalid", Email = "khaild.alhadi2021@gmail.com", PasswordHash = pwd, Phonenumber = 90000001, Role = "Customer", isActive = true };
+            var mutaz = new User { Username = "Mutaz", Email = "mutaz@marketplace.com", PasswordHash = pwd, Phonenumber = 90000002, Role = "Admin", isActive = true };
+            var hanin = new User { Username = "Hanin", Email = "hanin@marketplace.com", PasswordHash = pwd, Phonenumber = 90000003, Role = "Vendor", isActive = true };
+            var nawal = new User { Username = "Nawal", Email = "nawal@marketplace.com", PasswordHash = pwd, Phonenumber = 90000004, Role = "Vendor", isActive = true };
+            var ali = new User { Username = "Ali", Email = "alijhw3099@gmail.com", PasswordHash = pwd, Phonenumber = 90000005, Role = "Vendor", isActive = true };
+            var layla = new User { Username = "Layla", Email = "layla@marketplace.com", PasswordHash = pwd, Phonenumber = 90000006, Role = "Customer", isActive = true };
+            var yousef = new User { Username = "Yousef", Email = "yousef@marketplace.com", PasswordHash = pwd, Phonenumber = 90000007, Role = "Customer", isActive = true };
 
             context.Users.AddRange(khalid, mutaz, hanin, nawal, ali, layla, yousef);
             context.SaveChanges();
 
-            var haninProfile = new VendorProfile { UserId = hanin.UserId, StoreName = "Hanin's Boutique", Address = "Jeddah, KSA", CreatedaAt = DateTime.Now, isVerified = true };
-            var nawalProfile = new VendorProfile { UserId = nawal.UserId, StoreName = "Nawal Electronics", Address = "Riyadh, KSA", CreatedaAt = DateTime.Now, isVerified = true };
-            var aliProfile = new VendorProfile { UserId = ali.UserId, StoreName = "Ali Bookstore", Address = "Dammam, KSA", CreatedaAt = DateTime.Now, isVerified = true };
+            var haninProfile = new VendorProfile { UserId = hanin.UserId, StoreName = "Hanin's Boutique", Address = "Salalah, Oman", CreatedaAt = DateTime.Now, isVerified = true };
+            var nawalProfile = new VendorProfile { UserId = nawal.UserId, StoreName = "Nawal Electronics", Address = "Muscat, Oman", CreatedaAt = DateTime.Now, isVerified = true };
+            var aliProfile = new VendorProfile { UserId = ali.UserId, StoreName = "Ali Bookstore", Address = "Sohar, Oman", CreatedaAt = DateTime.Now, isVerified = true };
             context.VendorProfiles.AddRange(haninProfile, nawalProfile, aliProfile);
             context.SaveChanges();
 
@@ -149,7 +149,7 @@ namespace Online_Marketplace__E_commerce_.Helpers
             context.SaveChanges();
 
             context.Payments.Add(new Payment { orderId = laylaOrder.orderId, amount = laylaOrder.totalAmount, method = "Card", status = "Completed", paidAt = DateTime.Now.AddDays(-10) });
-            context.Shippings.Add(new Shipping { orderId = laylaOrder.orderId, address = "Layla's address, Riyadh", status = "Delivered", shippedAt = DateTime.Now.AddDays(-9), deliveredAt = DateTime.Now.AddDays(-7) });
+            context.Shippings.Add(new Shipping { orderId = laylaOrder.orderId, address = "Layla's address, Muscat", status = "Delivered", shippedAt = DateTime.Now.AddDays(-9), deliveredAt = DateTime.Now.AddDays(-7) });
 
             // Yousef: a still-pending order, unpaid and unshipped.
             var yousefOrder = new Order

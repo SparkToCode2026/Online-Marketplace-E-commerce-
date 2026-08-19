@@ -4,6 +4,7 @@ import { apiFetch, isLoggedIn } from "../api";
 import { useToast } from "./Toast";
 import { useConfirm } from "./ConfirmDialog";
 import { StarIcon, TrashIcon } from "./icons";
+import { FieldError } from "../lib/formErrors";
 
 // A single review as returned by GET /Review/all. The API serializes every DTO
 // field as camelCase, so the nested reviewer is `user.username` (verified against
@@ -62,6 +63,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [ratingError, setRatingError] = useState("");
 
   // Reload whenever the product changes (the user can navigate between products
   // without the component unmounting).
@@ -102,9 +104,10 @@ export default function ProductReviews({ productId }: { productId: number }) {
 
   async function submit() {
     if (rating < 1) {
-      toast("Pick a star rating first.", "info");
+      setRatingError("Please pick a star rating.");
       return;
     }
+    setRatingError("");
     setSubmitting(true);
     try {
       // The backend only lets you review a product you've actually ordered; if
@@ -118,6 +121,7 @@ export default function ProductReviews({ productId }: { productId: number }) {
       toast("Thanks for your review!", "success");
       setRating(0);
       setComment("");
+      setRatingError("");
       loadedFor.current = null; // force the guard to allow a reload
       load();
     } catch (e) {
@@ -157,7 +161,14 @@ export default function ProductReviews({ productId }: { productId: number }) {
       {isLoggedIn() ? (
         <div className="mb-6 rounded-2xl bg-white/60 p-5 shadow-sm">
           <p className="mb-2 text-sm font-medium text-ink/70">Write a review</p>
-          <Stars value={rating} onPick={setRating} />
+          <Stars
+            value={rating}
+            onPick={(n) => {
+              setRating(n);
+              setRatingError("");
+            }}
+          />
+          <FieldError msg={ratingError || undefined} />
           <textarea
             className="mt-3 w-full rounded-lg border border-ink/15 px-3 py-2 text-sm outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-100"
             placeholder="Share your thoughts (optional)…"
