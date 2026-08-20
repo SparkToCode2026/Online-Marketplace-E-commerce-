@@ -20,6 +20,9 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Add a product to a cart. If it's already in there,
         // increase the quantity instead of creating a duplicate row.
+        // Customer-only: filling a cart is part of the shopping flow, so
+        // Admin/Vendor are blocked from adding items just like checkout.
+        [Authorize(Roles = "Customer")]
         [HttpPost("add")]
         public IActionResult AddCartItem(CartItemCreateDto dto)
         {

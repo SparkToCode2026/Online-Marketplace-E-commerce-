@@ -22,6 +22,10 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Checkout: builds the order from the user's cart.
         // Prices/totals are derived server-side, never trusted from the caller.
+        // Customer-only: placing an order is a shopping action. Admins run the
+        // platform and vendors sell on it — neither should be creating orders,
+        // so this Role gate keeps their (test) orders out of the real data.
+        [Authorize(Roles = "Customer")]
         [HttpPost("checkout")]
         public IActionResult Checkout(int userId, string? couponCode)
         {

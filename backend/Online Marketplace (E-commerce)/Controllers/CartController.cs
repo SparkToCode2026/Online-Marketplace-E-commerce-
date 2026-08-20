@@ -19,6 +19,10 @@ namespace Online_Marketplace__E_commerce_.Controllers
 
         // Case 1 — Create a cart for a user (one per user, enforced here and
         // by the unique index on Carts.userId).
+        // Customer-only: a cart is the first step of shopping, so only a
+        // Customer should own one. Admin/Vendor are blocked here (the admin
+        // "view all carts" endpoints below stay open to them).
+        [Authorize(Roles = "Customer")]
         [HttpPost("create")]
         public IActionResult CreateCart(int userId)
         {
