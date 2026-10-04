@@ -73,10 +73,12 @@ namespace Online_Marketplace__E_commerce_
 
             app.UseCors(options => options.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
-            // Seeds demo data once (checks for it, does nothing on later runs).
+            // Creates/updates the database schema on startup (needed for a fresh
+            // Docker SQL Server), then seeds demo data once (does nothing on later runs).
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<ProjectContext>();
+                context.Database.Migrate();
                 Helpers.SeedData.Initialize(context);
             }
 

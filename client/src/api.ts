@@ -1,7 +1,8 @@
 // Shared API helper — used by every page.
 
 // Backend base URL. If you change the run port, change it here only.
-export const API = "http://localhost:5190/api";
+// Production build (Docker): same-origin "/api", nginx forwards it to the backend.
+export const API = import.meta.env.PROD ? "/api" : "http://localhost:5190/api";
 
 // Single fetch wrapper: attaches the JWT automatically and unwraps the body.
 export async function apiFetch(path: string, method = "GET", body: unknown = null) {
