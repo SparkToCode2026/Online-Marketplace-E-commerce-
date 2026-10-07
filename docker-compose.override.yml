@@ -1,0 +1,11 @@
+# Local-only: Docker Compose merges this file into docker-compose.yml automatically,
+# so on your machine "docker compose build" builds the images from source.
+# Do NOT copy this file to the server — there the images are pulled from Docker Hub.
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Online Marketplace (E-commerce)/Dockerfile
+
+  web:
+    build: ./client

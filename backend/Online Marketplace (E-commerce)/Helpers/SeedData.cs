@@ -9,12 +9,15 @@ namespace Online_Marketplace__E_commerce_.Helpers
         // Gate on Khaled's email specifically, not "any users exist" --
         // this DB already has random test accounts from live testing, and
         // seeding must not skip because of those, or duplicate on rerun.
-        public static void Initialize(ProjectContext context)
+        // password: optional override (config "SeedData:Password"). Production
+        // must set it -- the default above is public in the README, and the
+        // seeded accounts include an Admin.
+        public static void Initialize(ProjectContext context, string? password = null)
         {
             if (context.Users.Any(u => u.Email == "khaild.alhadi2021@gmail.com"))
                 return;
 
-            var pwd = PasswordHasher.Hash(SeedPassword);
+            var pwd = PasswordHasher.Hash(string.IsNullOrWhiteSpace(password) ? SeedPassword : password);
 
             var khalid = new User { Username = "Khalid", Email = "khaild.alhadi2021@gmail.com", PasswordHash = pwd, Phonenumber = 90000001, Role = "Customer", isActive = true };
             var mutaz = new User { Username = "Mutaz", Email = "mutaz@marketplace.com", PasswordHash = pwd, Phonenumber = 90000002, Role = "Admin", isActive = true };

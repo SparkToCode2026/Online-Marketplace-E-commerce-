@@ -1,10 +1,25 @@
-# Run everything: docker compose up -d --build   (needs a .env file, see .env.example)
+# Production stack. Needs a .env file next to it (copy .env.example).
+#
+#   Locally:    docker compose up -d --build      (docker-compose.override.yml adds the build steps)
+#   Push:       docker compose build && docker compose push api web
+#   On server:  copy ONLY this file + .env, then: docker compose pull && docker compose up -d
+#
+# See DEPLOYMENT.md for the full walkthrough.
+
+# Rotate container logs so they can't fill the server's disk
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    logging: *logging
+    image: mcr.microsoft.com/mssql/server:2022-latest # x86_64 only, needs ~2 GB RAM
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in .env}
     volumes:
       - mssql-data:/var/opt/mssql # keeps the data when the container is recreated
     healthcheck:
@@ -14,24 +29,39 @@ services:
       retries: 10
       start_period: 20s
     restart: unless-stopped
+    # No "ports": the database is reachable only from the api container, never from the internet.
 
   api:
-    build: "./backend/Online Marketplace (E-commerce)"
+    image: ${DOCKERHUB_USER:?set DOCKERHUB_USER in .env}/marketplace-api:${IMAGE_TAG:-latest}
     environment:
       # "db" is the service name above — Docker's internal DNS resolves it
       ConnectionStrings__DefaultConnection: Server=db;Database=MarketplaceDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True
-      Jwt__Key: ${JWT_KEY}
+      Jwt__Key: ${JWT_KEY:?set JWT_KEY in .env}
+      # Password for the seeded demo accounts (incl. the Admin) on the first run
+      SeedData__Password: ${SEED_PASSWORD:?set SEED_PASSWORD in .env}
+      Smtp__Username: ${SMTP_USERNAME:-}
+      Smtp__Password: ${SMTP_PASSWORD:-}
+      Smtp__FromEmail: ${SMTP_USERNAME:-}
+      # Don't log every SQL query in production
+      Logging__LogLevel__Microsoft.EntityFrameworkCore: Warning
+    logging: *logging
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
 
   web:
-    build: ./client
+    image: ${DOCKERHUB_USER}/marketplace-web:${IMAGE_TAG:-latest}
+    logging: *logging
     ports:
-      - "80:80"
+      - "${WEB_PORT:-80}:80"
     depends_on:
       - api
+    healthcheck:
+      test: wget -qO /dev/null http://127.0.0.1/ || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
     restart: unless-stopped
 
 volumes:

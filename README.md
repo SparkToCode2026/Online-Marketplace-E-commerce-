@@ -45,6 +45,8 @@ Online Marketplace (E-commerce).postman_collection.json   <- Postman collection:
 
 ## Getting Started
 
+> **Docker / production:** `docker compose up -d --build` runs the whole stack (SQL Server + API + nginx) on http://localhost. See [DEPLOYMENT.md](DEPLOYMENT.md) for pushing the images to Docker Hub and deploying to a server.
+
 ### Prerequisites
 
 - .NET 10 SDK
