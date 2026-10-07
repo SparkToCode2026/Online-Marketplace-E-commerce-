@@ -4,13 +4,6 @@ import { apiFetch } from "../api";
 import { BrandIcon } from "../components/icons";
 import { FieldError, fieldRing, isClean, type Errors } from "../lib/formErrors";
 
-const demoAccounts = [
-  { label: "Admin", email: "mutaz@marketplace.com" },
-  { label: "Vendor", email: "nawal@marketplace.com" },
-  { label: "Customer", email: "khaild.alhadi2021@gmail.com" },
-];
-const demoPassword = "Passw0rd!23";
-
 // Login page — verifies credentials and stores the JWT.
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -46,12 +39,6 @@ export default function Login() {
     setErrors(errs);
     if (!isClean(errs)) return;
     login(email, password);
-  }
-
-  function demoLogin(em: string) {
-    setEmail(em);
-    setPassword(demoPassword);
-    login(em, demoPassword);
   }
 
   return (
@@ -116,24 +103,6 @@ export default function Login() {
               Register
             </Link>
           </p>
-
-          <div className="mt-6 border-t border-ink/10 pt-4">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink/40">
-              Quick test login
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {demoAccounts.map((a) => (
-                <button
-                  key={a.email}
-                  type="button"
-                  onClick={() => demoLogin(a.email)}
-                  className="rounded-full border border-ink/15 py-2 text-xs font-medium text-ink/70 transition hover:border-accent-500 hover:text-accent-700"
-                >
-                  {a.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
