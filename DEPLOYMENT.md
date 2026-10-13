@@ -4,16 +4,16 @@
 
 | الملف | وظيفته |
 |---|---|
-| `docker-compose.yml` | تعريف الإنتاج: 3 خدمات (`db` = SQL Server، `api` = ASP.NET، `web` = nginx + React). يسحب الصور من Docker Hub. **هذا الملف الوحيد اللي ينرفع للسيرفر.** |
-| `docker-compose.override.yml` | للجهاز المحلي فقط: يضيف خطوات الـ build. Docker Compose يدمجه تلقائياً لو موجود جنب الملف الأول. |
+| `docker-compose.yml` | تعريف الإنتاج: 4 خدمات (`db` = SQL Server، `api` = ASP.NET، `web` = nginx + React، `caddy` = HTTPS). يسحب الصور من Docker Hub. **هذا الملف الوحيد اللي ينرفع للسيرفر.** |
+| `docker-compose.override.yml` | للجهاز المحلي فقط: يضيف خطوات الـ build، ويفتح `web` على `http://localhost`، ويطفّي `caddy`. Docker Compose يدمجه تلقائياً لو موجود جنب الملف الأول. |
 | `.env` | الأسرار والإعدادات (مو في git). انسخه من `.env.example`. |
 | `backend/.../Dockerfile` | يبني الـ API. |
 | `client/Dockerfile` + `client/nginx.conf` | يبني الواجهة، و nginx يقدّمها ويحوّل `/api/*` للـ API. |
 
-المتصفح يتكلم مع nginx فقط (بورت 80). الـ API وقاعدة البيانات ما لهم بورت مفتوح للإنترنت.
+على السيرفر المتصفح يتكلم مع Caddy فقط (80 و 443). Caddy يفك التشفير ويحوّل لـ nginx. الـ API وقاعدة البيانات ما لهم بورت مفتوح للإنترنت.
 
 ```
-المتصفح ──► web (nginx :80) ──/api/*──► api (:8080) ──► db (SQL Server :1433)
+المتصفح ──HTTPS──► caddy (:443) ──► web (nginx :80) ──/api/*──► api (:8080) ──► db (SQL Server :1433)
 ```
 
 ## 1) تجربة محلية
@@ -83,10 +83,10 @@ cp .env.example .env
 echo "MSSQL_SA_PASSWORD=Sa_$(openssl rand -hex 16)X"
 echo "JWT_KEY=$(openssl rand -hex 32)"
 echo "SEED_PASSWORD=Seed_$(openssl rand -hex 8)Q"
-nano .env      # الصق القيم + DOCKERHUB_USER و IMAGE_TAG
+nano .env      # الصق القيم + DOCKERHUB_USER و IMAGE_TAG و DOMAIN (شوف القسم 4)
 ```
 
-شغّل:
+**قبل التشغيل** جهّز الدومين (القسم 4)، وبعدين شغّل:
 
 ```bash
 docker compose pull
@@ -94,35 +94,29 @@ docker compose up -d
 docker compose ps
 ```
 
-الموقع الحين على `http://SERVER_IP`.
+الموقع الحين على `https://DOMAIN`.
 
-**الجدار الناري:** افتح بس 22 (SSH) و 80 و 443:
+**الجدار الناري:** افتح بس 22 (SSH) و 80 و 443. في **Azure** هذا من الـ NSG (VM ← Networking ← Inbound port rule)، ولا تحتاج `ufw`. في باقي الشركات:
 
 ```bash
 ufw allow 22 && ufw allow 80 && ufw allow 443 && ufw enable
 ```
 
-## 4) دومين + HTTPS (الخطوة التالية)
+## 4) دومين + HTTPS
 
-1. من مزوّد الدومين سوّ سجل **A** يشير لـ `SERVER_IP`.
-2. أسهل طريقة للشهادة هي **Caddy**: يطلع شهادة Let's Encrypt ويجددها تلقائياً. في `docker-compose.yml` على السيرفر:
-   - شيل `ports` من خدمة `web`.
-   - أضف هذي الخدمة:
-     ```yaml
-       caddy:
-         image: caddy:2
-         command: caddy reverse-proxy --from shop.example.com --to web:80
-         ports:
-           - "80:80"
-           - "443:443"
-         volumes:
-           - caddy-data:/data
-         restart: unless-stopped
-     ```
-   - وتحت `volumes:` أضف `caddy-data:`.
-3. شغّل `docker compose up -d`، وبعدين افتح `https://shop.example.com`.
+خدمة `caddy` تطلب شهادة مجانية من Let's Encrypt للدومين اللي في `DOMAIN`، وتجددها تلقائياً، وتحوّل `http://` لـ `https://`. الشهادة تنحفظ في volume اسمه `caddy-data`.
 
-(البديل: Cloudflare proxy قدّام السيرفر.)
+1. **الدومين:**
+   - **مجاني على Azure:** Public IP ← Configuration ← **DNS name label** (مثلاً `khalid-market`)، والدومين يصير `khalid-market.<region>.cloudapp.azure.com`.
+   - **أو دومين خاص:** من مزوّد الدومين سوّ سجل **A** يشير لـ `SERVER_IP`.
+2. تأكد إنه يرجّع IP السيرفر **قبل** ما تشغّل (لو Caddy حاول والدومين مو جاهز، Let's Encrypt يحدّ المحاولات الفاشلة):
+   ```bash
+   nslookup <الدومين>
+   ```
+3. في `.env` على السيرفر: `DOMAIN=<الدومين>`.
+4. `docker compose up -d`، وتابع `docker compose logs -f caddy` لين يطلع `certificate obtained successfully`.
+
+> لا تشغّل `docker compose down -v` على السيرفر: يمسح الشهادة (وقاعدة البيانات). Let's Encrypt يسمح بعدد محدود من الشهادات لنفس الدومين بالأسبوع.
 
 ## 5) تحديث نسخة جديدة
 

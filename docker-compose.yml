@@ -53,8 +53,7 @@ services:
   web:
     image: ${DOCKERHUB_USER}/marketplace-web:${IMAGE_TAG:-latest}
     logging: *logging
-    ports:
-      - "${WEB_PORT:-80}:80"
+    # No "ports": caddy is the public entry point and forwards to web:80 internally.
     depends_on:
       - api
     healthcheck:
@@ -64,5 +63,21 @@ services:
       retries: 3
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2
+    # Gets a free Let's Encrypt certificate for DOMAIN, renews it, and redirects HTTP -> HTTPS.
+    # DOMAIN must already resolve to this server's IP, or the certificate request fails.
+    command: caddy reverse-proxy --from ${DOMAIN:?set DOMAIN in .env} --to web:80
+    logging: *logging
+    ports:
+      - "80:80" # Let's Encrypt validates the domain over port 80
+      - "443:443"
+    volumes:
+      - caddy-data:/data # keeps the certificate; losing it means requesting a new one (rate-limited)
+    depends_on:
+      - web
+    restart: unless-stopped
+
 volumes:
   mssql-data:
+  caddy-data:
