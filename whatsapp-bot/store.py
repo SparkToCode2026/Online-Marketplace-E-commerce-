@@ -50,7 +50,9 @@ def search_products(session, search):
             "price": p["price"],
             "in_stock": p["stockQuantity"],
         }
-        for p in products[:10]  # a chat message can't show a whole catalogue
+        # The AI picks from these; show_products decides what the customer sees.
+        # ponytail: the AI sees at most 50 products; a big catalogue needs a category filter.
+        for p in products[:50]
     ]
 
 

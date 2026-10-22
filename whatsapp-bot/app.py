@@ -31,9 +31,16 @@ SYSTEM_PROMPT = (
     "Prices are in Omani Rial (ر.ع. in Arabic, OMR in English). "
     "Use the tools for everything about products, the cart and orders. Never invent products, prices or stock. "
     "Product names are in English, so to search, turn what the customer wants into one short English word, "
-    "like laptop, headphones, shirt, jeans or novel. An empty search lists every product. "
+    "like laptop, headphones, shirt, jeans or novel. An empty search lists every product: use it for "
+    "a general kind of thing (clothes, electronics, gifts) and pick the matching products yourself. "
     "If a product isn't found, say so and suggest what the store does have. "
-    "When adding to the cart, use quantity 1 unless the customer says otherwise. "
+    "To present products, call show_products with their product_ids: the customer gets each one as a card "
+    "with a photo, the price and an add-to-cart button. Then reply with one short line only, "
+    "without repeating the products' details. "
+    "When the customer taps a card's button, you get a message like [Tapped the button: add product 2 to my cart]: "
+    "add it with add_to_cart, and reply in the language of the customer's earlier messages. "
+    "When adding to the cart, use quantity 1 unless the customer says otherwise, "
+    "and confirm with the new cart total. "
     "To check out: show the cart and the total, ask for the delivery address and city, "
     "and wait for the customer to confirm before calling checkout. "
     "Payment is cash on delivery only. Only say the order is placed if checkout returns ok, "
@@ -41,6 +48,74 @@ SYSTEM_PROMPT = (
     "Always reply in the same language the customer writes in, short and friendly like a chat message, "
     "in plain text without Markdown headings or tables."
 )
+
+
+def send(to, message):
+    """Send one WhatsApp message to the phone number "to".
+
+    message is the part that depends on the kind of message,
+    e.g. {"type": "text", "text": {"body": "hi"}}.
+    """
+    url = f"https://graph.facebook.com/v23.0/{PHONE_NUMBER_ID}/messages"
+    headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}"}
+    body = {"messaging_product": "whatsapp", "to": to, **message}
+
+    try:
+        response = requests.post(url, headers=headers, json=body, timeout=10)
+    except requests.RequestException as error:
+        # No internet, timeout, ... We print it instead of crashing the webhook.
+        print(f"Could not reach WhatsApp: {error}", flush=True)
+        return
+
+    if not response.ok:
+        # Common reasons: the token expired, or (test number) the recipient
+        # is not in the allowed list in Meta's API Setup page.
+        print(f"WhatsApp refused the message: {response.text}", flush=True)
+
+
+def send_message(to, text):
+    """Send a WhatsApp text message to the phone number "to"."""
+    send(to, {"type": "text", "text": {"body": text}})
+
+
+def is_photo(url):
+    """True if the link is a JPEG or PNG image, the only kinds WhatsApp shows in a card."""
+    try:
+        response = requests.head(url, timeout=5, allow_redirects=True)
+    except requests.RequestException:  # no internet, or not a link at all
+        return False
+    return response.ok and response.headers.get("Content-Type", "").split(";")[0] in ("image/jpeg", "image/png")
+
+
+def send_product_card(to, product):
+    """Send one product as a card: photo, name, price, description and an "add to cart" button."""
+    price = f"{product['price']:.3f}".rstrip("0").rstrip(".")  # 25.000 -> 25, 2.500 -> 2.5
+    card = {
+        "type": "button",
+        "body": {"text": f"*{product['name']}*\n{price} ر.ع.\n{product['description'] or ''}"[:1000]},
+        # When the customer taps the button, WhatsApp sends us back its id (see receive_message).
+        "action": {"buttons": [
+            {"type": "reply", "reply": {"id": f"add:{product['productId']}", "title": "أضف للسلة"}},
+        ]},
+    }
+    # Any other kind of link (e.g. an SVG placeholder) would make WhatsApp drop the whole
+    # message, so those products are sent without a photo.
+    if is_photo(product["productUrl"]):
+        card["header"] = {"type": "image", "image": {"link": product["productUrl"]}}
+    send(to, {"type": "interactive", "interactive": card})
+
+
+def show_products(session, product_ids):
+    """The show_products tool: send the customer a card for each product."""
+    shown = []
+    for product_id in product_ids[:5]:  # more cards than that would flood the chat
+        try:
+            product = store.call("GET", "/Product/getById", params={"id": product_id})
+        except store.StoreError:
+            continue  # an id the AI made up, or a product that was just deleted
+        send_product_card(session["phone"], product)
+        shown.append(product["name"])
+    return {"ok": True, "shown": shown}
 
 
 def tool(name, description, **properties):
@@ -66,6 +141,8 @@ def tool(name, description, **properties):
 TOOLS = [
     tool("search_products", "Search the store's products by an English word in their name.",
          search={"type": "string", "description": "One English word, e.g. laptop. Empty = all products"}),
+    tool("show_products", "Send the customer product cards with a photo, the price and an add-to-cart button.",
+         product_ids={"type": "array", "items": {"type": "integer"}, "description": "At most 5"}),
     tool("view_cart", "Show the customer's cart and its total."),
     tool("add_to_cart", "Add a product to the customer's cart.",
          product_id={"type": "integer"},
@@ -79,6 +156,7 @@ TOOLS = [
 ]
 TOOL_FUNCTIONS = {
     "search_products": store.search_products,
+    "show_products": show_products,
     "view_cart": store.view_cart,
     "add_to_cart": store.add_to_cart,
     "remove_from_cart": store.remove_from_cart,
@@ -149,30 +227,6 @@ def ask_ai(history, session):
     return "Sorry, I can't answer right now. Please try again in a moment."
 
 
-def send_message(to, text):
-    """Send a WhatsApp text message to the phone number "to"."""
-    url = f"https://graph.facebook.com/v23.0/{PHONE_NUMBER_ID}/messages"
-    headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}"}
-    body = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "text",
-        "text": {"body": text},
-    }
-
-    try:
-        response = requests.post(url, headers=headers, json=body, timeout=10)
-    except requests.RequestException as error:
-        # No internet, timeout, ... We print it instead of crashing the webhook.
-        print(f"Could not reach WhatsApp: {error}", flush=True)
-        return
-
-    if not response.ok:
-        # Common reasons: the token expired, or (test number) the recipient
-        # is not in the allowed list in Meta's API Setup page.
-        print(f"WhatsApp refused the message: {response.text}", flush=True)
-
-
 @app.get("/")
 def health():
     # Health check: open http://localhost:8000 in the browser and you should see this text.
@@ -214,13 +268,19 @@ def receive_message():
 
                 sender = message["from"]  # the sender's phone number, e.g. "968xxxxxxxx"
 
-                if message["type"] != "text":
+                if message["type"] == "text":
+                    text = message["text"]["body"]
+                elif message["type"] == "interactive" and message["interactive"]["type"] == "button_reply":
+                    # The customer tapped "add to cart" under a product card. The button's id
+                    # is "add:<productId>"; we hand the tap to the AI like a message.
+                    product_id = message["interactive"]["button_reply"]["id"].removeprefix("add:")
+                    text = f"[Tapped the button: add product {product_id} to my cart]"
+                else:
                     # Images, voice notes, stickers, ... The AI only reads text for now.
                     print(f"Message from {sender}: <{message['type']} message>", flush=True)
                     send_message(sender, "Sorry, I can only read text messages for now.")
                     continue
 
-                text = message["text"]["body"]
                 # flush=True makes the line show up right away (also in the Docker logs).
                 print(f"Message from {sender}: {text}", flush=True)
 
@@ -231,6 +291,7 @@ def receive_message():
                     print(f"Store session failed: {error}", flush=True)
                     send_message(sender, "Sorry, the shop isn't available right now. Please try again later.")
                     continue
+                session["phone"] = sender  # where show_products sends the cards
 
                 # Add the new message to this person's conversation, ask the AI,
                 # then save the answer too and forget the oldest messages.

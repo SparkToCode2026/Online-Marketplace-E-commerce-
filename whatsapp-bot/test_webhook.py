@@ -51,7 +51,7 @@ with redirect_stdout(output):
 assert r.status_code == 200
 assert "Message from 96891234567: I want headphones" in output.getvalue()
 assert sessions == [("96891234567", "Layla")]
-assert ai_calls[-1] == (1, {"token": "t", "userId": 1, "cartId": 1, "name": "Layla"})
+assert ai_calls[-1] == (1, {"token": "t", "userId": 1, "cartId": 1, "name": "Layla", "phone": "96891234567"})
 assert sent == [("96891234567", "AI answer to: I want headphones")]
 
 # 3. Meta sends the same message again -> no second reply.
@@ -80,7 +80,43 @@ for i in range(10):
     client.post("/webhook", json=text_event(f"wamid.more{i}", f"message {i}"))
 assert len(bot.conversations["96891234567"]) == bot.MAX_HISTORY
 
-# 8. The store is down -> a polite reply, and the AI isn't called.
+# 8. Tapping "add to cart" under a product card -> the AI is told which product.
+button_event = {"entry": [{"changes": [{"value": {"messages": [{
+    "id": "wamid.5", "from": "96891234567", "type": "interactive",
+    "interactive": {"type": "button_reply", "button_reply": {"id": "add:2", "title": "أضف للسلة"}},
+}]}}]}]}
+client.post("/webhook", json=button_event)
+assert bot.conversations["96891234567"][-2]["content"] == "[Tapped the button: add product 2 to my cart]"
+
+# 9. show_products sends one card per product: photo, name, price and the button.
+cards = []
+bot.send = lambda to, message: cards.append((to, message["interactive"]))
+products = {
+    2: {"productId": 2, "name": "Wireless Headphones", "price": 25.0, "description": "Noise-cancelling",
+        "productUrl": "https://example.com/headphones.jpg"},
+    3: {"productId": 3, "name": "Cotton T-Shirt", "price": 2.5, "description": None,
+        "productUrl": "https://placehold.co/400x300?text=Product"},
+}
+real_call = store.call
+def fake_call(method, path, session=None, **kwargs):
+    if kwargs["params"]["id"] not in products:
+        raise store.StoreError("Product not found")
+    return products[kwargs["params"]["id"]]
+store.call = fake_call
+bot.is_photo = lambda url: url.endswith(".jpg")  # the placeholder is an SVG
+
+result = bot.show_products({"phone": "96891234567"}, [2, 3, 999])
+assert result == {"ok": True, "shown": ["Wireless Headphones", "Cotton T-Shirt"]}  # 999 doesn't exist
+assert [to for to, _ in cards] == ["96891234567", "96891234567"]
+headphones, tshirt = cards[0][1], cards[1][1]
+assert headphones["header"] == {"type": "image", "image": {"link": "https://example.com/headphones.jpg"}}
+assert headphones["body"]["text"] == "*Wireless Headphones*\n25 ر.ع.\nNoise-cancelling"
+assert headphones["action"]["buttons"][0]["reply"] == {"id": "add:2", "title": "أضف للسلة"}
+assert "header" not in tshirt  # not a JPEG/PNG -> sent without a photo
+assert tshirt["body"]["text"] == "*Cotton T-Shirt*\n2.5 ر.ع.\n"
+store.call = real_call
+
+# 10. The store is down -> a polite reply, and the AI isn't called.
 def store_down(phone, name):
     raise store.StoreError("connection refused")
 store.open_session = store_down
@@ -90,7 +126,7 @@ with redirect_stdout(io.StringIO()):
 assert sent[-1] == ("96891234567", "Sorry, the shop isn't available right now. Please try again later.")
 assert len(ai_calls) == calls_before
 
-# 9. remove_from_cart refuses an item that isn't in this customer's cart,
+# 11. remove_from_cart refuses an item that isn't in this customer's cart,
 #    because the store's own remove endpoint doesn't check the owner.
 store.view_cart = lambda session: {"items": [{"cart_item_id": 7}], "total": 5}
 removed = []
