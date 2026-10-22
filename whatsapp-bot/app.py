@@ -1,0 +1,253 @@
+"""
+WhatsApp shopping bot for the marketplace.
+
+The customer chats on WhatsApp; Meta sends each message to /webhook; the AI reads it and
+uses the store tools (store.py) to search products, fill the cart and place the order;
+then we send the AI's answer back through the WhatsApp API.
+"""
+import json
+import os
+
+import requests
+from dotenv import load_dotenv
+from flask import Flask, request
+
+import store
+
+# Load variables from the .env file (tokens, keys, ...).
+# In Docker there is no .env file: docker-compose passes the same variables instead.
+load_dotenv()
+
+# Our WhatsApp credentials (from Meta dashboard > WhatsApp > API Setup).
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
+PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
+
+# Our OpenAI key (from platform.openai.com > API keys) and the model that answers.
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
+
+SYSTEM_PROMPT = (
+    "You are the WhatsApp sales assistant of an online marketplace in Oman. "
+    "Prices are in Omani Rial (ر.ع. in Arabic, OMR in English). "
+    "Use the tools for everything about products, the cart and orders. Never invent products, prices or stock. "
+    "Product names are in English, so to search, turn what the customer wants into one short English word, "
+    "like laptop, headphones, shirt, jeans or novel. An empty search lists every product. "
+    "If a product isn't found, say so and suggest what the store does have. "
+    "When adding to the cart, use quantity 1 unless the customer says otherwise. "
+    "To check out: show the cart and the total, ask for the delivery address and city, "
+    "and wait for the customer to confirm before calling checkout. "
+    "Payment is cash on delivery only. Only say the order is placed if checkout returns ok, "
+    "then give the order number; otherwise explain the reason. "
+    "Always reply in the same language the customer writes in, short and friendly like a chat message, "
+    "in plain text without Markdown headings or tables."
+)
+
+
+def tool(name, description, **properties):
+    """One tool definition in the shape OpenAI expects. Every property is required."""
+    return {
+        "type": "function",
+        "function": {
+            "name": name,
+            "description": description,
+            "strict": True,
+            "parameters": {
+                "type": "object",
+                "properties": properties,
+                "required": list(properties),
+                "additionalProperties": False,
+            },
+        },
+    }
+
+
+# The tools the AI is allowed to use. OpenAI reads these descriptions to decide
+# when to call them; our code (ask_ai below) actually runs them, in store.py.
+TOOLS = [
+    tool("search_products", "Search the store's products by an English word in their name.",
+         search={"type": "string", "description": "One English word, e.g. laptop. Empty = all products"}),
+    tool("view_cart", "Show the customer's cart and its total."),
+    tool("add_to_cart", "Add a product to the customer's cart.",
+         product_id={"type": "integer"},
+         quantity={"type": "integer", "description": "How many, at least 1"}),
+    tool("remove_from_cart", "Remove one line from the customer's cart.",
+         cart_item_id={"type": "integer", "description": "The cart_item_id from view_cart"}),
+    tool("checkout", "Place the order for everything in the cart, paid cash on delivery.",
+         address={"type": "string", "description": "Delivery address"},
+         city={"type": "string"},
+         coupon_code={"type": ["string", "null"], "description": "A discount code, or null"}),
+]
+TOOL_FUNCTIONS = {
+    "search_products": store.search_products,
+    "view_cart": store.view_cart,
+    "add_to_cart": store.add_to_cart,
+    "remove_from_cart": store.remove_from_cart,
+    "checkout": store.checkout,
+}
+
+# Meta may send the same message twice (for example when the AI takes long to answer).
+# We remember the IDs we already handled, so we never reply twice to one message.
+# ponytail: kept in memory, so it resets on restart and isn't shared between workers;
+# move it to a database if duplicate replies show up.
+handled_message_ids = set()
+
+# Each person's recent messages, so the AI understands follow-ups like "add it to my cart".
+# Key = phone number, value = list of messages.
+# ponytail: kept in memory, so it resets on restart; move it to a database if
+# conversations need to survive restarts.
+conversations = {}
+MAX_HISTORY = 10  # messages kept per person (5 questions + 5 answers)
+
+# gunicorn looks for a variable named "app" inside app.py to start the server.
+app = Flask(__name__)
+
+
+def ask_ai(history, session):
+    """Send the conversation so far to OpenAI and return the AI's next answer.
+
+    history is a list like [{"role": "user", "content": "hi"}, {"role": "assistant", ...}, ...]
+    session is the customer's store login (see store.open_session); the tools act as this customer.
+    """
+    # The instructions first, then the conversation, so the AI sees the whole context.
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
+
+    try:
+        # The AI may need a few rounds: search, add to the cart, then write the answer.
+        for _ in range(6):
+            response = requests.post(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+                json={"model": OPENAI_MODEL, "messages": messages, "tools": TOOLS},
+                timeout=60,
+            )
+            response.raise_for_status()  # turns an error answer (wrong key, no credit, ...) into an exception
+            answer = response.json()["choices"][0]["message"]
+
+            if not answer.get("tool_calls"):
+                return answer["content"]  # a normal text answer: we're done
+
+            # The AI asked to use one or more tools: run them and give it the results.
+            messages.append(answer)
+            for call in answer["tool_calls"]:
+                name = call["function"]["name"]
+                args = json.loads(call["function"]["arguments"])
+                try:
+                    result = TOOL_FUNCTIONS[name](session, **args)
+                except Exception as error:  # e.g. the store says "Cart is empty" or "Not enough stock"
+                    result = {"ok": False, "reason": str(error)}
+                print(f"Tool {name}({args}) -> {result}", flush=True)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": call["id"],
+                    "content": json.dumps(result, ensure_ascii=False),
+                })
+    except requests.RequestException as error:
+        # Print the real reason for us, and send the customer a polite message instead.
+        reason = error.response.text if error.response is not None else error
+        print(f"OpenAI error: {reason}", flush=True)
+
+    return "Sorry, I can't answer right now. Please try again in a moment."
+
+
+def send_message(to, text):
+    """Send a WhatsApp text message to the phone number "to"."""
+    url = f"https://graph.facebook.com/v23.0/{PHONE_NUMBER_ID}/messages"
+    headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}"}
+    body = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "text",
+        "text": {"body": text},
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=body, timeout=10)
+    except requests.RequestException as error:
+        # No internet, timeout, ... We print it instead of crashing the webhook.
+        print(f"Could not reach WhatsApp: {error}", flush=True)
+        return
+
+    if not response.ok:
+        # Common reasons: the token expired, or (test number) the recipient
+        # is not in the allowed list in Meta's API Setup page.
+        print(f"WhatsApp refused the message: {response.text}", flush=True)
+
+
+@app.get("/")
+def health():
+    # Health check: open http://localhost:8000 in the browser and you should see this text.
+    return "WhatsApp shopping bot is running"
+
+
+@app.get("/webhook")
+def verify_webhook():
+    # Meta calls this once, when you click "Verify and save" in the dashboard.
+    # It sends a "challenge" number; we send it back and Meta saves the webhook.
+    # We don't check the "Verify token" field, so you can type anything there.
+    mode = request.args.get("hub.mode")
+    challenge = request.args.get("hub.challenge")
+
+    if mode == "subscribe":
+        return challenge, 200
+    return "Verification failed", 403
+
+
+@app.post("/webhook")
+def receive_message():
+    # Meta calls this every time something happens on our number:
+    # a new message, or a status update (sent / delivered / read).
+    data = request.get_json(silent=True) or {}
+
+    # The JSON is nested: entry -> changes -> value -> messages.
+    # Status updates have no "messages" list, so the loop simply skips them.
+    for entry in data.get("entry", []):
+        for change in entry.get("changes", []):
+            value = change.get("value", {})
+            # The sender's WhatsApp profile name, used as their name in the store.
+            contacts = value.get("contacts") or [{}]
+            name = contacts[0].get("profile", {}).get("name")
+
+            for message in value.get("messages", []):
+                if message["id"] in handled_message_ids:
+                    continue  # already answered this one
+                handled_message_ids.add(message["id"])
+
+                sender = message["from"]  # the sender's phone number, e.g. "968xxxxxxxx"
+
+                if message["type"] != "text":
+                    # Images, voice notes, stickers, ... The AI only reads text for now.
+                    print(f"Message from {sender}: <{message['type']} message>", flush=True)
+                    send_message(sender, "Sorry, I can only read text messages for now.")
+                    continue
+
+                text = message["text"]["body"]
+                # flush=True makes the line show up right away (also in the Docker logs).
+                print(f"Message from {sender}: {text}", flush=True)
+
+                # Log the customer in to the store, so the tools can use their cart.
+                try:
+                    session = store.open_session(sender, name)
+                except (store.StoreError, requests.RequestException) as error:
+                    print(f"Store session failed: {error}", flush=True)
+                    send_message(sender, "Sorry, the shop isn't available right now. Please try again later.")
+                    continue
+
+                # Add the new message to this person's conversation, ask the AI,
+                # then save the answer too and forget the oldest messages.
+                history = conversations.setdefault(sender, [])
+                history.append({"role": "user", "content": text})
+                reply = ask_ai(history, session)
+                history.append({"role": "assistant", "content": reply})
+                del history[:-MAX_HISTORY]
+
+                send_message(sender, reply)
+
+    # Always answer 200 quickly. Otherwise Meta thinks we failed and keeps resending the event.
+    return "OK", 200
+
+
+if __name__ == "__main__":
+    # This block only runs locally with "python app.py".
+    # In Docker, gunicorn imports "app" directly, so this part is skipped.
+    port = int(os.getenv("PORT", 8000))
+    app.run(port=port, debug=True)
