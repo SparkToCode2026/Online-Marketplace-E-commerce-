@@ -4,16 +4,18 @@
 
 | الملف | وظيفته |
 |---|---|
-| `docker-compose.yml` | تعريف الإنتاج: 4 خدمات (`db` = SQL Server، `api` = ASP.NET، `web` = nginx + React، `caddy` = HTTPS). يسحب الصور من Docker Hub. **هذا الملف الوحيد اللي ينرفع للسيرفر.** |
+| `docker-compose.yml` | تعريف الإنتاج: 5 خدمات (`db` = SQL Server، `api` = ASP.NET، `bot` = بوت الواتساب، `web` = nginx + React، `caddy` = HTTPS). يسحب الصور من Docker Hub. **هذا الملف الوحيد اللي ينرفع للسيرفر.** |
 | `docker-compose.override.yml` | للجهاز المحلي فقط: يضيف خطوات الـ build، ويفتح `web` على `http://localhost`، ويطفّي `caddy`. Docker Compose يدمجه تلقائياً لو موجود جنب الملف الأول. |
 | `.env` | الأسرار والإعدادات (مو في git). انسخه من `.env.example`. |
 | `backend/.../Dockerfile` | يبني الـ API. |
-| `client/Dockerfile` + `client/nginx.conf` | يبني الواجهة، و nginx يقدّمها ويحوّل `/api/*` للـ API. |
+| `client/Dockerfile` + `client/nginx.conf` | يبني الواجهة، و nginx يقدّمها ويحوّل `/api/*` للـ API و `/webhook` للبوت. |
+| `whatsapp-bot/Dockerfile` | يبني بوت الواتساب (Python). |
 
 على السيرفر المتصفح يتكلم مع Caddy فقط (80 و 443). Caddy يفك التشفير ويحوّل لـ nginx. الـ API وقاعدة البيانات ما لهم بورت مفتوح للإنترنت.
 
 ```
 المتصفح ──HTTPS──► caddy (:443) ──► web (nginx :80) ──/api/*──► api (:8080) ──► db (SQL Server :1433)
+واتساب (Meta) ──HTTPS──► caddy ──► web ──/webhook──► bot (:8000) ──/api/*──► api
 ```
 
 ## 1) تجربة محلية
@@ -52,10 +54,10 @@ docker compose down -v         # إيقاف + مسح قاعدة البيانات
 5. ابنِ وارفع:
    ```bash
    docker compose build
-   docker compose push api web
+   docker compose push api web bot
    ```
 
-بيطلع عندك في Docker Hub مستودعين: `<user>/marketplace-api` و `<user>/marketplace-web`.
+بيطلع عندك في Docker Hub ثلاث مستودعات: `<user>/marketplace-api` و `<user>/marketplace-web` و `<user>/marketplace-bot`.
 
 > الصور ما فيها أي أسرار، لأن كل الأسرار تجي من `.env` وقت التشغيل، فعادي تكون Public. لو خليتها Private، لازم تسوي `docker login` على السيرفر بعد.
 
@@ -125,7 +127,7 @@ ufw allow 22 && ufw allow 80 && ufw allow 443 && ufw enable
 ```bash
 # غيّر IMAGE_TAG=v1.0.1 في .env
 docker compose build
-docker compose push api web
+docker compose push api web bot
 ```
 
 على السيرفر:
@@ -147,6 +149,16 @@ docker compose cp db:/var/opt/mssql/backup.bak ./backup-$(date +%F).bak
 ```
 
 انسخ الملف لمكان برّا السيرفر بشكل دوري.
+
+## 7) بوت الواتساب
+
+البوت يستقبل رسائل العملاء من Meta، والـ AI يدوّر على المنتجات ويعبّي السلة ويسوي الطلب عن طريق الـ API نفسه (الدفع عند الاستلام). الطلبات تطلع في لوحة الأدمن مثل طلبات الموقع.
+
+1. في `.env` على السيرفر عبّي: `BOT_KEY` (`openssl rand -hex 32`)، و `WHATSAPP_TOKEN` و `PHONE_NUMBER_ID` (من Meta ← WhatsApp ← API Setup)، و `OPENAI_API_KEY`.
+2. `docker compose up -d` وتأكد إن `https://DOMAIN/webhook?hub.mode=subscribe&hub.challenge=123` يرجّع `123`.
+3. في Meta ← WhatsApp ← Configuration ← Webhook: الـ Callback URL هو `https://DOMAIN/webhook` (أي Verify token يمشي)، واشترك في `messages`.
+
+لوق البوت: `docker compose logs -f bot`.
 
 ## ملاحظات
 

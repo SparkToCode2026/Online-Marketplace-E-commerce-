@@ -1,7 +1,7 @@
 # Production stack. Needs a .env file next to it (copy .env.example).
 #
 #   Locally:    docker compose up -d --build      (docker-compose.override.yml adds the build steps)
-#   Push:       docker compose build && docker compose push api web
+#   Push:       docker compose build && docker compose push api web bot
 #   On server:  copy ONLY this file + .env, then: docker compose pull && docker compose up -d
 #
 # See DEPLOYMENT.md for the full walkthrough.
@@ -50,6 +50,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: unless-stopped
+
+  # WhatsApp shopping bot. Meta calls https://DOMAIN/webhook, which nginx (web) forwards here.
+  bot:
+    image: ${DOCKERHUB_USER}/marketplace-bot:${IMAGE_TAG:-latest}
+    environment:
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      PHONE_NUMBER_ID: ${PHONE_NUMBER_ID:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # The bot shops through the API inside Docker's network, never over the internet
+      STORE_API_URL: http://api:8080/api
+      BOT_KEY: ${BOT_KEY:-}
+    logging: *logging
+    depends_on:
+      - api
     restart: unless-stopped
 
   web:

@@ -7,6 +7,9 @@ services:
       context: ./backend
       dockerfile: Online Marketplace (E-commerce)/Dockerfile
 
+  bot:
+    build: ./whatsapp-bot
+
   web:
     build: ./client
     ports:
