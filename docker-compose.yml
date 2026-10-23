@@ -64,8 +64,9 @@ services:
       BOT_KEY: ${BOT_KEY:-}
       # The website link the bot sends customers
       STORE_URL: https://${DOMAIN}
-      # Who gets the daily tech digest (digest.py, run by cron on the server)
+      # Who gets the daily tech digest (digest.py, run by cron on the server), and who they are
       DIGEST_TO: ${DIGEST_TO:-}
+      DIGEST_PROFILE: ${DIGEST_PROFILE:-}
     logging: *logging
     depends_on:
       - api

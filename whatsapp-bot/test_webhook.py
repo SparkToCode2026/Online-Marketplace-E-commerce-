@@ -116,7 +116,38 @@ assert "header" not in tshirt  # not a JPEG/PNG -> sent without a photo
 assert tshirt["body"]["text"] == "*Cotton T-Shirt*\n2.5 ر.ع.\n"
 store.call = real_call
 
-# 10. The store is down -> a polite reply, and the AI isn't called.
+# 10. The digest: only the owner gets it, by tapping the morning template's button or writing "موجز".
+import digest  # noqa: E402
+import os  # noqa: E402
+
+requested = []
+digest.send_full = lambda to: requested.append(to)
+os.environ["DIGEST_TO"] = "96891234567"
+template_button = {"entry": [{"changes": [{"value": {"messages": [{
+    "id": "wamid.6", "from": "96891234567", "type": "button",
+    "button": {"payload": "send_digest", "text": "أرسل الموجز"},
+}]}}]}]}
+with redirect_stdout(io.StringIO()):
+    client.post("/webhook", json=template_button)
+    client.post("/webhook", json=text_event("wamid.7", "موجز"))
+assert requested == ["96891234567", "96891234567"]
+os.environ["DIGEST_TO"] = "96899999999"  # someone else writing "موجز" just chats with the AI
+calls_before = len(ai_calls)
+client.post("/webhook", json=text_event("wamid.8", "موجز"))
+assert len(requested) == 2 and len(ai_calls) == calls_before + 1
+
+# 11. The full digest: a header, one message per item with its link, and the priorities.
+sample = {"day": "2026-10-23", "intro": "مقدمة", "priorities": "أولويات", "items": [
+    {"emoji": "🧠", "title": "خبر", "date": "20 أكتوبر", "category": "AI", "details": "تفاصيل",
+     "why": "لأن", "url": "https://example.com/a"},
+]}
+texts = digest.messages(sample)
+assert len(texts) == 3
+assert "الجمعة 23 أكتوبر" in texts[0]
+assert texts[1].startswith("1. 🧠 *خبر*") and texts[1].endswith("🔗 https://example.com/a")
+assert texts[2] == "🎯 *أولويتك اليوم*\nأولويات"
+
+# 12. The store is down -> a polite reply, and the AI isn't called.
 def store_down(phone, name):
     raise store.StoreError("connection refused")
 store.open_session = store_down
@@ -126,7 +157,7 @@ with redirect_stdout(io.StringIO()):
 assert sent[-1] == ("96891234567", "Sorry, the shop isn't available right now. Please try again later.")
 assert len(ai_calls) == calls_before
 
-# 11. remove_from_cart refuses an item that isn't in this customer's cart,
+# 13. remove_from_cart refuses an item that isn't in this customer's cart,
 #    because the store's own remove endpoint doesn't check the owner.
 store.view_cart = lambda session: {"items": [{"cart_item_id": 7}], "total": 5}
 removed = []

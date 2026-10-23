@@ -275,6 +275,15 @@ def receive_message():
 
                 sender = message["from"]  # the sender's phone number, e.g. "968xxxxxxxx"
 
+                # The owner asks for the daily digest: the morning template's button, or "موجز".
+                if sender == os.getenv("DIGEST_TO") and (
+                    message["type"] == "button" or message.get("text", {}).get("body", "").strip() == "موجز"
+                ):
+                    import digest  # imported here, not at the top, because digest.py imports this file
+                    print(f"Digest requested by {sender}", flush=True)
+                    digest.send_full(sender)
+                    continue
+
                 if message["type"] == "text":
                     text = message["text"]["body"]
                 elif message["type"] == "interactive" and message["interactive"]["type"] == "button_reply":
