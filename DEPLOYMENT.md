@@ -160,6 +160,12 @@ docker compose cp db:/var/opt/mssql/backup.bak ./backup-$(date +%F).bak
 
 لوق البوت: `docker compose logs -f bot`.
 
+**الموجز اليومي (اختياري):** `whatsapp-bot/digest.py` يرسل لرقم `DIGEST_TO` أخبار التقنية وفرص التدريب والوظائف في عُمان. يحتاج قالب `daily_tech_digest` معتمد في Meta (نصّه `TEMPLATE_TEXT` داخل الملف)، ومهمة cron على السيرفر (الساعة 4:00 UTC = 8:00 بتوقيت عُمان):
+
+```bash
+echo '0 4 * * * root cd /home/azureuser/marketplace && docker compose exec -T bot python digest.py >> digest.log 2>&1' | sudo tee /etc/cron.d/marketplace-digest
+```
+
 ## ملاحظات
 
 - **ما تـ commit ملف `.env` أبداً.** هو أصلاً في `.gitignore`.

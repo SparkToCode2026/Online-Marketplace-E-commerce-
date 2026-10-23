@@ -72,12 +72,13 @@ def send(to, message):
     except requests.RequestException as error:
         # No internet, timeout, ... We print it instead of crashing the webhook.
         print(f"Could not reach WhatsApp: {error}", flush=True)
-        return
+        return False
 
     if not response.ok:
         # Common reasons: the token expired, or (test number) the recipient
         # is not in the allowed list in Meta's API Setup page.
         print(f"WhatsApp refused the message: {response.text}", flush=True)
+    return response.ok
 
 
 def send_message(to, text):
