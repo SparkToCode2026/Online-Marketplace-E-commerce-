@@ -62,6 +62,8 @@ services:
       # The bot shops through the API inside Docker's network, never over the internet
       STORE_API_URL: http://api:8080/api
       BOT_KEY: ${BOT_KEY:-}
+      # The website link the bot sends customers
+      STORE_URL: https://${DOMAIN}
     logging: *logging
     depends_on:
       - api

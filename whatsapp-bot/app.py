@@ -26,9 +26,14 @@ PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 
+# The store's website, which the bot sends when a customer asks for the link.
+STORE_URL = os.getenv("STORE_URL")
+
 SYSTEM_PROMPT = (
     "You are the WhatsApp sales assistant of an online marketplace in Oman. "
-    "Prices are in Omani Rial (ر.ع. in Arabic, OMR in English). "
+    + (f"The store's website is {STORE_URL}: send this link whenever the customer asks for the website. "
+       if STORE_URL else "")
+    + "Prices are in Omani Rial (ر.ع. in Arabic, OMR in English). "
     "Use the tools for everything about products, the cart and orders. Never invent products, prices or stock. "
     "To find products, call list_products and pick every product that matches what the customer wants, "
     "including synonyms and other languages: e.g. جوتي or shoes also means sneakers, and سماعات also means earbuds. "
