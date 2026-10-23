@@ -39,9 +39,10 @@ def open_session(phone, name):
                 json={"phone": phone, "name": name})
 
 
-def search_products(session, search):
-    """Active, in-stock products whose name contains the search word (empty = all)."""
-    products = call("GET", "/Product/filter", params={"search": search, "isActive": True, "inStock": True})
+def list_products(session):
+    """Every active, in-stock product. The AI picks the matching ones itself, so it also
+    understands synonyms and Arabic, which a search inside the English names can't."""
+    products = call("GET", "/Product/filter", params={"isActive": True, "inStock": True})
     return [
         {
             "product_id": p["productId"],
@@ -51,8 +52,9 @@ def search_products(session, search):
             "in_stock": p["stockQuantity"],
         }
         # The AI picks from these; show_products decides what the customer sees.
-        # ponytail: the AI sees at most 50 products; a big catalogue needs a category filter.
-        for p in products[:50]
+        # ponytail: the AI reads at most 200 products per question; a big catalogue needs
+        # a category filter or a search first.
+        for p in products[:200]
     ]
 
 

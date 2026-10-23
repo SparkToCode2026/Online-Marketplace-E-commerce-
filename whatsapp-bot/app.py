@@ -30,11 +30,13 @@ SYSTEM_PROMPT = (
     "You are the WhatsApp sales assistant of an online marketplace in Oman. "
     "Prices are in Omani Rial (ر.ع. in Arabic, OMR in English). "
     "Use the tools for everything about products, the cart and orders. Never invent products, prices or stock. "
-    "Product names are in English, so to search, turn what the customer wants into one short English word, "
-    "like laptop, headphones, shirt, jeans or novel. An empty search lists every product: use it for "
-    "a general kind of thing (clothes, electronics, gifts) and pick the matching products yourself. "
-    "If a product isn't found, say so and suggest what the store does have. "
-    "To present products, call show_products with their product_ids: the customer gets each one as a card "
+    "To find products, call list_products and pick every product that matches what the customer wants, "
+    "including synonyms and other languages: e.g. جوتي or shoes also means sneakers, and سماعات also means earbuds. "
+    "Product names are in English. Only products of the kind the customer asked for match. "
+    "If none does (e.g. they ask for perfume and the store has none), never call show_products: "
+    "just say the store doesn't have it, and name in words two or three kinds of things it does sell. "
+    "When there are matching products, show them right away (don't ask first): "
+    "call show_products with their product_ids, and the customer gets each one as a card "
     "with a photo, the price and an add-to-cart button. Then reply with one short line only, "
     "without repeating the products' details. "
     "When the customer taps a card's button, you get a message like [Tapped the button: add product 2 to my cart]: "
@@ -139,8 +141,7 @@ def tool(name, description, **properties):
 # The tools the AI is allowed to use. OpenAI reads these descriptions to decide
 # when to call them; our code (ask_ai below) actually runs them, in store.py.
 TOOLS = [
-    tool("search_products", "Search the store's products by an English word in their name.",
-         search={"type": "string", "description": "One English word, e.g. laptop. Empty = all products"}),
+    tool("list_products", "List every product the store has in stock, to pick the ones the customer wants."),
     tool("show_products", "Send the customer product cards with a photo, the price and an add-to-cart button.",
          product_ids={"type": "array", "items": {"type": "integer"}, "description": "At most 5"}),
     tool("view_cart", "Show the customer's cart and its total."),
@@ -155,7 +156,7 @@ TOOLS = [
          coupon_code={"type": ["string", "null"], "description": "A discount code, or null"}),
 ]
 TOOL_FUNCTIONS = {
-    "search_products": store.search_products,
+    "list_products": store.list_products,
     "show_products": show_products,
     "view_cart": store.view_cart,
     "add_to_cart": store.add_to_cart,
