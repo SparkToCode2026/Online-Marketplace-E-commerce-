@@ -80,6 +80,7 @@ namespace Online_Marketplace__E_commerce_
                 var context = scope.ServiceProvider.GetRequiredService<ProjectContext>();
                 context.Database.Migrate();
                 Helpers.SeedData.Initialize(context, app.Configuration["SeedData:Password"]);
+                Helpers.SeedData.EnsureAdmin(context, app.Configuration["Admin:Email"], app.Configuration["SeedData:Password"]);
             }
 
             // Configure the HTTP request pipeline.

@@ -12,6 +12,30 @@ namespace Online_Marketplace__E_commerce_.Helpers
         // password: optional override (config "SeedData:Password"). Production
         // must set it -- the default above is public in the README, and the
         // seeded accounts include an Admin.
+        // Creates one more Admin from config ("Admin:Email", ADMIN_EMAIL in .env) with the
+        // SeedData:Password, so an admin can be added on a live server without touching the
+        // database. Runs on every startup but creates the account only once: a user who
+        // already has that email is left as it is (their password is never reset here).
+        public static void EnsureAdmin(ProjectContext context, string? email, string? password)
+        {
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return;
+            if (context.Users.Any(u => u.Email == email))
+                return;
+
+            context.Users.Add(new User
+            {
+                Username = email.Split('@')[0],
+                Email = email,
+                PasswordHash = PasswordHasher.Hash(password),
+                Role = "Admin",
+                isActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            context.SaveChanges();
+            Console.WriteLine($"Admin account created for {email}");
+        }
+
         public static void Initialize(ProjectContext context, string? password = null)
         {
             if (context.Users.Any(u => u.Email == "khaild.alhadi2021@gmail.com"))

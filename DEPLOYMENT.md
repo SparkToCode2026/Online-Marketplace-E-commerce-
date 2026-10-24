@@ -140,6 +140,16 @@ docker compose up -d
 
 الـ migrations تنطبق تلقائياً لما يشتغل الـ API. **الرجوع لنسخة قديمة:** ارجع `IMAGE_TAG` للقيمة السابقة وشغّل نفس الأمرين.
 
+### إضافة أدمن جديد
+
+على السيرفر في `.env`: حط كلمة السر في `SEED_PASSWORD` والإيميل في `ADMIN_EMAIL`، وبعدها أعد تشغيل الـ API:
+
+```bash
+sudo docker compose up -d --no-deps api
+```
+
+الحساب ينسوي مرة وحدة بس (إذا الإيميل مو موجود)، وتطلع في `docker compose logs api` رسالة `Admin account created`. تغيير `SEED_PASSWORD` ما يغيّر كلمات سر الحسابات الموجودة.
+
 ## 6) نسخ احتياطي لقاعدة البيانات
 
 ```bash
