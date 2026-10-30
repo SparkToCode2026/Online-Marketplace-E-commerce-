@@ -183,6 +183,9 @@ handled_message_ids = set()
 conversations = {}
 MAX_HISTORY = 10  # messages kept per person (5 questions + 5 answers)
 
+# When the owner's message has one of these words, they get the daily digest instead of the shop.
+DIGEST_WORDS = ("موجز", "اخبار", "أخبار", "وظائف", "وظيفة")
+
 # gunicorn looks for a variable named "app" inside app.py to start the server.
 app = Flask(__name__)
 
@@ -268,6 +271,12 @@ def receive_message():
             contacts = value.get("contacts") or [{}]
             name = contacts[0].get("profile", {}).get("name")
 
+            # WhatsApp accepts a message first and says later, here, if it couldn't deliver it
+            # (e.g. the morning digest template). Without this line such failures are silent.
+            for status in value.get("statuses", []):
+                if status.get("status") == "failed":
+                    print(f"Message to {status.get('recipient_id')} failed: {status.get('errors')}", flush=True)
+
             for message in value.get("messages", []):
                 if message["id"] in handled_message_ids:
                     continue  # already answered this one
@@ -275,9 +284,11 @@ def receive_message():
 
                 sender = message["from"]  # the sender's phone number, e.g. "968xxxxxxxx"
 
-                # The owner asks for the daily digest: the morning template's button, or "موجز".
+                # The owner asks for the daily digest: the morning template's button, or a message
+                # about it in their own words, e.g. "مارسلت الاخبار اليوم؟".
+                body = message.get("text", {}).get("body", "")
                 if sender == os.getenv("DIGEST_TO") and (
-                    message["type"] == "button" or message.get("text", {}).get("body", "").strip() == "موجز"
+                    message["type"] == "button" or any(word in body for word in DIGEST_WORDS)
                 ):
                     import digest  # imported here, not at the top, because digest.py imports this file
                     print(f"Digest requested by {sender}", flush=True)

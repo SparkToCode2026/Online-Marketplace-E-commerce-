@@ -130,11 +130,22 @@ template_button = {"entry": [{"changes": [{"value": {"messages": [{
 with redirect_stdout(io.StringIO()):
     client.post("/webhook", json=template_button)
     client.post("/webhook", json=text_event("wamid.7", "موجز"))
-assert requested == ["96891234567", "96891234567"]
+    client.post("/webhook", json=text_event("wamid.7b", "مارسلت الاخبار اليوم؟"))
+assert requested == ["96891234567"] * 3
 os.environ["DIGEST_TO"] = "96899999999"  # someone else writing "موجز" just chats with the AI
 calls_before = len(ai_calls)
 client.post("/webhook", json=text_event("wamid.8", "موجز"))
-assert len(requested) == 2 and len(ai_calls) == calls_before + 1
+assert len(requested) == 3 and len(ai_calls) == calls_before + 1
+
+# 10b. WhatsApp reports it couldn't deliver a message we sent -> the reason goes to the log.
+failed_event = {"entry": [{"changes": [{"value": {"statuses": [{
+    "status": "failed", "recipient_id": "96891234567",
+    "errors": [{"code": 131049, "title": "This message was not delivered to maintain healthy ecosystem engagement."}],
+}]}}]}]}
+output = io.StringIO()
+with redirect_stdout(output):
+    client.post("/webhook", json=failed_event)
+assert "Message to 96891234567 failed: [{'code': 131049" in output.getvalue()
 
 # 11. The full digest: a header, one message per item with its link, and the priorities.
 sample = {"day": "2026-10-23", "intro": "مقدمة", "priorities": "أولويات", "items": [

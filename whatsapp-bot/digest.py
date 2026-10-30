@@ -6,7 +6,7 @@ WhatsApp lets a business start a conversation only with a template Meta approved
 template is too small for the whole digest. So:
   1. cron on the VM runs "python digest.py" at 8:00 Oman time: it writes today's digest and
      sends the short template (TEMPLATE_TEXT) with a "send the digest" button.
-  2. The owner taps the button (or writes "موجز"): that opens WhatsApp's 24-hour window,
+  2. The owner taps the button (or asks, e.g. "موجز" or "وين الأخبار"): that opens WhatsApp's 24-hour window,
      and the bot sends the full digest, one message per item (see app.receive_message).
 "python digest.py --now" skips the template and sends the full digest straight away.
 """
@@ -168,4 +168,5 @@ if __name__ == "__main__":
         print("Full digest sent", flush=True)
     else:
         print("Digest:", len(build()["items"]), "items", flush=True)
-        print("Template sent" if send_template(DIGEST_TO) else "Template NOT sent", flush=True)
+        # Accepted isn't delivered: if WhatsApp drops it later, the bot's log says why.
+        print("Template accepted" if send_template(DIGEST_TO) else "Template NOT sent", flush=True)
