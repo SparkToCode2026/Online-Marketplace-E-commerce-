@@ -7,11 +7,13 @@ then we send the AI's answer back through the WhatsApp API.
 """
 import json
 import os
+import re
 
 import requests
 from dotenv import load_dotenv
 from flask import Flask, request
 
+import door
 import store
 
 # Load variables from the .env file (tokens, keys, ...).
@@ -55,6 +57,19 @@ SYSTEM_PROMPT = (
     "Always reply in the same language the customer writes in, short and friendly like a chat message, "
     "in plain text without Markdown headings or tables."
 )
+
+# The /me mode: the owner's own assistant instead of the shop's.
+ME_PROMPT = (
+    "You are the personal assistant of the shop's owner on WhatsApp, not the shop's assistant. "
+    "About the owner: {profile}\n"
+    "Help with whatever they ask: their projects, their career, tech news and jobs in Oman. "
+    "Search the web for anything recent, and give the link of what you found. "
+    "Reply in the language they write in, short like a chat message, "
+    "in plain text without Markdown headings or tables."
+)
+# The web search adds a source like " ([site.com](https://...))" after what it found;
+# WhatsApp would show that Markdown as it is, and the reply already has the link.
+CITATION = re.compile(r" ?\(\[[^\]]*\]\([^)]*\)\)")
 
 
 def send(to, message):
@@ -186,6 +201,16 @@ MAX_HISTORY = 10  # messages kept per person (5 questions + 5 answers)
 # When the owner's message has one of these words, they get the daily digest instead of the shop.
 DIGEST_WORDS = ("موجز", "اخبار", "أخبار", "وظائف", "وظيفة")
 
+# The owner can switch what the bot is for them; customers always get the shop.
+# ponytail: kept in memory, so after a restart the owner is back in the shop.
+MODES = {"/ecommer": "shop", "/me": "me", "/door": "door"}
+MODE_REPLIES = {
+    "shop": "🛒 رجعنا للمتجر.",
+    "me": "👤 وضعك الشخصي: اسألني عنك أو عن مشاريعك أو أي شي جديد، وأدوّر لك في النت. */ecommer* للرجوع للمتجر.",
+    "door": door.HELP,
+}
+modes = {}  # the owner's phone -> "shop", "me" or "door"
+
 # gunicorn looks for a variable named "app" inside app.py to start the server.
 app = Flask(__name__)
 
@@ -237,6 +262,50 @@ def ask_ai(history, session):
     return "Sorry, I can't answer right now. Please try again in a moment."
 
 
+def output_text(response):
+    """The answer in an OpenAI Responses API reply: the text of its "message" item
+    (the other items are the web searches it made)."""
+    return next(
+        part["text"]
+        for item in response["output"] if item["type"] == "message"
+        for part in item["content"] if part["type"] == "output_text"
+    )
+
+
+def ask_me(history):
+    """The owner's personal assistant (the /me mode): knows who they are, and searches the web."""
+    import digest  # imported here, not at the top, because digest.py imports this file
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/responses",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            json={
+                "model": OPENAI_MODEL,
+                "instructions": ME_PROMPT.format(profile=digest.DIGEST_PROFILE),
+                "input": history,
+                "tools": [{"type": "web_search"}],
+            },
+            timeout=100,  # a web search takes a while; gunicorn waits up to 120 s
+        )
+        response.raise_for_status()
+        return CITATION.sub("", output_text(response.json()))
+    except requests.RequestException as error:
+        reason = error.response.text if error.response is not None else error
+        print(f"OpenAI error: {reason}", flush=True)
+    return "Sorry, I can't answer right now. Please try again in a moment."
+
+
+def converse(key, text, ask, *args):
+    """Add text to the conversation `key`, get the answer from ask(history, *args),
+    then save the answer too and forget the oldest messages."""
+    history = conversations.setdefault(key, [])
+    history.append({"role": "user", "content": text})
+    reply = ask(history, *args)
+    history.append({"role": "assistant", "content": reply})
+    del history[:-MAX_HISTORY]
+    return reply
+
+
 @app.get("/")
 def health():
     # Health check: open http://localhost:8000 in the browser and you should see this text.
@@ -283,16 +352,30 @@ def receive_message():
                 handled_message_ids.add(message["id"])
 
                 sender = message["from"]  # the sender's phone number, e.g. "968xxxxxxxx"
+                owner = sender == os.getenv("DIGEST_TO")
+                body = message.get("text", {}).get("body", "").strip()
+
+                # The owner switches what the bot is for them: /ecommer, /me or /door.
+                if owner and body.lower() in MODES:
+                    modes[sender] = MODES[body.lower()]
+                    send_message(sender, MODE_REPLIES[modes[sender]])
+                    continue
 
                 # The owner asks for the daily digest: the morning template's button, or a message
-                # about it in their own words, e.g. "مارسلت الاخبار اليوم؟".
-                body = message.get("text", {}).get("body", "")
-                if sender == os.getenv("DIGEST_TO") and (
-                    message["type"] == "button" or any(word in body for word in DIGEST_WORDS)
-                ):
+                # about it in their own words, e.g. "مارسلت الاخبار اليوم؟" (in the /me mode their
+                # assistant answers those, with a web search of its own).
+                if owner and (message["type"] == "button" or (
+                    modes.get(sender) != "me" and any(word in body for word in DIGEST_WORDS)
+                )):
                     import digest  # imported here, not at the top, because digest.py imports this file
                     print(f"Digest requested by {sender}", flush=True)
                     digest.send_full(sender)
+                    continue
+
+                # In the /door mode the owner's messages go to the front door, not to an AI.
+                if owner and modes.get(sender) == "door":
+                    print(f"Door: {body}", flush=True)
+                    send_message(sender, door.handle(body))
                     continue
 
                 if message["type"] == "text":
@@ -311,6 +394,12 @@ def receive_message():
                 # flush=True makes the line show up right away (also in the Docker logs).
                 print(f"Message from {sender}: {text}", flush=True)
 
+                # In the /me mode the owner chats with their own assistant, in a conversation
+                # kept apart from the shop's.
+                if owner and modes.get(sender) == "me":
+                    send_message(sender, converse(f"me:{sender}", text, ask_me))
+                    continue
+
                 # Log the customer in to the store, so the tools can use their cart.
                 try:
                     session = store.open_session(sender, name)
@@ -320,15 +409,7 @@ def receive_message():
                     continue
                 session["phone"] = sender  # where show_products sends the cards
 
-                # Add the new message to this person's conversation, ask the AI,
-                # then save the answer too and forget the oldest messages.
-                history = conversations.setdefault(sender, [])
-                history.append({"role": "user", "content": text})
-                reply = ask_ai(history, session)
-                history.append({"role": "assistant", "content": reply})
-                del history[:-MAX_HISTORY]
-
-                send_message(sender, reply)
+                send_message(sender, converse(sender, text, ask_ai, session))
 
     # Always answer 200 quickly. Otherwise Meta thinks we failed and keeps resending the event.
     return "OK", 200

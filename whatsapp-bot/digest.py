@@ -93,13 +93,7 @@ def fetch_digest():
         timeout=300,  # searching takes a while
     )
     response.raise_for_status()
-    # The answer is the text part of the "message" item (the others are the searches it made).
-    text = next(
-        part["text"]
-        for item in response.json()["output"] if item["type"] == "message"
-        for part in item["content"] if part["type"] == "output_text"
-    )
-    return json.loads(text)
+    return json.loads(app.output_text(response.json()))
 
 
 def build():

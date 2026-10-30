@@ -5,7 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py store.py digest.py ./
+COPY app.py store.py digest.py door.py ./
 
 # Run as a normal user, not root (with a home folder: gunicorn keeps a control socket there)
 RUN useradd --create-home bot

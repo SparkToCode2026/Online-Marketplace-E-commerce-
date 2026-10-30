@@ -69,6 +69,12 @@ services:
       # Who gets the daily tech digest (digest.py, run by cron on the server), and who they are
       DIGEST_TO: ${DIGEST_TO:-}
       DIGEST_PROFILE: ${DIGEST_PROFILE:-}
+      # The owner's front door (/door): a Raspberry Pi whose reverse SSH tunnel ends on the
+      # server's Docker address (172.17.0.1:8001), so it's never reachable from the internet
+      DOOR_URL: http://host.docker.internal:8001
+      DOOR_KEY: ${DOOR_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     logging: *logging
     depends_on:
       - api

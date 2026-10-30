@@ -147,6 +147,70 @@ with redirect_stdout(output):
     client.post("/webhook", json=failed_event)
 assert "Message to 96891234567 failed: [{'code': 131049" in output.getvalue()
 
+# 10c. The owner's modes: /door sends their messages to the front door, /me to their own
+#      assistant, /ecommer back to the shop. For anyone else it's always the shop.
+import door  # noqa: E402
+
+os.environ["DIGEST_TO"] = "96891234567"
+door_calls = []
+real_door_call = door.call
+door.call = lambda path, payload=None: door_calls.append((path, payload))  # None = the Pi said ok
+with redirect_stdout(io.StringIO()):
+    client.post("/webhook", json=text_event("wamid.d1", "/Door"))
+    assert sent[-1] == ("96891234567", door.HELP)
+    client.post("/webhook", json=text_event("wamid.d2", "افتح"))
+    assert door_calls == [("/openDoor", None)] and sent[-1][1] == "✅ انفتح الباب"
+    client.post("/webhook", json=text_event("wamid.d3", "لا تفتح"))  # only "افتح" itself opens
+    assert len(door_calls) == 1 and sent[-1][1] == door.HELP
+
+# Guest codes: the code, then how long it lasts (a minute if not said); no code -> the bot makes one.
+door.handle("رمز 1122 دقيقة")
+assert door_calls[-1] == ("/tempCode", {"code": "1122", "seconds": 60})
+door.handle("سوي رمز ١١٢٢ لمدة 5 دقائق")
+assert door_calls[-1] == ("/tempCode", {"code": "1122", "seconds": 300})
+reply = door.handle("رمز ساعتين")
+code = door_calls[-1][1]["code"]
+assert door_calls[-1][1]["seconds"] == 7200 and len(code) == 4 and code.isdigit()
+assert reply.startswith(f"✅ الرمز *{code}* شغال لين")
+
+# A customer can't reach the door, even after typing /door.
+os.environ["DIGEST_TO"] = "96899999999"  # now 96891234567 is just a customer
+with redirect_stdout(io.StringIO()):
+    client.post("/webhook", json=text_event("wamid.d4", "/door"))
+    client.post("/webhook", json=text_event("wamid.d5", "افتح"))
+assert len(door_calls) == 4 and sent[-1] == ("96891234567", "AI answer to: افتح")
+
+# /me: the owner's own assistant, with its own conversation; /ecommer goes back to the shop.
+os.environ["DIGEST_TO"] = "96891234567"
+me_calls = []
+bot.ask_me = lambda history: me_calls.append(list(history)) or "me answer"
+with redirect_stdout(io.StringIO()):
+    client.post("/webhook", json=text_event("wamid.m1", "/me"))
+    client.post("/webhook", json=text_event("wamid.m2", "ايش مشاريعي؟"))
+    assert me_calls == [[{"role": "user", "content": "ايش مشاريعي؟"}]] and sent[-1][1] == "me answer"
+    client.post("/webhook", json=text_event("wamid.m2b", "في وظائف .NET؟"))  # the assistant, not the digest
+    assert len(me_calls) == 2 and len(requested) == 3
+    client.post("/webhook", json=text_event("wamid.m3", "/ecommer"))
+    client.post("/webhook", json=text_event("wamid.m4", "عندكم سماعات؟"))
+assert len(me_calls) == 2 and sent[-1][1] == "AI answer to: عندكم سماعات؟"
+
+# The door isn't set up, or the Pi refuses the key -> the owner is told why.
+door.call = real_door_call
+door.DOOR_URL = door.DOOR_KEY = None
+assert door.handle("افتح") == "❌ الباب مو مربوط بعد: DOOR_URL و DOOR_KEY ناقصين في السيرفر."
+
+
+class Refused:
+    status_code, ok, text = 401, False, "unauthorized"
+
+
+door.DOOR_URL, door.DOOR_KEY = "http://door", "key"
+real_post = door.requests.post
+door.requests.post = lambda url, **kwargs: Refused()
+with redirect_stdout(io.StringIO()):
+    assert door.handle("افتح") == "❌ مفتاح الباب (DOOR_KEY) في السيرفر ما يطابق اللي في الـ Pi."
+door.requests.post = real_post
+
 # 11. The full digest: a header, one message per item with its link, and the priorities.
 sample = {"day": "2026-10-23", "intro": "مقدمة", "priorities": "أولويات", "items": [
     {"emoji": "🧠", "title": "خبر", "date": "20 أكتوبر", "category": "AI", "details": "تفاصيل",
